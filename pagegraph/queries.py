@@ -66,8 +66,8 @@ def nid_of_docroot_containing_node(graph, nid):
 
     # The list now contains (docroot_nid, docroot_pgid), from last created
     # to earliest created.
-    dr_nids_and_pgids_sorted.reverse()
-    for docroot_nid, docroot_pgid in dr_nids_and_pgids_sorted:
+    dr_nids_pgids_sorted.reverse()
+    for docroot_nid, docroot_pgid in dr_nids_pgids_sorted:
         if docroot_pgid > node_pg_id:
             continue
         return docroot_nid
