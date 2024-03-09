@@ -96,13 +96,14 @@ def summarize_iframe(graph, nid):
         (a_nid, url_for_docroot(graph, a_nid)) for a_nid in child_docroot_nids]
     child_docroots_sorted = sorted(
         child_docroots, key=lambda x: _pg_id(graph, x[0]))
+    docroot_dicts = [{"nid": x[0], "url": x[1]} for x in child_docroots_sorted]
 
     return {
         "parent frame": {
             "nid": parent_docroot_nid,
             "url": parent_docroot_url
         },
-        "child documents": child_docroots_sorted
+        "child documents": docroot_dicts
     }
 
 
