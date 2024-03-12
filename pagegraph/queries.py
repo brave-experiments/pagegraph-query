@@ -1,5 +1,7 @@
 import networkx as NWX
 
+import pagegraph.utils as PG_U
+
 
 def _pg_id(graph, nid):
     return int(graph.nodes[nid]['id'])
@@ -16,19 +18,51 @@ def nids_of_iframes(graph):
 def nid_of_html_node_for_script_node(graph, nid):
     reverse_graph = NWX.reverse_view(graph)
     for parent_nid, edge_info in reverse_graph.adj[nid].items():
-        for edge_id, edge_data in edge_info.items():
+        for _, edge_data in edge_info.items():
             if edge_data['edge type'] != "execute":
                 continue
             return parent_nid
-    raise Exception(nid, "Couldn't find execution edge for nid")
+    PG_U.throw_node_related_error(
+        graph, nid, f"Can't find execution edge for nid={nid}")
 
 
-def nid_of_parser_for_frame_containing_node(graph, nid):
+def nid_of_parser_for_frame_containing_script_node(graph, nid):
+    node_data = graph.nodes[nid]
+
     reverse_graph = NWX.reverse_view(graph)
     parent_nodes = reverse_graph.adj[nid]
 
+    if node_data["node type"] != "script":
+        PG_U.throw_node_related_error(
+            graph, nid, f"Expected a script node for nid={nid}")
+
+    target_parent_node_type = None
+    if node_data["script type"] == "inline inside generated element":
+        target_parent_node_type = "HTML element"
+    else:
+        target_parent_node_type = "script"
+
     for parent_nid, edge_info in parent_nodes.items():
-        for edge_id, edge_data in edge_info.items():
+        for _, edge_data in edge_info.items():
+            if edge_data["edge type"] != "execute":
+                continue
+            parent_node_data = graph.nodes[parent_nid]
+            if parent_node_data["node type"] == target_parent_node_type:
+                return nid_of_parser_for_frame_containing_node(
+                    graph, parent_nid)
+    PG_U.throw_node_related_error(
+        graph, nid, f"Can't find a path to the parser script node nid={nid}")
+
+
+def nid_of_parser_for_frame_containing_node(graph, nid):
+    node_data = graph.nodes[nid]
+    if node_data["node type"] == "script":
+        return nid_of_parser_for_frame_containing_script_node(graph, nid)
+
+    reverse_graph = NWX.reverse_view(graph)
+    parent_nodes = reverse_graph.adj[nid]
+    for parent_nid, edge_info in parent_nodes.items():
+        for _, edge_data in edge_info.items():
             if edge_data["edge type"] != "create node":
                 continue
             parent_node_data = graph.nodes[parent_nid]
@@ -39,24 +73,26 @@ def nid_of_parser_for_frame_containing_node(graph, nid):
                     graph, parent_nid)
                 return nid_of_parser_for_frame_containing_node(
                     graph, script_elm_nid)
-    raise Exception(nid, "Couldn't find a path to the parser for nid")
+    PG_U.throw_node_related_error(
+        graph, nid, f"Couldn't find a path to the parser for nid={nid}")
 
 
 def nids_of_docroots_for_parser(graph, nid):
     dom_root_nids = []
-    for child_nid, edge_info in graph.adj[nid].items():
+    for child_nid, _ in graph.adj[nid].items():
         if graph.nodes[child_nid]['node type'] == "DOM root":
             dom_root_nids.append(child_nid)
     if len(dom_root_nids) == 0:
-        raise Exception(nid, "Found no DOM roots for parser")
+        PG_U.throw_node_related_error(
+            graph, nid, f"Found no DOM roots for parser nid={nid}")
     return dom_root_nids
 
 
 def nid_of_docroot_containing_node(graph, nid):
     """We cheat here by finding the docroot node that has an id closest to, but
-    not larger than, the given node (since any document with a higher pg id)
+    not larger than, the given node (since any document with a higher pg id
     had to be created after this node, and so could not contain the given
-    node."""
+    node)."""
     node_pg_id = _pg_id(graph, nid)
 
     parser_nid = nid_of_parser_for_frame_containing_node(graph, nid)
@@ -79,12 +115,13 @@ def url_for_docroot(graph, nid):
 
 def nids_of_docroots_for_iframe(graph, nid):
     for child_nid, edge_info in graph.adj[nid].items():
-        for edge_id, edge_data in edge_info.items():
+        for _, edge_data in edge_info.items():
             if edge_data['edge type'] != "cross DOM":
                 continue
             child_frame_parser_nid = child_nid
             return nids_of_docroots_for_parser(graph, child_frame_parser_nid)
-    raise Exception(nid, "Found no DOC Roots")
+    PG_U.throw_node_related_error(
+        graph, nid, f"Found no DOC Roots for nid={nid}")
 
 
 def summarize_iframe(graph, nid):
@@ -107,6 +144,13 @@ def summarize_iframe(graph, nid):
     }
 
 
-def summarize_iframes_in_graph(graph):
+def summarize_iframes_in_graph(graph, only_local=False):
     iframe_nids = nids_of_iframes(graph)
-    return [summarize_iframe(graph, frame_nid) for frame_nid in iframe_nids]
+    summaries = [summarize_iframe(graph, a_nid) for a_nid in iframe_nids]
+    if not only_local:
+        return summaries
+    local_frame_summaries = []
+    for summary in summaries:
+        if summary["child documents"][-1]["url"] == "about:blank":
+            local_frame_summaries.append(summary)
+    return local_frame_summaries
