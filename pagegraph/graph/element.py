@@ -1,5 +1,5 @@
 import sys
-from typing import TYPE_CHECKING
+from typing import Any, Dict, TYPE_CHECKING
 
 from pagegraph.graph.types import PageGraphId
 if TYPE_CHECKING:
@@ -21,6 +21,12 @@ class PageGraphElement:
 
     def id(self) -> PageGraphId:
         return self._id
+
+    def data(self) -> Dict[str, Any]:
+        raise NotImplementedError("Child class must implement 'data'")
+
+    def timestamp(self) -> int:
+        raise NotImplementedError("Child class must implement 'timestamp'")
 
     def describe(self) -> str:
         raise NotImplementedError("Child class must implement 'describe'")

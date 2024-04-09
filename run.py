@@ -23,6 +23,8 @@ PARSER = argparse.ArgumentParser(
         description="Extracts information about a Web page's execution from "
                     " a PageGraph recordings.")
 
+PARSER.add_argument("--version", action="version", version="%(prog)s 0.4.0")
+
 SUBPARSERS = PARSER.add_subparsers(required=True)
 
 FRAME_TREE_PARSER = SUBPARSERS.add_parser(
