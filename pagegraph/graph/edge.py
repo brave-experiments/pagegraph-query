@@ -22,6 +22,7 @@ class Edge(PageGraphElement):
         ATTRIBUTE_SET = "set attribute"
         CROSS_DOM = "cross DOM"
         EXECUTE = "execute"
+        EXECUTE_FROM_ATTRIBUTE = "execute from attribute"
         NODE_CREATE = "create node"
         NODE_INSERT = "insert node"
         NODE_REMOVE = "remove node"
@@ -29,6 +30,7 @@ class Edge(PageGraphElement):
         REQUEST_START = "request start"
         REQUEST_COMPLETE = "request complete"
         REQUEST_ERROR = "request error"
+        REQUEST_REDIRECT = "request redirect"
         REQUEST_RESPONSE = "request response"
         EVENT_LISTENER = "event listener"
         EVENT_LISTENER_ADD = "add event listener"
@@ -149,6 +151,10 @@ class ExecuteEdge(Edge):
         return cast(ScriptNode, outgoing_node)
 
 
+class ExecuteFromAttributeEdge(ExecuteEdge):
+    pass
+
+
 class StructureEdge(Edge):
 
     def is_structure_edge(self) -> bool:
@@ -200,6 +206,10 @@ class RequestErrorEdge(FrameIdAttributedEdge):
         node = super().outgoing_node()
         assert node.is_requester_node_type()
         return cast(RequesterNode, node)
+
+
+class RequestRedirectEdge(FrameIdAttributedEdge):
+    pass
 
 
 class RequestResponseEdge(FrameIdAttributedEdge):
@@ -302,12 +312,14 @@ TYPE_MAPPING: Dict[Edge.Types, Type[Edge]] = dict([
     (Edge.Types.ATTRIBUTE_SET, AttributeSetEdge),
     (Edge.Types.CROSS_DOM, CrossDOMEdge),
     (Edge.Types.EXECUTE, ExecuteEdge),
+    (Edge.Types.EXECUTE_FROM_ATTRIBUTE, ExecuteFromAttributeEdge),
     (Edge.Types.NODE_CREATE, NodeCreateEdge),
     (Edge.Types.NODE_INSERT, NodeInsertEdge),
     (Edge.Types.NODE_REMOVE, NodeRemoveEdge),
     (Edge.Types.STRUCTURE, StructureEdge),
     (Edge.Types.REQUEST_START, RequestStartEdge),
     (Edge.Types.REQUEST_COMPLETE, RequestCompleteEdge),
+    {Edge.Types.REQUEST_REDIRECT, RequestRedirectEdge},
     (Edge.Types.REQUEST_RESPONSE, RequestResponseEdge),
     (Edge.Types.EVENT_LISTENER, EventListenerEdge),
     (Edge.Types.EVENT_LISTENER_ADD, EventListenerAddEdge),
@@ -331,4 +343,4 @@ def for_type(edge_type: Edge.Types, graph: "PageGraph",
     try:
         return TYPE_MAPPING[edge_type](graph, edge_id, parent_id, child_id)
     except KeyError:
-        raise ValueError(f"Unexpected edge type={edge_type.value}")
+        raise ValueError(f"Unexpected edge type='{edge_type.value}'")

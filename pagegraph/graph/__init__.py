@@ -7,7 +7,8 @@ from pagegraph.graph.edge import Edge, NodeInsertEdge
 from pagegraph.graph.edge import for_type as edge_for_type
 from pagegraph.graph.node import for_type as node_for_type
 from pagegraph.graph.node import DOMRootNode, Node, HTMLNode, ScriptNode
-from pagegraph.graph.node import  ParserNode, FrameOwnerNode, ResourceNode
+from pagegraph.graph.node import ParserNode, FrameOwnerNode, ResourceNode
+from pagegraph.graph.node import TextNode
 from pagegraph.graph.types import BlinkId, NodeIterator, PageGraphId, DOMNode
 from pagegraph.graph.types import ChildNode, ParentNode, EdgeIterator, FrameId
 
@@ -16,18 +17,36 @@ class PageGraph:
 
     graph: NWX.MultiDiGraph
     r_graph: NWX.MultiDiGraph
-    blink_id_mapping: dict[BlinkId, DOMNode] = {}
+    blink_id_mapping: Dict[BlinkId, DOMNode] = {}
+
+    nodes_by_type: Dict[Node.Types, List[Node]] = {}
+    edges_by_type: Dict[Edge.Types, List[Edge]] = {}
 
     inserted_below_mapping: Dict[ParentNode, List[ChildNode]] = {}
     # Mapping from a frame id to the most recent DOM node seen for the frame
     frame_id_mapping: Dict[FrameId, DOMRootNode] = {}
 
     def __init__(self, graph: NWX.MultiDiGraph):
+        print("start")
         self.graph = graph
         self.r_graph = NWX.reverse_view(graph)
         # do the below to populate the blink_id mapping dicts
         # and the frame_id to frame node mapping (we keep the most
         # recent version of each frame).
+        for node in self.nodes():
+            try:
+                self.nodes_by_type[node.node_type()].append(node)
+            except KeyError:
+                self.nodes_by_type[node.node_type()] = [node]
+
+        print('start edge cache')
+        for edge in self.edges():
+            try:
+                self.edges_by_type[edge.edge_type()].append(edge)
+            except KeyError:
+                self.edges_by_type[edge.edge_type()] = [edge]
+
+        print('here')
         for node in self.dom_nodes():
             if node.is_domroot():
                 domroot_node = cast(DOMRootNode, node)
@@ -38,10 +57,12 @@ class PageGraph:
                     current_node = self.frame_id_mapping[frame_id]
                     if current_node.timestamp() < domroot_node.timestamp():
                         self.frame_id_mapping[frame_id] = domroot_node
+        print('there')
         # Finally, populate the mapping of what nodes were ever inserted
         # below another node, during the document's lifetime
         for insert_edge in self.insert_edges():
             pass
+        print("end")
 
     def nodes(self) -> NodeIterator:
         for node_id in self.graph.nodes():
@@ -52,10 +73,8 @@ class PageGraph:
             yield self.edge(edge_id)
 
     def insert_edges(self) -> Iterable[NodeInsertEdge]:
-        for _, _, edge_id in self.graph.edges:
-            edge = self.edge(edge_id)
-            if edge.is_insert_edge():
-                yield cast(NodeInsertEdge, edge)
+        for edge in self.edges_of_type(Edge.Types.NODE_INSERT):
+            return cast(NodeInsertEdge, node)
 
     def node_for_blink_id(self, blink_id: BlinkId) -> Node:
         assert blink_id in self.blink_id_mapping
@@ -67,16 +86,24 @@ class PageGraph:
             node.throw("Unexpected blink id in mapping table")
         return cast(HTMLNode, node)
 
-    def dom_nodes(self) -> NodeIterator:
-        for node in self.nodes():
-            if node.is_dom_node_type():
-                yield node
+    def dom_nodes(self) -> Iterable[DOMNode]:
+        type_mapping = (
+            (Node.Types.DOM_ROOT, DOMRootNode),
+            (Node.Types.HTML_NODE, HTMLNode),
+            (Node.Types.TEXT_NODE, TextNode),
+            (Node.Types.FRAME_OWNER, FrameOwnerNode),
+        )
+        for node_type, node_class in type_mapping:
+            for node in self.nodes_by_type[node_type]:
+                yield cast(node_class, node)
 
     def nodes_of_type(self, node_type: Node.Types) -> NodeIterator:
-        for nid in self.graph.nodes():
-            node = self.node(nid)
-            if node.is_type(node_type):
-                yield node
+        for node in self.nodes_by_type[node_type]:
+            yield node
+
+    def edges_of_type(self, edge_type: Edge.Types) -> EdgeIterator:
+        for edge in self.edges_by_type[edge_type]:
+            yield edge
 
     def domroot_for_frame_id(self, frame_id: FrameId) -> DOMRootNode:
         assert frame_id in self.frame_id_mapping
@@ -101,6 +128,10 @@ class PageGraph:
     def frame_owner_nodes(self) -> Iterable[FrameOwnerNode]:
         node_iterator = self.nodes_of_type(Node.Types.FRAME_OWNER)
         return cast(Iterable[FrameOwnerNode], node_iterator)
+
+    def domroots(self) -> Iterable[DOMRootNode]:
+        node_iterator = self.nodes_of_type(Node.Types.DOM_ROOT)
+        return cast(Iterable[DOMRootNode], node_iterator)
 
     def child_dom_nodes(self, parent_node: ParentNode) -> Iterable[ChildNode] | None:
         """Returns all nodes that were ever a child of the parent node,
@@ -166,11 +197,6 @@ class PageGraph:
                         yield domroot_node
                 except KeyError:
                     pass
-
-    def domroots(self) -> Iterable[DOMRootNode]:
-        for node in self.nodes():
-            if node.is_domroot():
-                yield cast(DOMRootNode, node)
 
 
 def from_path(input_path: str) -> PageGraph:
