@@ -369,8 +369,13 @@ class DOMRootNode(DOMElementNode):
     def frame_id(self) -> FrameId:
         return self.data()[self.RawAttrs.FRAME_ID.value]
 
-    def url(self) -> Url:
-        return self.data()[self.RawAttrs.URL.value]
+    def url(self) -> Url | None:
+        try:
+            return self.data()[self.RawAttrs.URL.value]
+        except KeyError:
+            # This will happen for temporary frame owner nodes that
+            # are created before the document is setup
+            return None
 
     def tag_name(self) -> str:
         return self.data()[Node.RawAttrs.TAG.value]

@@ -68,8 +68,9 @@ class Edge(PageGraphElement):
     def outgoing_node(self) -> Node:
         return self.pg.node(self.outgoing_node_id)
 
-    def edge_type(self) -> str:
-        return self.data()[self.RawAttrs.TYPE.value]
+    def edge_type(self) -> "Edge.Types":
+        type_name = self.data()[self.RawAttrs.TYPE.value]
+        return self.Types(type_name)
 
     def is_type(self, edge_type: Types) -> bool:
         return self.data()[self.RawAttrs.TYPE.value] == edge_type.value
@@ -319,7 +320,7 @@ TYPE_MAPPING: Dict[Edge.Types, Type[Edge]] = dict([
     (Edge.Types.STRUCTURE, StructureEdge),
     (Edge.Types.REQUEST_START, RequestStartEdge),
     (Edge.Types.REQUEST_COMPLETE, RequestCompleteEdge),
-    {Edge.Types.REQUEST_REDIRECT, RequestRedirectEdge},
+    (Edge.Types.REQUEST_REDIRECT, RequestRedirectEdge),
     (Edge.Types.REQUEST_RESPONSE, RequestResponseEdge),
     (Edge.Types.EVENT_LISTENER, EventListenerEdge),
     (Edge.Types.EVENT_LISTENER_ADD, EventListenerAddEdge),

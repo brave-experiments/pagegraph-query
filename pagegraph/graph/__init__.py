@@ -27,7 +27,6 @@ class PageGraph:
     frame_id_mapping: Dict[FrameId, DOMRootNode] = {}
 
     def __init__(self, graph: NWX.MultiDiGraph):
-        print("start")
         self.graph = graph
         self.r_graph = NWX.reverse_view(graph)
         # do the below to populate the blink_id mapping dicts
@@ -39,30 +38,27 @@ class PageGraph:
             except KeyError:
                 self.nodes_by_type[node.node_type()] = [node]
 
-        print('start edge cache')
         for edge in self.edges():
             try:
                 self.edges_by_type[edge.edge_type()].append(edge)
             except KeyError:
                 self.edges_by_type[edge.edge_type()] = [edge]
 
-        print('here')
         for node in self.dom_nodes():
             if node.is_domroot():
                 domroot_node = cast(DOMRootNode, node)
-                frame_id = domroot_node.frame_id()
-                if frame_id not in self.frame_id_mapping:
-                    self.frame_id_mapping[frame_id] = domroot_node
+                blink_id = domroot_node.blink_id()
+                if blink_id not in self.frame_id_mapping:
+                    self.frame_id_mapping[blink_id] = domroot_node
                 else:
-                    current_node = self.frame_id_mapping[frame_id]
+                    current_node = self.frame_id_mapping[blink_id]
                     if current_node.timestamp() < domroot_node.timestamp():
-                        self.frame_id_mapping[frame_id] = domroot_node
-        print('there')
+                        self.frame_id_mapping[blink_id] = domroot_node
+
         # Finally, populate the mapping of what nodes were ever inserted
         # below another node, during the document's lifetime
-        for insert_edge in self.insert_edges():
+        for edge in self.insert_edges():
             pass
-        print("end")
 
     def nodes(self) -> NodeIterator:
         for node_id in self.graph.nodes():
@@ -74,7 +70,7 @@ class PageGraph:
 
     def insert_edges(self) -> Iterable[NodeInsertEdge]:
         for edge in self.edges_of_type(Edge.Types.NODE_INSERT):
-            return cast(NodeInsertEdge, node)
+            yield cast(NodeInsertEdge, edge)
 
     def node_for_blink_id(self, blink_id: BlinkId) -> Node:
         assert blink_id in self.blink_id_mapping
@@ -94,8 +90,10 @@ class PageGraph:
             (Node.Types.FRAME_OWNER, FrameOwnerNode),
         )
         for node_type, node_class in type_mapping:
+            if node_type not in self.nodes_by_type:
+                continue
             for node in self.nodes_by_type[node_type]:
-                yield cast(node_class, node)
+                yield cast(node_class, node) # type: ignore
 
     def nodes_of_type(self, node_type: Node.Types) -> NodeIterator:
         for node in self.nodes_by_type[node_type]:

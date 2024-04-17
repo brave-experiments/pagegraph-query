@@ -8,12 +8,12 @@ if TYPE_CHECKING:
     from pagegraph.graph.edge import RequestCompleteEdge, RequestErrorEdge
 
 
-def _frametree_from_frame_owner(node: "FrameOwnerNode") -> List[Dict[Any, Any]]:
-    rs = [_frametree_from_domroot(domroot) for domroot in node.domroots()]
+def _tree_from_frame_owner(node: "FrameOwnerNode") -> List[Dict[Any, Any]]:
+    rs = [_tree_from_domroot(domroot) for domroot in node.domroots()]
     return rs
 
 
-def _frametree_from_domroot(node: "DOMRootNode") -> Dict[Any, Any]:
+def _tree_from_domroot(node: "DOMRootNode") -> Dict[Any, Any]:
     children: List[Dict[Any, Any]] = []
     summary = {
         "url": node.url(),
@@ -22,7 +22,7 @@ def _frametree_from_domroot(node: "DOMRootNode") -> Dict[Any, Any]:
     }
 
     for frame_owner in node.frame_owner_nodes():
-        children += _frametree_from_frame_owner(frame_owner)
+        children += _tree_from_frame_owner(frame_owner)
     return summary
 
 
@@ -84,7 +84,8 @@ def requests(input_path: str, frame_nid: str | None = None) -> Any:
                 "url": resource_node.url(),
             }
             if response_edge.is_request_complete_edge():
-                request_complete_edge = cast("RequestCompleteEdge", response_edge)
+                request_complete_edge = cast(
+                        "RequestCompleteEdge", response_edge)
                 request_data["type"] = "complete"
                 request_data["hash"] = request_complete_edge.hash()
                 request_data["size"] = request_complete_edge.size()
