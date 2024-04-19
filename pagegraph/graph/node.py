@@ -11,6 +11,7 @@ from pagegraph.graph.types import PageGraphEdgeKey, NodeIterator, Url
 from pagegraph.graph.types import FrameSummary, ParentNode, FrameId
 from pagegraph.graph.types import RequesterNode
 from pagegraph.graph.element import PageGraphElement
+from pagegraph.util import is_url_local
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
@@ -174,7 +175,7 @@ class Node(PageGraphElement):
         self.throw("Could not find a creator for this node")
         return None
 
-    def created_node(self) -> Iterable[Node]:
+    def created_nodes(self) -> Iterable[Node]:
         for edge in self.outgoing_edges():
             if edge.is_create_edge():
                 yield edge.outgoing_node()
@@ -241,6 +242,15 @@ class Node(PageGraphElement):
         output = f"node nid={self.id()}\n"
         for attr_name, attr_value in self.data().items():
             output += f"- {attr_name}={str(attr_value).replace("\n", "\\n")}\n"
+
+        output += "incoming edges:\n"
+        for edge in self.incoming_edges():
+            output += f"- {edge.id()} - {edge.edge_type().value}\n"
+
+        output += "outgoing edges:\n"
+        for edge in self.outgoing_edges():
+            output += f"- {edge.id()} - {edge.edge_type().value}\n"
+
         return output
 
     def validate(self) -> bool:
@@ -268,6 +278,7 @@ class DOMElementNode(Node):
         assert node
         return node
 
+
 class ScriptNode(Node):
 
     class ScriptTypes(StrEnum):
@@ -284,6 +295,12 @@ class ScriptNode(Node):
             if edge.is_create_edge():
                 create_edge = cast("NodeCreateEdge", edge)
                 yield create_edge.outgoing_node()
+
+    def creator_node(self) -> "ScriptNode" | "HTMLNode": # type: ignore
+        for edge in self.incoming_edges():
+            if edge.is_execute_edge():
+                return edge.incoming_node().creator_node() # type: ignore[return-value]
+        self.throw("Could not find creator for script node")
 
 
 class HTMLNode(DOMElementNode):
@@ -348,6 +365,36 @@ class TextNode(DOMElementNode):
 
 
 class DOMRootNode(DOMElementNode):
+
+    def is_top_level_frame(self) -> bool:
+        parser = self.parser()
+        assert parser
+        return parser.is_toplevel_parser()
+
+    def is_local_frame(self) -> bool:
+        parent_frame = self.parent_frame()
+        if not parent_frame:
+            self.throw("Nonsensical to ask if a top level frame is local")
+            return False
+
+        this_frame_url = self.url()
+        if not this_frame_url:
+            self.throw("Frame is intermediate frame, cannot be local")
+            return False
+
+        parent_frame_url = parent_frame.url()
+        assert parent_frame_url
+        return is_url_local(this_frame_url, parent_frame_url)
+
+    def parent_frame(self) -> None | "DOMRootNode":
+        assert not self.is_top_level_frame()
+        parser = self.parser()
+        assert parser
+        owning_frame = parser.frame_owner_node()
+        if not owning_frame:
+            self.throw("Could not find parent frame")
+            return None
+        return owning_frame.domroot()
 
     def frame_owner_nodes(self) -> Iterable[FrameOwnerNode]:
         seen_set = set()
@@ -453,19 +500,18 @@ class DOMRootNode(DOMElementNode):
 class ParserNode(Node):
 
     def domroot(self) -> DOMRootNode | None:
-        msg = "Tried to ask for DOMRoot of a parser"
-        self.throw(msg)
+        self.throw("Tried to ask for DOMRoot of a parser")
         return super().domroot() # deadcode, to please mypy
 
     def frame_owner_node(self) -> FrameOwnerNode | None:
         parent_nodes_list = list(self.parent_nodes())
         num_parent_nodes = len(parent_nodes_list)
-        has_parent_nodes = num_parent_nodes == 0
+        has_parent_nodes = num_parent_nodes != 0
         if not has_parent_nodes:
             return None
         assert num_parent_nodes == 1
         parent_node = parent_nodes_list[0]
-        assert parent_node.is_type(Node.Types.FRAME_OWNER)
+        assert parent_node.is_frame_owner()
         return cast(FrameOwnerNode, parent_node)
 
     def created_nodes(self) -> Iterable[Node]:

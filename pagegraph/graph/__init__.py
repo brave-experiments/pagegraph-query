@@ -11,6 +11,7 @@ from pagegraph.graph.node import ParserNode, FrameOwnerNode, ResourceNode
 from pagegraph.graph.node import TextNode
 from pagegraph.graph.types import BlinkId, NodeIterator, PageGraphId, DOMNode
 from pagegraph.graph.types import ChildNode, ParentNode, EdgeIterator, FrameId
+from pagegraph.util import check_pagegraph_version
 
 
 class PageGraph:
@@ -32,17 +33,16 @@ class PageGraph:
         # do the below to populate the blink_id mapping dicts
         # and the frame_id to frame node mapping (we keep the most
         # recent version of each frame).
+        for node_type in Node.Types:
+            self.nodes_by_type[node_type] = []
+        for edge_type in Edge.Types:
+            self.edges_by_type[edge_type] = []
+
         for node in self.nodes():
-            try:
-                self.nodes_by_type[node.node_type()].append(node)
-            except KeyError:
-                self.nodes_by_type[node.node_type()] = [node]
+            self.nodes_by_type[node.node_type()].append(node)
 
         for edge in self.edges():
-            try:
-                self.edges_by_type[edge.edge_type()].append(edge)
-            except KeyError:
-                self.edges_by_type[edge.edge_type()] = [edge]
+            self.edges_by_type[edge.edge_type()].append(edge)
 
         for node in self.dom_nodes():
             if node.is_domroot():
@@ -198,4 +198,5 @@ class PageGraph:
 
 
 def from_path(input_path: str) -> PageGraph:
+    check_pagegraph_version(input_path)
     return PageGraph(NWX.read_graphml(input_path))

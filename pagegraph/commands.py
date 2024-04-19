@@ -32,7 +32,7 @@ def frametree(input_path: str) -> List[Dict[Any, Any]]:
 
     trees = []
     for domroot_node in toplevel_domroot_nodes:
-        trees.append(_frametree_from_domroot(domroot_node))
+        trees.append(_tree_from_domroot(domroot_node))
     return trees
 
 
@@ -41,28 +41,41 @@ def subframes(input_path: str, local_only: bool = False) -> Any:
     summaries = []
 
     for iframe_node in pg.iframe_nodes():
-        iframe_summary: Dict[str, Any] = {}
         parent_frame = iframe_node.domroot()
         if parent_frame is None:
             iframe_node.throw("Couldn't find owner of iframe")
             return
+
+        if local_only and not parent_frame.is_top_level_frame():
+            continue
+
         parent_frame_url = parent_frame.url()
         parent_frame_nid = parent_frame.id()
-        iframe_summary["parent frame"] = {
-            "url": parent_frame_url,
-            "nid": parent_frame_nid
-        }
-        iframe_summary["iframe"] = {
-            "nid": iframe_node.id()
-        }
 
         child_documents = []
-        for domroot_node in iframe_node.domroots():
+        is_all_local_frames = True
+        for child_domroot in iframe_node.domroots():
+            if local_only and not child_domroot.is_local_frame():
+                is_all_local_frames = False
+                break
             child_documents.append({
-                "nid": domroot_node.id(),
-                "url": domroot_node.url()
+                "nid": child_domroot.id(),
+                "url": child_domroot.url()
             })
-        iframe_summary["child documents"] = child_documents
+
+        if local_only and not is_all_local_frames:
+            continue
+
+        iframe_summary: Dict[str, Any] = {
+            "parent frame": {
+                "url": parent_frame_url,
+                "nid": parent_frame_nid
+            },
+            "iframe": {
+                "nid": iframe_node.id()
+            },
+            "child frames": child_documents
+        }
         summaries.append(iframe_summary)
     return summaries
 
