@@ -5,7 +5,6 @@ import os
 import sys
 
 import pagegraph.commands
-from pagegraph.util import check_pagegraph_version
 
 
 def frametree_cmd(args):
