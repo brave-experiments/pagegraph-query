@@ -1,8 +1,6 @@
 from enum import StrEnum
-from typing import cast, Dict, List, TypeVar, Type, TYPE_CHECKING
+from typing import cast, Dict, List, TypeVar, Type, TYPE_CHECKING, Union
 
-from pagegraph.graph.node import Node, HTMLNode, DOMRootNode, FrameOwnerNode
-from pagegraph.graph.node import TextNode, ScriptNode
 from pagegraph.graph.types import PageGraphNodeId, PageGraphEdgeId
 from pagegraph.graph.types import BlinkId, PageGraphEdgeKey, RequesterNode
 from pagegraph.graph.types import ChildNode, ParentNode, FrameId
@@ -10,6 +8,7 @@ from pagegraph.graph.element import PageGraphElement
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
+    from pagegraph.graph.node import Node, ScriptNode, DOMRootNode, HTMLNode
 
 
 class Edge(PageGraphElement):
@@ -62,10 +61,10 @@ class Edge(PageGraphElement):
         self.outgoing_node_id = child_id
         super().__init__(graph, id)
 
-    def incoming_node(self) -> Node:
+    def incoming_node(self) -> "Node":
         return self.pg.node(self.incoming_node_id)
 
-    def outgoing_node(self) -> Node:
+    def outgoing_node(self) -> "Node":
         return self.pg.node(self.outgoing_node_id)
 
     def edge_type(self) -> "Edge.Types":
@@ -97,6 +96,9 @@ class Edge(PageGraphElement):
         return False
 
     def is_request_error_edge(self) -> bool:
+        return False
+
+    def is_request_redirect_edge(self) -> bool:
         return False
 
     def data(self) -> dict[str, str]:
@@ -146,10 +148,10 @@ class ExecuteEdge(Edge):
     def is_execute_edge(self) -> bool:
         return True
 
-    def outgoing_node(self) -> ScriptNode:
+    def outgoing_node(self) -> "ScriptNode":
         outgoing_node = super().outgoing_node()
         assert outgoing_node.is_script()
-        return cast(ScriptNode, outgoing_node)
+        return cast("ScriptNode", outgoing_node)
 
 
 class ExecuteFromAttributeEdge(ExecuteEdge):
@@ -210,7 +212,9 @@ class RequestErrorEdge(FrameIdAttributedEdge):
 
 
 class RequestRedirectEdge(FrameIdAttributedEdge):
-    pass
+
+    def is_request_redirect_edge(self) -> bool:
+        return True
 
 
 class RequestResponseEdge(FrameIdAttributedEdge):
@@ -231,7 +235,7 @@ class NodeInsertEdge(FrameIdAttributedEdge):
     def inserted_before_blink_id(self) -> BlinkId | None:
         return self.data()[Edge.RawAttrs.BEFORE_BLINK_ID]
 
-    def inserted_before_node(self) -> None | Node:
+    def inserted_before_node(self) -> Union[None, "Node"]:
         blink_id = self.inserted_before_blink_id()
         if not blink_id:
             return None
@@ -246,9 +250,9 @@ class NodeInsertEdge(FrameIdAttributedEdge):
         node = self.pg.node_for_blink_id(blink_id)
         assert node.is_parent_dom_node_type()
         if node.is_html_elm():
-            return cast(HTMLNode, node)
+            return cast("HTMLNode", node)
         else:
-            return cast(DOMRootNode, node)
+            return cast("DOMRootNode", node)
 
     def inserted_node(self) -> ChildNode:
         child_node = self.outgoing_node()

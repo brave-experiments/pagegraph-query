@@ -16,6 +16,7 @@ from pagegraph.util import check_pagegraph_version
 
 class PageGraph:
 
+    debug: bool = True
     graph: NWX.MultiDiGraph
     r_graph: NWX.MultiDiGraph
     blink_id_mapping: Dict[BlinkId, DOMNode] = {}
@@ -27,9 +28,11 @@ class PageGraph:
     # Mapping from a frame id to the most recent DOM node seen for the frame
     frame_id_mapping: Dict[FrameId, DOMRootNode] = {}
 
-    def __init__(self, graph: NWX.MultiDiGraph):
+    def __init__(self, graph: NWX.MultiDiGraph, debug: bool = False):
         self.graph = graph
+        self.debug = debug
         self.r_graph = NWX.reverse_view(graph)
+
         # do the below to populate the blink_id mapping dicts
         # and the frame_id to frame node mapping (we keep the most
         # recent version of each frame).
@@ -40,6 +43,13 @@ class PageGraph:
 
         for node in self.nodes():
             self.nodes_by_type[node.node_type()].append(node)
+
+        # We iterate over nodes a second time if we're in debug mode
+        # because some internal checks are dependent on caches
+        # having already seen other nodes, and so this removes those cycles.
+        if self.debug:
+            for node in self.nodes():
+                node.validate()
 
         for edge in self.edges():
             self.edges_by_type[edge.edge_type()].append(edge)
@@ -73,7 +83,10 @@ class PageGraph:
             yield cast(NodeInsertEdge, edge)
 
     def node_for_blink_id(self, blink_id: BlinkId) -> Node:
-        assert blink_id in self.blink_id_mapping
+        if self.debug:
+            if blink_id not in self.blink_id_mapping:
+                raise Exception(f"blink_id not in blink_id cache: {blink_id}")
+
         node = self.blink_id_mapping[blink_id]
         if node.is_domroot():
             return cast(DOMRootNode, node)
@@ -197,6 +210,6 @@ class PageGraph:
                     pass
 
 
-def from_path(input_path: str) -> PageGraph:
+def from_path(input_path: str, debug: bool = False) -> PageGraph:
     check_pagegraph_version(input_path)
-    return PageGraph(NWX.read_graphml(input_path))
+    return PageGraph(NWX.read_graphml(input_path), debug)

@@ -3,7 +3,8 @@ from __future__ import annotations
 from enum import StrEnum
 from functools import lru_cache
 import sys
-from typing import cast, Dict, Iterable, Self, Set, TypeVar, Type, TYPE_CHECKING
+from typing import cast, Dict, Iterable, List, Self, Set, TypeVar, Type
+from typing import TYPE_CHECKING
 
 from pagegraph.graph.types import BlinkId, EdgeIterator, ChildNode
 from pagegraph.graph.types import PageGraphId, PageGraphNodeId, PageGraphEdgeId
@@ -13,15 +14,22 @@ from pagegraph.graph.types import RequesterNode
 from pagegraph.graph.element import PageGraphElement
 from pagegraph.util import is_url_local
 
+from pagegraph.graph.edge import Edge
+
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
-    from pagegraph.graph.edge import Edge, NodeCreateEdge, NodeInsertEdge
+    from pagegraph.graph.edge import NodeCreateEdge, NodeInsertEdge
     from pagegraph.graph.edge import ExecuteEdge, StructureEdge
     from pagegraph.graph.edge import RequestStartEdge, RequestErrorEdge
-    from pagegraph.graph.edge import RequestCompleteEdge
+    from pagegraph.graph.edge import RequestCompleteEdge, RequestRedirectEdge
 
 
 class Node(PageGraphElement):
+
+    parent_node_types: List["Node.Types"] = []
+    child_node_types: List["Node.Types"] = []
+    incoming_edge_types: List["Edge.Types"] = []
+    outgoing_edge_types: List["Edge.Types"] = []
 
     class Types(StrEnum):
         FRAME_OWNER = "frame owner"
@@ -225,13 +233,16 @@ class Node(PageGraphElement):
         return cast(DOMRootNode, owning_domroot)
 
     def executed_scripts(self) -> Iterable[ScriptNode]:
-        assert (
-            self.is_text_elm() or
-            self.is_html_elm() or
-            self.is_script() or
-            self.is_frame_owner() or
-            self.is_domroot()
-        )
+        if self.pg.debug:
+            is_executing_script = (
+                self.is_text_elm() or
+                self.is_html_elm() or
+                self.is_script() or
+                self.is_frame_owner() or
+                self.is_domroot()
+            )
+            if not is_executing_script:
+                self.throw("Unexpected node executing a script")
         for edge in self.outgoing_edges():
             if not edge.is_execute_edge():
                 continue
@@ -254,6 +265,37 @@ class Node(PageGraphElement):
         return output
 
     def validate(self) -> bool:
+        if len(self.__class__.parent_node_types) > 0:
+            valid_parent_node_types = self.__class__.parent_node_types
+            for parent_node in self.parent_nodes():
+                node_type = parent_node.node_type()
+                if node_type not in valid_parent_node_types:
+                    self.throw(f"Unexpected parent node type: {node_type}")
+                    return False
+
+        if len(self.__class__.child_node_types) > 0:
+            valid_child_node_types = self.__class__.child_node_types
+            for child_node in self.child_nodes():
+                node_type = child_node.node_type()
+                if node_type not in valid_child_node_types:
+                    self.throw(f"Unexpected child node type: {node_type}")
+                    return False
+
+        if len(self.__class__.incoming_edge_types) > 0:
+            valid_incoming_edge_types = self.__class__.incoming_edge_types
+            for edge in self.incoming_edges():
+                edge_type = edge.edge_type()
+                if edge_type not in valid_incoming_edge_types:
+                    self.throw(f"Unexpected incoming edge type: {edge_type}")
+                    return False
+
+        if len(self.__class__.outgoing_edge_types) > 0:
+            valid_outgoing_edge_types = self.__class__.outgoing_edge_types
+            for edge in self.outgoing_edges():
+                edge_type = edge.edge_type()
+                if edge_type not in valid_outgoing_edge_types:
+                    self.throw(f"Unexpected outgoing edge type: {edge_type}")
+                    return False
         return True
 
     def creator_edge(self) -> NodeCreateEdge | None:
@@ -281,14 +323,39 @@ class DOMElementNode(Node):
 
 class ScriptNode(Node):
 
+    incoming_edge_types = [
+        Edge.Types.EVENT_LISTENER,
+        Edge.Types.EXECUTE,
+        Edge.Types.EXECUTE_FROM_ATTRIBUTE,
+        Edge.Types.JS_RESULT,
+        Edge.Types.REQUEST_COMPLETE,
+        Edge.Types.REQUEST_ERROR,
+        Edge.Types.REQUEST_REDIRECT,
+        Edge.Types.REQUEST_RESPONSE,
+        Edge.Types.STORAGE_READ_RESULT,
+    ]
+
+    outgoing_edge_types = [
+        Edge.Types.ATTRIBUTE_DELETE,
+        Edge.Types.ATTRIBUTE_SET,
+        Edge.Types.EXECUTE,
+        Edge.Types.JS_CALL,
+        Edge.Types.NODE_CREATE,
+        Edge.Types.NODE_INSERT,
+        Edge.Types.NODE_REMOVE,
+        Edge.Types.REQUEST_START,
+        Edge.Types.STORAGE_CLEAR,
+        Edge.Types.STORAGE_DELETE,
+        Edge.Types.STORAGE_READ_CALL,
+        Edge.Types.STORAGE_SET,
+        Edge.Types.EVENT_LISTENER_ADD,
+        Edge.Types.EVENT_LISTENER_REMOVE,
+    ]
+
     class ScriptTypes(StrEnum):
         INLINE = "inline"
         INLINE_ELM = "inline inside generated element"
         UNKNOWN = "unknown"
-
-    def __init__(self, graph: "PageGraph", pg_id: PageGraphId):
-        super().__init__(graph, pg_id)
-        assert self.is_type(Node.Types.SCRIPT)
 
     def created_nodes(self) -> Iterable[Node]:
         for edge in self.outgoing_edges():
@@ -493,11 +560,19 @@ class DOMRootNode(DOMElementNode):
     @lru_cache(maxsize=None)
     def summarize_frame(self) -> FrameSummary:
         parser = self.parser()
-        assert parser is not None
+        assert parser
         return self._summarize_frame(parser, FrameSummary(), set())
 
 
 class ParserNode(Node):
+
+    parent_node_types = [
+        Node.Types.FRAME_OWNER,
+        # The RESOURCE case is uncommon, but occurs when something is
+        # fetched that doesn't have a representation in the graph,
+        # most commonly a pre* <meta> instruction.
+        Node.Types.RESOURCE
+    ]
 
     def domroot(self) -> DOMRootNode | None:
         self.throw("Tried to ask for DOMRoot of a parser")
@@ -505,14 +580,14 @@ class ParserNode(Node):
 
     def frame_owner_node(self) -> FrameOwnerNode | None:
         parent_nodes_list = list(self.parent_nodes())
-        num_parent_nodes = len(parent_nodes_list)
-        has_parent_nodes = num_parent_nodes != 0
-        if not has_parent_nodes:
-            return None
-        assert num_parent_nodes == 1
-        parent_node = parent_nodes_list[0]
-        assert parent_node.is_frame_owner()
-        return cast(FrameOwnerNode, parent_node)
+        frame_owner_nodes: List["FrameOwnerNode"] = []
+        for parent_node in parent_nodes_list:
+            if parent_node.is_frame_owner():
+                frame_owner_nodes.append(cast(FrameOwnerNode, parent_node))
+        if self.pg.debug:
+            if len(frame_owner_nodes) != 1:
+                self.throw("Did not find exactly 1 parent frame owner node")
+        return frame_owner_nodes[0]
 
     def created_nodes(self) -> Iterable[Node]:
         for edge in self.outgoing_edges():
@@ -537,22 +612,31 @@ class ParserNode(Node):
 
 class ResourceNode(Node):
 
+    outgoing_edge_types = [
+        Edge.Types.REQUEST_COMPLETE,
+        Edge.Types.REQUEST_ERROR,
+        Edge.Types.REQUEST_REDIRECT
+    ]
+
+    incoming_edge_types = [
+        Edge.Types.REQUEST_REDIRECT,
+        Edge.Types.REQUEST_START
+    ]
+
     def url(self) -> Url:
         return self.data()[Node.RawAttrs.URL.value]
 
     def incoming_edges(self) -> Iterable["RequestStartEdge"]:
         for edge in super().incoming_edges():
-            if not edge.is_request_start_edge():
-                edge.throw("")
-            assert edge.is_request_start_edge()
             yield cast("RequestStartEdge", edge)
 
     def outgoing_edges(self) -> Iterable[
-            "RequestCompleteEdge" | "RequestErrorEdge"]:
+            "RequestCompleteEdge" | "RequestErrorEdge" | "RequestRedirectEdge"]:
         for edge in super().outgoing_edges():
-            assert edge.is_request_complete_edge() or edge.is_request_error_edge()
             if edge.is_request_complete_edge():
                 yield cast("RequestCompleteEdge", edge)
+            elif edge.is_request_redirect_edge():
+                yield cast("RequestRedirectEdge", edge)
             else:
                 yield cast("RequestErrorEdge", edge)
 

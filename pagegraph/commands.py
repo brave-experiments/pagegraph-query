@@ -26,8 +26,8 @@ def _tree_from_domroot(node: "DOMRootNode") -> Dict[Any, Any]:
     return summary
 
 
-def frametree(input_path: str) -> List[Dict[Any, Any]]:
-    pg = pagegraph.graph.from_path(input_path)
+def frametree(input_path: str, debug: bool = False) -> List[Dict[Any, Any]]:
+    pg = pagegraph.graph.from_path(input_path, debug)
     toplevel_domroot_nodes = pg.toplevel_domroot_nodes()
 
     trees = []
@@ -36,8 +36,9 @@ def frametree(input_path: str) -> List[Dict[Any, Any]]:
     return trees
 
 
-def subframes(input_path: str, local_only: bool = False) -> Any:
-    pg = pagegraph.graph.from_path(input_path)
+def subframes(input_path: str, local_only: bool = False,
+              debug: bool = False) -> Any:
+    pg = pagegraph.graph.from_path(input_path, debug)
     summaries = []
 
     for iframe_node in pg.iframe_nodes():
@@ -63,6 +64,9 @@ def subframes(input_path: str, local_only: bool = False) -> Any:
                 "url": child_domroot.url()
             })
 
+        if len(child_documents) == 0:
+            continue
+
         if local_only and not is_all_local_frames:
             continue
 
@@ -80,8 +84,9 @@ def subframes(input_path: str, local_only: bool = False) -> Any:
     return summaries
 
 
-def requests(input_path: str, frame_nid: str | None = None) -> Any:
-    pg = pagegraph.graph.from_path(input_path)
+def requests(input_path: str, frame_nid: str | None = None,
+             debug: bool = False) -> Any:
+    pg = pagegraph.graph.from_path(input_path, debug)
     requests = []
 
     for resource_node in pg.resource_nodes():

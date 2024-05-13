@@ -9,15 +9,15 @@ from pagegraph.util import check_pagegraph_version
 
 
 def frametree_cmd(args):
-    return pagegraph.commands.frametree(args.input)
+    return pagegraph.commands.frametree(args.input, args.debug)
 
 
 def subframes_cmd(args):
-    return pagegraph.commands.subframes(args.input, args.local)
+    return pagegraph.commands.subframes(args.input, args.local, args.debug)
 
 
 def request_cmd(args):
-    return pagegraph.commands.requests(args.input, args.frame)
+    return pagegraph.commands.requests(args.input, args.frame, args.debug)
 
 
 PARSER = argparse.ArgumentParser(
@@ -25,7 +25,8 @@ PARSER = argparse.ArgumentParser(
         description="Extracts information about a Web page's execution from "
                     " a PageGraph recordings.")
 
-PARSER.add_argument("--version", action="version", version="%(prog)s 0.6.0")
+PARSER.add_argument("--version", action="version", version="%(prog)s 0.6.1")
+PARSER.add_argument("--debug", action="store_true", default=False)
 
 SUBPARSERS = PARSER.add_subparsers(required=True)
 
@@ -46,8 +47,8 @@ SUBFRAMES_PARSER.add_argument(
 SUBFRAMES_PARSER.add_argument(
     "-l", "--local",
     action="store_true",
-    help="Only print information about about frames that are local at "
-         "serialization time.")
+    help="Only print information about about frames that are local to"
+         " the top level frame at serialization time.")
 SUBFRAMES_PARSER.set_defaults(func=subframes_cmd)
 
 REQUEST_PARSER = SUBPARSERS.add_parser(
