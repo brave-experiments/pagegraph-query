@@ -1,14 +1,17 @@
 from enum import StrEnum
-from typing import cast, Dict, List, TypeVar, Type, TYPE_CHECKING, Union
+from json import loads, JSONDecodeError
+from typing import Any, cast, Dict, List, TypeVar, Type, TYPE_CHECKING, Union
 
+from pagegraph.graph.element import PageGraphElement
 from pagegraph.graph.types import PageGraphNodeId, PageGraphEdgeId
 from pagegraph.graph.types import BlinkId, PageGraphEdgeKey, RequesterNode
 from pagegraph.graph.types import ChildNode, ParentNode, FrameId
-from pagegraph.graph.element import PageGraphElement
+from pagegraph.graph.serialize import Reportable, RequestReport
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
     from pagegraph.graph.node import Node, ScriptNode, DOMRootNode, HTMLNode
+    from pagegraph.graph.node import JSStructureNode, ResourceNode
 
 
 class Edge(PageGraphElement):
@@ -45,6 +48,7 @@ class Edge(PageGraphElement):
         JS_RESULT = "js result"
 
     class RawAttrs(StrEnum):
+        ARGS = "args"
         BEFORE_BLINK_ID = "before"
         FRAME_ID = "frame id"
         HASH = "response hash"
@@ -53,6 +57,7 @@ class Edge(PageGraphElement):
         SIZE = "size"
         TIMESTAMP = "timestamp"
         TYPE = "edge type"
+        VALUE = "value"
 
     def __init__(self, graph: "PageGraph", id: PageGraphEdgeId,
             parent_id: PageGraphNodeId, child_id: PageGraphNodeId):
@@ -99,6 +104,12 @@ class Edge(PageGraphElement):
         return False
 
     def is_request_redirect_edge(self) -> bool:
+        return False
+
+    def is_js_call_edge(self) -> bool:
+        return False
+
+    def is_js_result_edge(self) -> bool:
         return False
 
     def data(self) -> dict[str, str]:
@@ -180,14 +191,28 @@ class RequestStartEdge(FrameIdAttributedEdge):
         return cast(RequesterNode, node)
 
 
-class RequestCompleteEdge(FrameIdAttributedEdge):
+class RequestCompleteEdge(FrameIdAttributedEdge, Reportable):
+
+    def to_report(self) -> RequestReport:
+        resource_node = self.incoming_node()
+        return RequestReport(resource_node.id(), resource_node.url(),
+            "complete", self.hash(), self.size(), self.headers())
 
     def is_request_complete_edge(self) -> bool:
         return True
 
+    def incoming_node(self) -> "ResourceNode":
+        node = super().incoming_node()
+        if self.pg.debug:
+            if not node.is_resource_node():
+                self.throw("Unexpected incoming node type")
+        return cast("ResourceNode", node)
+
     def outgoing_node(self) -> RequesterNode:
         node = super().outgoing_node()
-        assert node.is_requester_node_type()
+        if self.pg.debug:
+            if not node.is_requester_node_type():
+                self.throw("Unexpected outgoing node type")
         return cast(RequesterNode, node)
 
     def headers(self) -> str:
@@ -200,18 +225,44 @@ class RequestCompleteEdge(FrameIdAttributedEdge):
         return self.data()[self.RawAttrs.HASH.value]
 
 
-class RequestErrorEdge(FrameIdAttributedEdge):
+class RequestErrorEdge(FrameIdAttributedEdge, Reportable):
+
+    def to_report(self) -> RequestReport:
+        resource_node = self.incoming_node()
+        return RequestReport(resource_node.id(), resource_node.url(),
+            "error", None, None, None)
 
     def is_request_error_edge(self) -> bool:
         return True
 
+    def incoming_node(self) -> "ResourceNode":
+        node = super().incoming_node()
+        if self.pg.debug:
+            if not node.is_resource_node():
+                self.throw("Unexpected incoming node type")
+        return cast("ResourceNode", node)
+
     def outgoing_node(self) -> RequesterNode:
         node = super().outgoing_node()
-        assert node.is_requester_node_type()
+        if self.pg.debug:
+            if not node.is_requester_node_type():
+                self.throw("Unexpected outgoing node type")
         return cast(RequesterNode, node)
 
 
-class RequestRedirectEdge(FrameIdAttributedEdge):
+class RequestRedirectEdge(FrameIdAttributedEdge, Reportable):
+
+    def incoming_node(self) -> "ResourceNode":
+        node = super().incoming_node()
+        if self.pg.debug:
+            if not node.is_resource_node():
+                self.throw("Unexpected incoming node type")
+        return cast("ResourceNode", node)
+
+    def to_report(self) -> RequestReport:
+        resource_node = self.incoming_node()
+        return RequestReport(resource_node.id(), resource_node.url(),
+            "redirect", None, None, None)
 
     def is_request_redirect_edge(self) -> bool:
         return True
@@ -301,11 +352,59 @@ class StorageDeleteEdge(FrameIdAttributedEdge):
 
 
 class JSCallEdge(FrameIdAttributedEdge):
-    pass
+
+    def args(self) -> Any:
+        args_raw = self.data()[Edge.RawAttrs.ARGS.value]
+        return_result = None
+        try:
+            return_result = loads(args_raw)
+        except JSONDecodeError:
+            return_result = args_raw
+        return return_result
+
+    def is_js_call_edge(self) -> bool:
+        return True
+
+    def incoming_node(self) -> "ScriptNode":
+        incoming_node = super().incoming_node()
+        if self.pg.debug:
+            if not incoming_node.is_script():
+                self.throw("Unexpected incoming node type")
+        return cast("ScriptNode", incoming_node)
+
+    def outgoing_node(self) -> "JSStructureNode":
+        outgoing_node = super().outgoing_node()
+        if self.pg.debug:
+            if not outgoing_node.is_js_structure():
+                self.throw("Unexpected outgoing node type")
+        return cast("JSStructureNode", outgoing_node)
 
 
 class JSResultEdge(FrameIdAttributedEdge):
-    pass
+
+    def value(self) -> Any:
+        value_raw = self.data()[Edge.RawAttrs.VALUE.value]
+        try:
+            return loads(value_raw)
+        except JSONDecodeError:
+            return value_raw
+
+    def is_js_result_edge(self) -> bool:
+        return True
+
+    def outgoing_node(self) -> "ScriptNode":
+        outgoing_node = super().outgoing_node()
+        if self.pg.debug:
+            if not outgoing_node.is_script():
+                self.throw("Unexpected outgoing node type")
+        return cast("ScriptNode", outgoing_node)
+
+    def incoming_node(self) -> "JSStructureNode":
+        incoming_node = super().incoming_node()
+        if self.pg.debug:
+            if not incoming_node.is_js_structure():
+                self.throw("Unexpected incoming node type")
+        return cast("JSStructureNode", incoming_node)
 
 
 class DeprecatedEdge(Edge):

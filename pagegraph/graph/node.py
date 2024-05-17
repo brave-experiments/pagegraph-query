@@ -2,19 +2,23 @@ from __future__ import annotations
 
 from enum import StrEnum
 from functools import lru_cache
+from itertools import chain
 import sys
-from typing import cast, Dict, Iterable, List, Self, Set, TypeVar, Type
+from typing import cast, Dict, Iterable, List, Self, Set, Tuple, TypeVar, Type
 from typing import TYPE_CHECKING
 
+from pagegraph.graph.element import PageGraphElement
+from pagegraph.graph.edge import Edge
+from pagegraph.graph.js import JSCallResult
 from pagegraph.graph.types import BlinkId, EdgeIterator, ChildNode
 from pagegraph.graph.types import PageGraphId, PageGraphNodeId, PageGraphEdgeId
 from pagegraph.graph.types import PageGraphEdgeKey, NodeIterator, Url
 from pagegraph.graph.types import FrameSummary, ParentNode, FrameId
 from pagegraph.graph.types import RequesterNode
-from pagegraph.graph.element import PageGraphElement
+from pagegraph.graph.serialize import Reportable, FrameReport, DOMElementReport
+from pagegraph.graph.serialize import JSStructureReport
 from pagegraph.util import is_url_local
 
-from pagegraph.graph.edge import Edge
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
@@ -22,6 +26,7 @@ if TYPE_CHECKING:
     from pagegraph.graph.edge import ExecuteEdge, StructureEdge
     from pagegraph.graph.edge import RequestStartEdge, RequestErrorEdge
     from pagegraph.graph.edge import RequestCompleteEdge, RequestRedirectEdge
+    from pagegraph.graph.edge import JSCallEdge, JSResultEdge
 
 
 class Node(PageGraphElement):
@@ -55,11 +60,15 @@ class Node(PageGraphElement):
     class RawAttrs(StrEnum):
         BLINK_ID = "node id"
         FRAME_ID = "frame id"
+        METHOD = "method"
         SCRIPT_TYPE = "script type"
         TIMESTAMP = "timestamp"
         TYPE = "node type"
         TAG = "tag name"
         URL = "url"
+
+    def type_name(self) -> str:
+        return self.data()[self.RawAttrs.TYPE.value]
 
     def node_type(self) -> "Node.Types":
         type_name = self.data()[self.RawAttrs.TYPE.value]
@@ -152,6 +161,12 @@ class Node(PageGraphElement):
 
     def is_html_elm(self) -> bool:
         return self.is_type(self.Types.HTML_NODE)
+
+    def is_js_structure(self) -> bool:
+        return False
+
+    def is_resource_node(self) -> bool:
+        return False
 
     def is_toplevel_parser(self) -> bool:
         for incoming_edge in self.incoming_edges():
@@ -306,21 +321,6 @@ class Node(PageGraphElement):
         return None
 
 
-class DOMElementNode(Node):
-
-    def blink_id(self) -> BlinkId:
-        return self.data()[Node.RawAttrs.BLINK_ID.value]
-
-    def insert_edge(self) -> "NodeInsertEdge":
-        node: None | "NodeInsertEdge" = None
-        for edge in self.incoming_edges():
-            if edge.is_insert_edge():
-                node = cast("NodeInsertEdge", edge)
-                break
-        assert node
-        return node
-
-
 class ScriptNode(Node):
 
     incoming_edge_types = [
@@ -370,9 +370,28 @@ class ScriptNode(Node):
         self.throw("Could not find creator for script node")
 
 
-class HTMLNode(DOMElementNode):
+class DOMElementNode(Node):
 
-    def html_tag_name(self) -> str:
+    def blink_id(self) -> BlinkId:
+        return self.data()[Node.RawAttrs.BLINK_ID.value]
+
+    def tag_name(self) -> str:
+        raise NotImplementedError()
+
+    def insert_edge(self) -> "NodeInsertEdge" | None:
+        insert_edge: None | "NodeInsertEdge" = None
+        for edge in self.incoming_edges():
+            insert_edge = cast("NodeInsertEdge", edge)
+            break
+        return insert_edge
+
+
+class HTMLNode(DOMElementNode, Reportable):
+
+    def to_report(self) -> DOMElementReport:
+        return DOMElementReport(self.id(), self.tag_name())
+
+    def tag_name(self) -> str:
         return self.data()[Node.RawAttrs.TAG.value]
 
     def parent_html_nodes(self) -> Iterable[ParentNode]:
@@ -409,7 +428,10 @@ class HTMLNode(DOMElementNode):
         return cast(DOMRootNode, super().domroot())
 
 
-class FrameOwnerNode(DOMElementNode):
+class FrameOwnerNode(DOMElementNode, Reportable):
+
+    def to_report(self) -> DOMElementReport:
+        return DOMElementReport(self.id(), self.tag_name())
 
     def child_parser_nodes(self) -> Iterable[ParserNode]:
         for child_node in self.child_nodes():
@@ -427,11 +449,19 @@ class FrameOwnerNode(DOMElementNode):
         return self.data()[self.RawAttrs.TAG.value]
 
 
-class TextNode(DOMElementNode):
-    pass
+class TextNode(DOMElementNode, Reportable):
+
+    def to_report(self) -> DOMElementReport:
+        return DOMElementReport(self.id(), self.tag_name())
+
+    def tag_name(self) -> str:
+        return "<text>"
 
 
-class DOMRootNode(DOMElementNode):
+class DOMRootNode(DOMElementNode, Reportable):
+
+    def to_report(self) -> FrameReport:
+        return FrameReport(self.id(), self.url(), self.blink_id())
 
     def is_top_level_frame(self) -> bool:
         parser = self.parser()
@@ -623,6 +653,9 @@ class ResourceNode(Node):
         Edge.Types.REQUEST_START
     ]
 
+    def is_resource_node(self) -> bool:
+        return True
+
     def url(self) -> Url:
         return self.data()[Node.RawAttrs.URL.value]
 
@@ -646,10 +679,64 @@ class ResourceNode(Node):
             yield incoming_node
 
 
-class JSBuiltInNode(Node):
+class JSStructureNode(Node, Reportable):
+    def to_report(self) -> JSStructureReport:
+        return JSStructureReport(self.name(), self.type_name())
+
+    def is_js_structure(self) -> bool:
+        return True
+
+    def name(self) -> str:
+        return self.data()[self.RawAttrs.METHOD.value]
+
+    def call_results(self) -> list["JSCallResult"]:
+
+        js_calls = self.incoming_edges()
+        js_results = self.outgoing_edges()
+        calls_and_results_unsorted = list(chain(js_calls, js_results))
+        calls_and_results = sorted(calls_and_results_unsorted,
+            key=lambda x: x.int_id())
+
+        if self.pg.debug:
+            num_calls = len(list(js_calls))
+            num_results = len(list(js_results))
+            if num_results > num_calls:
+                self.throw("Found more results than calls to this builtin, "
+                           f"calls={num_calls}, results={num_results}")
+
+            last_edge = calls_and_results[0]
+            for edge in calls_and_results[1:]:
+                if edge.is_js_result_edge():
+                    if last_edge.is_js_result_edge():
+                        self.throw("Found two adjacent result edges: "
+                                   f"{last_edge.id()} and {edge.id()}")
+                last_edge = edge
+
+        call_results: list[JSCallResult] = []
+        for edge in calls_and_results:
+            if edge.is_js_result_edge():
+                js_result_edge = cast("JSResultEdge", edge)
+                last_call_result = call_results[-1]
+                last_call_result.result_edge = js_result_edge
+            else:
+                js_call_edge = cast("JSCallEdge", edge)
+                a_call_result = JSCallResult(js_call_edge, None)
+                call_results.append(a_call_result)
+        return call_results
+
+    def incoming_edges(self) -> Iterable["JSCallEdge"]:
+        for edge in super().incoming_edges():
+            yield cast("JSCallEdge", edge)
+
+    def outgoing_edges(self) -> Iterable["JSResultEdge"]:
+        for edge in super().outgoing_edges():
+            yield cast("JSResultEdge", edge)
+
+
+class JSBuiltInNode(JSStructureNode):
     pass
 
-class WebAPINode(Node):
+class WebAPINode(JSStructureNode):
     pass
 
 class StorageNode(Node):

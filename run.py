@@ -5,6 +5,7 @@ import os
 import sys
 
 import pagegraph.commands
+import pagegraph.graph.serialize
 
 
 def frametree_cmd(args):
@@ -17,6 +18,11 @@ def subframes_cmd(args):
 
 def request_cmd(args):
     return pagegraph.commands.requests(args.input, args.frame, args.debug)
+
+
+def js_calls_cmd(args):
+    return pagegraph.commands.js_calls(args.input, args.frame, args.cross,
+                                       args.method, args.debug)
 
 
 PARSER = argparse.ArgumentParser(
@@ -59,15 +65,42 @@ REQUEST_PARSER.add_argument(
 REQUEST_PARSER.add_argument(
     "-f", "--frame",
     default=None,
-    help="Only print information about requests made in a specific frames "
-         "(as described by PageGraph node ids, in the format 'n##'). "
-         "By default, all requests, in all frames, are described.")
+    help="Only print information about requests made in a specific frame "
+         "(as described by PageGraph node ids, in the format 'n##').")
 REQUEST_PARSER.set_defaults(func=request_cmd)
+
+JS_CALLS_PARSER = SUBPARSERS.add_parser(
+    "js-calls",
+    help="Print information about JS calls made during page execution.")
+JS_CALLS_PARSER.add_argument(
+    "input",
+    help="Path to PageGraph recording.")
+JS_CALLS_PARSER.add_argument(
+    "-f", "--frame",
+    default=None,
+    help="Only include JS calls made by code running in this frame's context"
+         "(as described by PageGraph node ids, in the format 'n##'). "
+         "Note that this filters on the calling frame context, not the "
+         "receiving frame context, which will differ in some cases, such as "
+         "same-origin cross-frame calls.")
+JS_CALLS_PARSER.add_argument(
+    "-c", "--cross",
+    default=False,
+    action="store_true",
+    help="Only include JS calls where the calling frame context and the "
+         "receiving frame context differ.")
+JS_CALLS_PARSER.add_argument(
+    "-m", "--method",
+    default=None,
+    help="Only include JS calls where the function or method being called "
+         "includes this value as a substring.")
+JS_CALLS_PARSER.set_defaults(func=js_calls_cmd)
 
 ARGS = PARSER.parse_args()
 try:
     RESULT = ARGS.func(ARGS)
-    print(json.dumps(RESULT))
+    REPORT = pagegraph.graph.serialize.to_jsonable(RESULT)
+    print(json.dumps(REPORT))
 except ValueError as e:
     print(f"Invalid argument: {e}", file=sys.stderr)
     sys.exit(1)

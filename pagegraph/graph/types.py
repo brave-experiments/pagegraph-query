@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from typing import Iterable, Set, Type, TYPE_CHECKING, Union
+from typing import Iterable, Set, Tuple, Type, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
-    from pagegraph.graph.edge import Edge
+    from pagegraph.graph.edge import Edge, JSCallEdge, JSResultEdge
     from pagegraph.graph.node import Node, DOMRootNode, HTMLNode, ParserNode
     from pagegraph.graph.node import TextNode, FrameOwnerNode, ScriptNode
 

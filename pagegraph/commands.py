@@ -1,6 +1,11 @@
+from dataclasses import dataclass
 from typing import cast, Any, Dict, List, TYPE_CHECKING
 
 import pagegraph.graph
+from pagegraph.graph.edge import Edge
+from pagegraph.graph.serialize import FrameReport, RequestReport
+from pagegraph.graph.serialize import DOMElementReport, JSStructureReport
+from pagegraph.graph.serialize import JSInvokeReport, Report
 
 
 if TYPE_CHECKING:
@@ -36,58 +41,60 @@ def frametree(input_path: str, debug: bool = False) -> List[Dict[Any, Any]]:
     return trees
 
 
-def subframes(input_path: str, local_only: bool = False,
-              debug: bool = False) -> Any:
+@dataclass
+class SubFramesCommandReport(Report):
+    parent_frame: FrameReport
+    iframe: DOMElementReport
+    child_frames: list[FrameReport]
+
+
+def subframes(input_path: str, local_only: bool,
+              debug: bool) -> list[SubFramesCommandReport]:
     pg = pagegraph.graph.from_path(input_path, debug)
-    summaries = []
+    report: list[SubFramesCommandReport] = []
 
     for iframe_node in pg.iframe_nodes():
         parent_frame = iframe_node.domroot()
         if parent_frame is None:
             iframe_node.throw("Couldn't find owner of iframe")
-            return
+            continue
 
         if local_only and not parent_frame.is_top_level_frame():
             continue
 
-        parent_frame_url = parent_frame.url()
-        parent_frame_nid = parent_frame.id()
+        parent_frame_report = parent_frame.to_report()
+        iframe_elm_report = iframe_node.to_report()
+        child_frame_reports: list[FrameReport] = []
 
-        child_documents = []
         is_all_local_frames = True
         for child_domroot in iframe_node.domroots():
             if local_only and not child_domroot.is_local_frame():
                 is_all_local_frames = False
                 break
-            child_documents.append({
-                "nid": child_domroot.id(),
-                "url": child_domroot.url()
-            })
+            child_frame_reports.append(child_domroot.to_report())
 
-        if len(child_documents) == 0:
+        if len(child_frame_reports) == 0:
             continue
 
         if local_only and not is_all_local_frames:
             continue
 
-        iframe_summary: Dict[str, Any] = {
-            "parent frame": {
-                "url": parent_frame_url,
-                "nid": parent_frame_nid
-            },
-            "iframe": {
-                "nid": iframe_node.id()
-            },
-            "child frames": child_documents
-        }
-        summaries.append(iframe_summary)
-    return summaries
+        subframe_report = SubFramesCommandReport(
+            parent_frame_report, iframe_elm_report, child_frame_reports)
+        report.append(subframe_report)
+    return report
 
 
-def requests(input_path: str, frame_nid: str | None = None,
-             debug: bool = False) -> Any:
+@dataclass
+class RequestsCommandReport(Report):
+    request: RequestReport
+    frame: FrameReport
+
+
+def requests(input_path: str, frame_nid: str | None,
+             debug: bool) -> list[RequestsCommandReport]:
     pg = pagegraph.graph.from_path(input_path, debug)
-    requests = []
+    report: list[RequestsCommandReport] = []
 
     for resource_node in pg.resource_nodes():
         for response_edge in resource_node.outgoing_edges():
@@ -97,26 +104,41 @@ def requests(input_path: str, frame_nid: str | None = None,
                 continue
             request_frame = pg.domroot_for_frame_id(request_frame_id)
 
-            request_data: Dict[str, str | int] = {
-                "nid": resource_node.id(),
-                "url": resource_node.url(),
-            }
-            if response_edge.is_request_complete_edge():
-                request_complete_edge = cast(
-                        "RequestCompleteEdge", response_edge)
-                request_data["type"] = "complete"
-                request_data["hash"] = request_complete_edge.hash()
-                request_data["size"] = request_complete_edge.size()
-                request_data["headers"] = request_complete_edge.headers()
-            else:
-                request_data["type"] = "error"
+            request_report = response_edge.to_report()
+            frame_report = request_frame.to_report()
+            report.append(RequestsCommandReport(request_report, frame_report))
+    return report
 
-            requests.append({
-                "request": request_data,
-                "frame": {
-                    "blink_id": request_frame.blink_id(),
-                    "nid": request_frame.id(),
-                    "url": request_frame.url(),
-                }
-            })
-    return requests
+
+@dataclass
+class JSCallsCommandReport(Report):
+    method: JSStructureReport
+    invocation: JSInvokeReport
+    call_context: FrameReport
+    receiver_context: FrameReport
+
+
+def js_calls(input_path: str, frame: str | None, cross_frame: bool,
+             method: str | None, debug: bool) -> list[JSCallsCommandReport]:
+    pg = pagegraph.graph.from_path(input_path, debug)
+    report: list[JSCallsCommandReport] = []
+
+    js_structure_nodes = pg.js_structure_nodes()
+    for js_node in js_structure_nodes:
+        if method and method not in js_node.name():
+            continue
+
+        for call_result in js_node.call_results():
+            if frame and call_result.call_context().id() != frame:
+                continue
+            if cross_frame and not call_result.is_cross_frame_call():
+                continue
+
+            call_context = call_result.call_context()
+            receiver_context = call_result.receiver_context()
+
+            js_call_report = JSCallsCommandReport(
+                js_node.to_report(), call_result.to_report(),
+                call_context.to_report(), receiver_context.to_report())
+            report.append(js_call_report)
+    return report
