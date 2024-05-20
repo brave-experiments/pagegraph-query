@@ -2,9 +2,9 @@ import sys
 from typing import Any, Dict, TYPE_CHECKING
 
 from pagegraph.graph.types import PageGraphId
+
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
-
 
 
 class PageGraphElement:

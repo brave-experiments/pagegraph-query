@@ -14,7 +14,7 @@ from pagegraph.graph.types import BlinkId, EdgeIterator, ChildNode
 from pagegraph.graph.types import PageGraphId, PageGraphNodeId, PageGraphEdgeId
 from pagegraph.graph.types import PageGraphEdgeKey, NodeIterator, Url
 from pagegraph.graph.types import FrameSummary, ParentNode, FrameId
-from pagegraph.graph.types import RequesterNode
+from pagegraph.graph.types import RequesterNode, RequestResponseTypesEdge
 from pagegraph.graph.serialize import Reportable, FrameReport, DOMElementReport
 from pagegraph.graph.serialize import JSStructureReport
 from pagegraph.util import is_url_local
@@ -185,12 +185,14 @@ class Node(PageGraphElement):
     def timestamp(self) -> int:
         return int(self.data()[self.RawAttrs.TIMESTAMP])
 
-    def creator_node(self) -> "ScriptNode" | "ParserNode" | None:
+    def creator_node(self) -> "ScriptNode" | "HTMLNode" | "ParserNode" | None:
         for edge in self.incoming_edges():
             if edge.is_create_edge():
                 creator_edge = cast("NodeCreateEdge", edge)
                 node = creator_edge.incoming_node()
-                assert node.is_script() or node.is_parser()
+                if self.pg.debug:
+                    if not node.is_script() and not node.is_parser():
+                        self.throw("Unexpected parent creator node")
                 if node.is_script():
                     return cast("ScriptNode", node)
                 else:
@@ -218,7 +220,9 @@ class Node(PageGraphElement):
                 break
             c_node = creator_node.creator_node()
             if c_node is not None:
-                assert c_node.is_parser() or c_node.is_script()
+                if self.pg.debug:
+                    if not c_node.is_parser() and not c_node.is_script():
+                        self.throw("Unexpected parent creation edge")
                 if c_node.is_parser():
                     creator_node = cast(ParserNode, c_node)
                 else:
@@ -234,7 +238,8 @@ class Node(PageGraphElement):
         # and so could not contain the given node).
         domroots_sorted = sorted(domroots_for_parser, key=lambda x: x.id())
 
-        # The list now contains DOMRoots, from last created to earliest created.
+        # The list now contains DOMRoots, from last created to earliest
+        # created.
         domroots_sorted.reverse()
         owning_domroot = None
         for a_domroot in domroots_sorted:
@@ -363,11 +368,16 @@ class ScriptNode(Node):
                 create_edge = cast("NodeCreateEdge", edge)
                 yield create_edge.outgoing_node()
 
-    def creator_node(self) -> "ScriptNode" | "HTMLNode": # type: ignore
+    def creator_node(self) -> "ScriptNode" | "HTMLNode" | "ParserNode" | None:
+        creator_node = None
         for edge in self.incoming_edges():
             if edge.is_execute_edge():
-                return edge.incoming_node().creator_node() # type: ignore[return-value]
-        self.throw("Could not find creator for script node")
+                creator_node = edge.incoming_node().creator_node()
+                break
+        if self.pg.debug:
+            if not creator_node:
+                self.throw("Could not find creator for script node")
+        return creator_node
 
 
 class DOMElementNode(Node):
@@ -411,8 +421,7 @@ class HTMLNode(DOMElementNode, Reportable):
         for parent_node in self.parent_html_nodes():
             if parent_node.is_domroot():
                 return cast(DOMRootNode, parent_node)
-            else:
-                return cast(HTMLNode, parent_node)._domroot_from_parent_node_path()
+            return cast(HTMLNode, parent_node)._domroot_from_parent_node_path()
         return None
 
     def domroot(self) -> DOMRootNode:
@@ -535,11 +544,11 @@ class DOMRootNode(DOMElementNode, Reportable):
         return self
 
     def script_nodes(self) -> Iterable[ScriptNode]:
-        for script_node in self.summarize_frame().script_nodes:
-            yield script_node
+        return self.summarize_frame().script_nodes
 
-    def _summarize_frame(self, node: Node,
-            frame_summary: FrameSummary, ignore_nodes: Set[Node]) -> FrameSummary:
+    def _summarize_frame(
+            self, node: Node, frame_summary: FrameSummary,
+            ignore_nodes: Set[Node]) -> FrameSummary:
         if node in ignore_nodes:
             return frame_summary
 
@@ -555,26 +564,30 @@ class DOMRootNode(DOMElementNode, Reportable):
                         continue
 
                     if a_child_node.is_text_elm():
-                        child_text_node = cast(TextNode, a_child_node)
-                        frame_summary.attached_nodes.add(child_text_node)
+                        c_text_node = cast(TextNode, a_child_node)
+                        frame_summary.attached_nodes.add(c_text_node)
                     elif a_child_node.is_frame_owner():
-                        child_frame_owner_node = cast(FrameOwnerNode, a_child_node)
-                        frame_summary.attached_nodes.add(child_frame_owner_node)
+                        c_frame_node = cast(FrameOwnerNode, a_child_node)
+                        frame_summary.attached_nodes.add(c_frame_node)
                     elif a_child_node.is_html_elm():
-                        child_html_node = cast(HTMLNode, a_child_node)
-                        frame_summary.attached_nodes.add(child_html_node)
-                        self._summarize_frame(child_html_node, frame_summary, ignore_nodes)
+                        c_html_node = cast(HTMLNode, a_child_node)
+                        frame_summary.attached_nodes.add(c_html_node)
+                        self._summarize_frame(
+                            c_html_node, frame_summary, ignore_nodes)
 
         if node.is_script() or node.is_parser():
-            creating_node: ScriptNode | ParserNode = (
-                cast(ScriptNode, node) if node.is_script() else cast(ParserNode, node)
-            )
+            creating_node: ScriptNode | ParserNode
+            if node.is_script():
+                creating_node = cast(ScriptNode, node)
+            else:
+                creating_node = cast(ParserNode, node)
 
             for a_created_node in creating_node.created_nodes():
                 if frame_summary.includes_created(a_created_node):
                     continue
                 frame_summary.created_nodes.add(a_created_node)
-                self._summarize_frame(a_created_node, frame_summary, ignore_nodes)
+                self._summarize_frame(
+                    a_created_node, frame_summary, ignore_nodes)
 
         for executed_node in node.executed_scripts():
             assert executed_node.is_script()
@@ -606,7 +619,7 @@ class ParserNode(Node):
 
     def domroot(self) -> DOMRootNode | None:
         self.throw("Tried to ask for DOMRoot of a parser")
-        return super().domroot() # deadcode, to please mypy
+        return super().domroot()  # deadcode, to please mypy
 
     def frame_owner_node(self) -> FrameOwnerNode | None:
         parent_nodes_list = list(self.parent_nodes())
@@ -660,11 +673,9 @@ class ResourceNode(Node):
         return self.data()[Node.RawAttrs.URL.value]
 
     def incoming_edges(self) -> Iterable["RequestStartEdge"]:
-        for edge in super().incoming_edges():
-            yield cast("RequestStartEdge", edge)
+        return [cast("RequestStartEdge", e) for e in super().incoming_edges()]
 
-    def outgoing_edges(self) -> Iterable[
-            "RequestCompleteEdge" | "RequestErrorEdge" | "RequestRedirectEdge"]:
+    def outgoing_edges(self) -> Iterable[RequestResponseTypesEdge]:
         for edge in super().outgoing_edges():
             if edge.is_request_complete_edge():
                 yield cast("RequestCompleteEdge", edge)
@@ -690,12 +701,11 @@ class JSStructureNode(Node, Reportable):
         return self.data()[self.RawAttrs.METHOD.value]
 
     def call_results(self) -> list["JSCallResult"]:
-
         js_calls = self.incoming_edges()
         js_results = self.outgoing_edges()
         calls_and_results_unsorted = list(chain(js_calls, js_results))
-        calls_and_results = sorted(calls_and_results_unsorted,
-            key=lambda x: x.int_id())
+        calls_and_results = sorted(
+            calls_and_results_unsorted, key=lambda x: x.int_id())
 
         if self.pg.debug:
             num_calls = len(list(js_calls))
@@ -736,20 +746,26 @@ class JSStructureNode(Node, Reportable):
 class JSBuiltInNode(JSStructureNode):
     pass
 
+
 class WebAPINode(JSStructureNode):
     pass
+
 
 class StorageNode(Node):
     pass
 
+
 class CookieJarNode(Node):
     pass
+
 
 class LocalStorageNode(Node):
     pass
 
+
 class SessionStorageNode(Node):
     pass
+
 
 class DeprecatedNode(Node):
     pass
@@ -778,8 +794,9 @@ TYPE_MAPPING: Dict[Node.Types, Type[Node]] = dict([
     (Node.Types.FP_SHIELDS, DeprecatedNode),
 ])
 
+
 def for_type(node_type: Node.Types, graph: "PageGraph",
-        node_id: PageGraphNodeId) -> Node:
+             node_id: PageGraphNodeId) -> Node:
     try:
         return TYPE_MAPPING[node_type](graph, node_id)
     except KeyError:

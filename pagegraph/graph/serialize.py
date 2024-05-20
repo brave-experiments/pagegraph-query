@@ -49,17 +49,31 @@ class Reportable:
         raise NotImplementedError()
 
 
-def to_jsonable(data: Report | list[Report]) -> Any:
+def report_field_name(field_name: str) -> str:
+    return field_name.replace("_", " ")
+
+
+JSONAble = Report | list[Report] | dict[str, Report] | str | int | float | bool
+
+
+def to_jsonable(data: JSONAble) -> Any:
     if isinstance(data, list):
         return [to_jsonable(x) for x in data]
 
-    if not isinstance(data, Report):
-        return data
+    if isinstance(data, dict):
+        jsonable_dict: dict[str, JSONAble] = {}
+        for k, v in data.items():
+            report_key = report_field_name(k)
+            jsonable_dict[report_key] = to_jsonable(v)
+        return jsonable_dict
 
-    jsonable_map = {}
-    for field in fields(data):
-        field_name = field.name
-        value = getattr(data, field_name)
-        report_name = field_name.replace("_", " ")
-        jsonable_map[report_name] = to_jsonable(value)
-    return jsonable_map
+    if isinstance(data, Report):
+        jsonable_map = {}
+        for field in fields(data):
+            field_name = field.name
+            value = getattr(data, field_name)
+            report_name = report_field_name(field_name)
+            jsonable_map[report_name] = to_jsonable(value)
+        return jsonable_map
+
+    return data

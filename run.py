@@ -8,10 +8,6 @@ import pagegraph.commands
 import pagegraph.graph.serialize
 
 
-def frametree_cmd(args):
-    return pagegraph.commands.frametree(args.input, args.debug)
-
-
 def subframes_cmd(args):
     return pagegraph.commands.subframes(args.input, args.local, args.debug)
 
@@ -34,14 +30,6 @@ PARSER.add_argument("--version", action="version", version="%(prog)s 0.6.1")
 PARSER.add_argument("--debug", action="store_true", default=False)
 
 SUBPARSERS = PARSER.add_subparsers(required=True)
-
-# FRAME_TREE_PARSER = SUBPARSERS.add_parser(
-#     "frametree",
-#     help="Prints the frame tree of all documents in the recording.")
-# FRAME_TREE_PARSER.add_argument(
-#     "input",
-#     help="Path to PageGraph recording.")
-# FRAME_TREE_PARSER.set_defaults(func=frametree_cmd)
 
 SUBFRAMES_PARSER = SUBPARSERS.add_parser(
     "subframes",
@@ -96,8 +84,8 @@ JS_CALLS_PARSER.add_argument(
          "includes this value as a substring.")
 JS_CALLS_PARSER.set_defaults(func=js_calls_cmd)
 
-ARGS = PARSER.parse_args()
 try:
+    ARGS = PARSER.parse_args()
     RESULT = ARGS.func(ARGS)
     REPORT = pagegraph.graph.serialize.to_jsonable(RESULT)
     print(json.dumps(REPORT))

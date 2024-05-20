@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Union
 
 from pagegraph.graph.types import FrameId
-from pagegraph.graph.serialize import Report, JSInvokeReport
+from pagegraph.graph.serialize import Reportable, JSInvokeReport
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from pagegraph.graph.node import JSStructureNode, DOMRootNode
 
 
-class JSCallResult(Report):
+class JSCallResult(Reportable):
     call_edge: "JSCallEdge"
     js_structure: "JSStructureNode"
     result_edge: Union["JSResultEdge", None]

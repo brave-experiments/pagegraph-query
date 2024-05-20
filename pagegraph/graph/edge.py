@@ -60,8 +60,7 @@ class Edge(PageGraphElement):
         VALUE = "value"
 
     def __init__(self, graph: "PageGraph", id: PageGraphEdgeId,
-            parent_id: PageGraphNodeId, child_id: PageGraphNodeId):
-        assert id.startswith('e')
+                 parent_id: PageGraphNodeId, child_id: PageGraphNodeId):
         self.incoming_node_id = parent_id
         self.outgoing_node_id = child_id
         super().__init__(graph, id)
@@ -154,8 +153,8 @@ class CrossDOMEdge(Edge):
     def is_cross_dom_edge(self) -> bool:
         return True
 
-class ExecuteEdge(Edge):
 
+class ExecuteEdge(Edge):
     def is_execute_edge(self) -> bool:
         return True
 
@@ -176,7 +175,6 @@ class StructureEdge(Edge):
 
     def outgoing_node(self) -> ChildNode:
         outgoing_node = super().outgoing_node()
-        # assert outgoing_node.is_child_dom_node_type()
         return cast(ChildNode, outgoing_node)
 
 
@@ -195,7 +193,8 @@ class RequestCompleteEdge(FrameIdAttributedEdge, Reportable):
 
     def to_report(self) -> RequestReport:
         resource_node = self.incoming_node()
-        return RequestReport(resource_node.id(), resource_node.url(),
+        return RequestReport(
+            resource_node.id(), resource_node.url(),
             "complete", self.hash(), self.size(), self.headers())
 
     def is_request_complete_edge(self) -> bool:
@@ -229,7 +228,8 @@ class RequestErrorEdge(FrameIdAttributedEdge, Reportable):
 
     def to_report(self) -> RequestReport:
         resource_node = self.incoming_node()
-        return RequestReport(resource_node.id(), resource_node.url(),
+        return RequestReport(
+            resource_node.id(), resource_node.url(),
             "error", None, None, None)
 
     def is_request_error_edge(self) -> bool:
@@ -261,7 +261,8 @@ class RequestRedirectEdge(FrameIdAttributedEdge, Reportable):
 
     def to_report(self) -> RequestReport:
         resource_node = self.incoming_node()
-        return RequestReport(resource_node.id(), resource_node.url(),
+        return RequestReport(
+            resource_node.id(), resource_node.url(),
             "redirect", None, None, None)
 
     def is_request_redirect_edge(self) -> bool:
@@ -307,7 +308,9 @@ class NodeInsertEdge(FrameIdAttributedEdge):
 
     def inserted_node(self) -> ChildNode:
         child_node = self.outgoing_node()
-        assert child_node.is_child_dom_node_type()
+        if self.pg.debug:
+            if not child_node.is_child_dom_node_type():
+                self.throw("Unexpected child node type")
         return cast(ChildNode, child_node)
 
 
@@ -441,9 +444,10 @@ TYPE_MAPPING: Dict[Edge.Types, Type[Edge]] = dict([
     (Edge.Types.SHIELD, DeprecatedEdge),
 ])
 
+
 def for_type(edge_type: Edge.Types, graph: "PageGraph",
-        edge_id: PageGraphEdgeId, parent_id: PageGraphNodeId,
-        child_id: PageGraphNodeId) -> Edge:
+             edge_id: PageGraphEdgeId, parent_id: PageGraphNodeId,
+             child_id: PageGraphNodeId) -> Edge:
     try:
         return TYPE_MAPPING[edge_type](graph, edge_id, parent_id, child_id)
     except KeyError:

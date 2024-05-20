@@ -8,39 +8,6 @@ from pagegraph.graph.serialize import DOMElementReport, JSStructureReport
 from pagegraph.graph.serialize import JSInvokeReport, Report
 
 
-if TYPE_CHECKING:
-    from pagegraph.graph.node import DOMRootNode, FrameOwnerNode
-    from pagegraph.graph.edge import RequestCompleteEdge, RequestErrorEdge
-
-
-def _tree_from_frame_owner(node: "FrameOwnerNode") -> List[Dict[Any, Any]]:
-    rs = [_tree_from_domroot(domroot) for domroot in node.domroots()]
-    return rs
-
-
-def _tree_from_domroot(node: "DOMRootNode") -> Dict[Any, Any]:
-    children: List[Dict[Any, Any]] = []
-    summary = {
-        "url": node.url(),
-        "nid": node.id(),
-        "children": children
-    }
-
-    for frame_owner in node.frame_owner_nodes():
-        children += _tree_from_frame_owner(frame_owner)
-    return summary
-
-
-def frametree(input_path: str, debug: bool = False) -> List[Dict[Any, Any]]:
-    pg = pagegraph.graph.from_path(input_path, debug)
-    toplevel_domroot_nodes = pg.toplevel_domroot_nodes()
-
-    trees = []
-    for domroot_node in toplevel_domroot_nodes:
-        trees.append(_tree_from_domroot(domroot_node))
-    return trees
-
-
 @dataclass
 class SubFramesCommandReport(Report):
     parent_frame: FrameReport

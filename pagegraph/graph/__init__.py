@@ -2,7 +2,7 @@ from functools import lru_cache
 from itertools import chain
 from typing import Any, cast, Dict, Iterable, List, Tuple
 
-import networkx as NWX # type: ignore
+import networkx as NWX  # type: ignore
 
 from pagegraph.graph.edge import Edge, NodeInsertEdge, JSCallEdge
 from pagegraph.graph.edge import for_type as edge_for_type
@@ -86,7 +86,8 @@ class PageGraph:
         return edges
 
     def insert_edges(self) -> Iterable[NodeInsertEdge]:
-        return [cast(NodeInsertEdge, e) for e in self.edges_of_type(Edge.Types.NODE_INSERT)]
+        return [cast(NodeInsertEdge, e) for e in
+                self.edges_of_type(Edge.Types.NODE_INSERT)]
 
     def node_for_blink_id(self, blink_id: BlinkId) -> Node:
         if self.debug:
@@ -123,7 +124,6 @@ class PageGraph:
         if self.debug:
             if frame_id not in self.frame_id_mapping:
                 raise Exception(f"frame_id not in frame_id_mapping:{frame_id}")
-        assert frame_id in self.frame_id_mapping
         return self.frame_id_mapping[frame_id]
 
     def resource_nodes(self) -> Iterable[ResourceNode]:
@@ -160,7 +160,8 @@ class PageGraph:
         edge_iterator = self.edges_of_type(Edge.Types.JS_CALL)
         return cast(Iterable[JSCallEdge], edge_iterator)
 
-    def child_dom_nodes(self, parent_node: ParentNode) -> List[ChildNode] | None:
+    def child_dom_nodes(self,
+                        parent_node: ParentNode) -> List[ChildNode] | None:
         """Returns all nodes that were ever a child of the parent node,
         at any point during the page's lifetime."""
         if parent_node not in self.inserted_below_mapping:

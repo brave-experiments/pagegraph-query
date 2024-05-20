@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
 
-pycodestyle **/*.py
-pycodestyle *.py
+pycodestyle .
 mypy --strict pagegraph/
