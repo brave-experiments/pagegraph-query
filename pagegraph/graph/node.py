@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from abc import abstractmethod
 from base64 import b64encode
 from dataclasses import dataclass
 from enum import StrEnum
@@ -14,6 +13,7 @@ from pagegraph.graph.element import PageGraphElement
 from pagegraph.graph.edge import Edge
 from pagegraph.graph.js import JSCallResult
 from pagegraph.graph.requests import RequestResponse, RequestChain
+from pagegraph.graph.requests import ResourceType
 from pagegraph.types import BlinkId, EdgeIterator, ChildNode
 from pagegraph.types import PageGraphId, PageGraphNodeId, PageGraphEdgeId
 from pagegraph.types import PageGraphEdgeKey, NodeIterator, Url
@@ -23,7 +23,7 @@ from pagegraph.serialize import Reportable, FrameReport, DOMElementReport
 from pagegraph.serialize import JSStructureReport, ScriptReport
 from pagegraph.serialize import EdgeReport, BriefEdgeReport
 from pagegraph.serialize import NodeReport, BriefNodeReport
-from pagegraph.util import is_url_local
+from pagegraph.util import is_url_local, brief_version
 
 
 if TYPE_CHECKING:
@@ -329,7 +329,7 @@ class Node(PageGraphElement):
     def describe(self) -> str:
         output = f"node nid={self.id()}\n"
         for attr_name, attr_value in self.data().items():
-            output += f"- {attr_name}={str(attr_value).replace("\n", "\\n")}\n"
+            output += f"- {attr_name}={brief_version(str(attr_value))}\n"
 
         output += "incoming edges:\n"
         for edge in self.incoming_edges():
@@ -507,18 +507,67 @@ class ScriptNode(Node, Reportable):
         return b64encode(hasher.digest()).decode("utf8")
 
     def url(self) -> Url:
+        # If all of the following are correct, then we can be certain
+        # about associating this script with a particular URL.
+        # 1. this script is script type EXTERNAL
+        # 2. the executing node is an HTML node
+        # 3. the executing node has only one
+        #    outgoing execution edge (to the `self` node here)
+        # 4. the executing node has only outgoing request edge
+        # 5. the outgoing request successfully completed
+        # 6. that resulting request is for script
+        can_use_direct_url_method = True
         if self.pg.debug:
+            # Test for requirement 1 above
             if self.script_type() != ScriptNode.ScriptType.EXTERNAL:
                 self.throw("Cannot ask for URL of non-external script")
 
         incoming_node = self.execute_edge().incoming_node()
         if self.pg.debug:
+            # Test for requirement 2 above
             if not incoming_node.is_html_elm():
                 incoming_node.throw("Unexpected execute edge")
 
-        script_hash = self.hash()
         executing_node = cast("HTMLNode", incoming_node)
+        # Test for requirement 3 above
+        num_found_execution_edges = 0
+        for outgoing_edge in executing_node.outgoing_edges():
+            if outgoing_edge.is_execute_edge():
+                num_found_execution_edges += 1
 
+        # A little odd to use a `while` statement here, since we'll
+        # never loop, but just done so we can easily jump out of the
+        # series of checks with a `break`
+        while num_found_execution_edges == 1:
+            # Test for requirement 4 above
+            requests_from_node = executing_node.requests()
+            if len(requests_from_node) != 1:
+                break
+            request_chain = requests_from_node[0]
+            # Test for requirements 5
+            successful_request = request_chain.success_request()
+            if not successful_request:
+                break
+            if request_chain.resource_type() != ResourceType.SCRIPT:
+                break
+            # Otherwise, if we're here, we can confidently and correctly
+            # get the URL the script came from, based off the requests
+            # initiated by the executing node.
+            return request_chain.final_url()
+
+        # Otherwise we have to try and match this script with request
+        # responses by hash, which has at least one rare bug that causes
+        # the python generated hash to not match the PageGraph generated
+        # graph in the XML. So we do this matching as a last resort.
+        # For note, this bug can be reproduced by fetching the following
+        # redirecting URL:
+        #    https://sslwidget.criteo.com/event?a=21479&v=5.23.0
+        #    &otl=1&p0=e%3Dce%26m%3D%255B%255D&p1=e%3Dsetcurrency%26c%3DUSD
+        #    &p2=e%3Dexd%26site_type%3Dm&p3=e%3Dvh&p4=e%3Ddis&adce=1
+        #    &bundle=nVg9El9uTERKdEUycGp2R2dhM2VaalJoaGhYZ1NkdHFSWTlpd0FSWlBZeSUyRm5LeGV2OWd6JTJCZUJncGZUbTZNVjJFWXlxSVZVR3luMjdDOWdKWWFsUXAwMyUyRmNUdyUyRmFvdmhLJTJGWVVoJTJGS1MlMkYxRmYwZURjT2N1cW9pZXY3bmslMkI1VENObU5vZUNlWUFXY0tRUVdHOUIyYTJrdTF3UXJBJTNEJTNE
+        #    &tld=shein.com.mx&fu=https%253A%252F%252Fm.shein.com.mx%252F
+        #    &ceid=7af27d1e-ff03-43dc-89ac-064fc890a79a&dtycbr=22540
+        script_hash = self.hash()
         matching_request_chain = None
         for request_chain in executing_node.requests():
             if request_chain.hash() == script_hash:
@@ -548,7 +597,6 @@ class DOMElementNode(Node):
     def blink_id(self) -> BlinkId:
         return self.data()[Node.RawAttrs.BLINK_ID.value]
 
-    @abstractmethod
     def tag_name(self) -> str:
         raise NotImplementedError()
 

@@ -7,6 +7,7 @@ from pagegraph.serialize import FrameReport, RequestReport, ScriptReport
 from pagegraph.serialize import DOMElementReport, JSStructureReport
 from pagegraph.serialize import JSInvokeReport, Report, RequestChainReport
 from pagegraph.serialize import NodeReport, EdgeReport
+from pagegraph.versions import PageGraphFeature
 
 
 @dataclass
@@ -119,18 +120,29 @@ def js_calls(input_path: str, frame: str | None, cross_frame: bool,
 @dataclass
 class ScriptsCommandReport(Report):
     script: ScriptReport
-    # frame: FrameReport
+    frame: FrameReport | None = None
 
 
 def scripts(input_path: str, frame: str | None, pg_id: PageGraphId | None,
-            include_source: bool, debug: bool) -> list[ScriptsCommandReport]:
+            include_source: bool, omit_executors: bool,
+            debug: bool) -> list[ScriptsCommandReport]:
     pg = pagegraph.graph.from_path(input_path, debug)
     reports: list[ScriptsCommandReport] = []
     for script_node in pg.script_nodes():
         if pg_id and script_node.id() != pg_id:
             continue
+
         script_report = script_node.to_report(include_source)
         report = ScriptsCommandReport(script_report)
+
+        if pg.feature_check(PageGraphFeature.EXECUTE_EDGES_HAVE_FRAME_ID):
+            frame_id = script_node.execute_edge().frame_id()
+            frame_report = pg.domroot_for_frame_id(frame_id).to_report()
+            report.frame = frame_report
+
+        if omit_executors:
+            report.script.executor = None
+
         reports.append(report)
     return reports
 
@@ -144,3 +156,19 @@ def element_query(input_path: str, pg_id: PageGraphId, depth: int,
         return pg.edge(pg_id).to_edge_report(depth)
     else:
         raise ValueError("Invalid element id, should be either n## or e##.")
+
+
+@dataclass
+class EffectsCommandReport(Report):
+    actor: Report
+    action: Report
+
+
+# The rules we follow for deciding which actions (edges) and elements (nodes)
+# a node is responsible for are
+
+
+def effects(input_path: str, pg_id: PageGraphId, loose: bool,
+            debug: bool) -> list[EffectsCommandReport]:
+    reports: list[EffectsCommandReport] = []
+    return reports

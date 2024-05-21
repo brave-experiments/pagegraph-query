@@ -24,12 +24,18 @@ def js_calls_cmd(args):
 
 def scripts_cmd(args):
     return pagegraph.commands.scripts(args.input, args.frame, args.id,
-                                      args.source, args.debug)
+                                      args.source, args.omit_executors,
+                                      args.debug)
 
 
 def element_query_cmd(args):
     return pagegraph.commands.element_query(args.input, args.id, args.depth,
                                             args.debug)
+
+
+def effects_cmd(args):
+    return pagegraph.commands.effects(args.input, args.id, args.loose,
+                                      args.debug)
 
 
 PARSER = argparse.ArgumentParser(
@@ -95,6 +101,12 @@ SCRIPTS_PARSER.add_argument(
          "Note that this filters on the calling frame context, not the "
          "receiving frame context, which will differ in some cases, such as "
          "same-origin cross-frame calls.")
+SCRIPTS_PARSER.add_argument(
+    "-o", "--omit-executors",
+    default=False,
+    action="store_true",
+    help="If included, do not append information about why or how each script "
+         "was executed.")
 SCRIPTS_PARSER.set_defaults(func=scripts_cmd)
 
 JS_CALLS_PARSER = SUBPARSERS.add_parser(
@@ -147,6 +159,46 @@ ELEMENT_QUERY_PARSER.add_argument(
     help="Depth of the recursion to summarize in the graph. Defaults to 0 "
          "(only print detailed information about target element).")
 ELEMENT_QUERY_PARSER.set_defaults(func=element_query_cmd)
+
+EFFECTS_QUERY_PARSER = SUBPARSERS.add_parser(
+    "effects",
+    help="Print information about the effects the given element had on "
+         "the page. By default only includes requests.")
+EFFECTS_QUERY_PARSER.add_argument(
+    "input",
+    help="Path to PageGraph recording.")
+EFFECTS_QUERY_PARSER.add_argument(
+    "id",
+    help="Id of a frame, script, request, or parser node "
+         "(as described by PageGraph node ids, in the format 'n##').")
+EFFECTS_QUERY_PARSER.add_argument(
+    "-l", "--loose",
+    default=False,
+    action="store_true",
+    help="By default, the 'effects' query includes any action or element "
+         "where the target node was the primary cause of the action (i.e., "
+         "actions where the target node was the most immediate cause). "
+         "Passing this flag loosens that, and includes any action or element "
+         "that this node was involved with at all.")
+# EFFECTS_QUERY_PARSER.add_argument(
+#     "--include-js-builtin-calls",
+#     default=False,
+#     action="store_true",
+#     help="Include calls to JS builtins that occurred because of the target "
+#           "node.")
+# EFFECTS_QUERY_PARSER.add_argument(
+#     "--include-web-api-calls",
+#     default=False,
+#     action="store_true",
+#     help="Include calls to instrumented Web APIs that occurred because of "
+#          "the target node.")
+# EFFECTS_QUERY_PARSER.add_argument(
+#     "--exclude-requests",
+#     default=False,
+#     action="store_true",
+#     help="Do not include requests that occurred because of the target node.")
+
+EFFECTS_QUERY_PARSER.set_defaults(func=effects_cmd)
 
 
 try:

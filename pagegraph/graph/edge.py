@@ -4,6 +4,7 @@ from json import loads, JSONDecodeError
 from typing import Any, cast, Dict, List, TypeVar, Type, TYPE_CHECKING, Union
 
 from pagegraph.graph.element import PageGraphElement
+from pagegraph.graph.requests import ResourceType
 from pagegraph.types import PageGraphNodeId, PageGraphEdgeId, Url
 from pagegraph.types import BlinkId, PageGraphEdgeKey, RequesterNode
 from pagegraph.types import ChildNode, ParentNode, FrameId, RequestId
@@ -280,7 +281,7 @@ class CrossDOMEdge(Edge):
         return True
 
 
-class ExecuteEdge(Edge):
+class ExecuteEdge(FrameIdAttributedEdge):
 
     incoming_node_type_names = [
         "HTML element",  # Node.Types.HTML_NODE
@@ -348,42 +349,6 @@ class RequestStartEdge(FrameIdAttributedEdge):
         "resource type": "resource_type",
     }
 
-    # Values are defined by Blink, in `Resource::ResourceTypeToString`.
-    # See third_party/blink/renderer/platform/loader/fetch/resource.h.
-    # The OTHER catch all case covers the additional types
-    # defined in `blink::Resource::InitiatorTypeNameToString`.
-    class ResourceType(StrEnum):
-        ATTRIBUTION_RESOURCE = "Attribution resource"
-        AUDIO = "Audio"
-        CSS_RESOURCE = "CSS resource"
-        CSS_RESOURCE_UA = "User Agent CSS resource"
-        CSS_STYLESHEET = "CSS stylesheet"
-        DICTIONARY = "Dictionary"
-        DOCUMENT = "Document"
-        FETCH = "Fetch"
-        FONT = "Font"
-        ICON = "Icon"
-        IMAGE = "Image"
-        INTERNAL_RESOURCE = "Internal resource"
-        LINK_ELM_RESOURCE = "Link element resource"
-        LINK_PREFETCH = "Link prefetch resource"
-        MANIFEST = "Manifest"
-        MOCK = "Mock"
-        PROCESSING_INSTRUCTION = "Processing instruction"
-        RAW = "Raw"
-        REQUEST = "Request"
-        SCRIPT = "Script"
-        SPECULATION_RULE = "SpeculationRule"
-        SVG = "SVG document"
-        SVG_USE_ELM_RESOURCE = "SVG Use element resource"
-        TEXT_TRACK = "Text track"
-        TRACK = "Track"
-        VIDEO = "Video"
-        XML_HTTP_REQUEST = "XMLHttpRequest"
-        XML_RESOURCE = "XML resource"
-        XSL_STYLESHEET = "XSL stylesheet"
-        OTHER = "Other"  # Fallback / catchall case
-
     def request_id(self) -> RequestId:
         return int(self.data()[Edge.RawAttrs.REQUEST_ID.value])
 
@@ -402,12 +367,12 @@ class RequestStartEdge(FrameIdAttributedEdge):
                 self.throw("Unexpected outgoing node type")
         return cast("ResourceNode", node)
 
-    def resource_type(self) -> "RequestStartEdge.ResourceType":
+    def resource_type(self) -> "ResourceType":
         resource_type_raw = self.data()[Edge.RawAttrs.RESOURCE_TYPE.value]
         try:
-            return RequestStartEdge.ResourceType(resource_type_raw)
+            return ResourceType(resource_type_raw)
         except ValueError:
-            return RequestStartEdge.ResourceType.OTHER
+            return ResourceType.OTHER
 
     def url(self) -> Url:
         return self.outgoing_node().url()

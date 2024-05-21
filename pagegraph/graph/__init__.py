@@ -1,8 +1,9 @@
 from functools import lru_cache
 from itertools import chain
-from typing import Any, cast
+from typing import Any, cast, Union
 
 import networkx as NWX  # type: ignore
+from packaging.version import Version
 
 from pagegraph.graph.edge import Edge, NodeInsertEdge, JSCallEdge
 from pagegraph.graph.edge import RequestStartEdge
@@ -15,13 +16,17 @@ from pagegraph.graph.requests import RequestChain, request_chain_for_edge
 from pagegraph.types import BlinkId, NodeIterator, PageGraphId, DOMNode
 from pagegraph.types import ChildNode, ParentNode, EdgeIterator, FrameId
 from pagegraph.types import RequestId
-from pagegraph.util import check_pagegraph_version
+from pagegraph.versions import PageGraphFeature, check_pagegraph_version
+from pagegraph.versions import min_version_for_feature
 
 
 class PageGraph:
 
     # Instance properties
-    debug: bool = True
+    debug: bool
+    # Tracks the version of the graph (distinct from the version of this
+    # library).
+    graph_version: Union[Version, None]
     graph: NWX.MultiDiGraph
     r_graph: NWX.MultiDiGraph
 
@@ -37,9 +42,11 @@ class PageGraph:
     # Mapping from a frame id to the most recent DOM node seen for the frame
     __frame_id_map: dict[FrameId, DOMRootNode] = {}
 
-    def __init__(self, graph: NWX.MultiDiGraph, debug: bool = False):
+    def __init__(self, graph: NWX.MultiDiGraph,
+                 version: Union[Version, None] = None, debug: bool = False):
         self.graph = graph
         self.debug = debug
+        self.graph_version = version
         self.r_graph = NWX.reverse_view(graph)
 
         # do the below to populate the blink_id mapping dicts
@@ -84,6 +91,12 @@ class PageGraph:
             request_id = request_start_edge.request_id()
             self.__request_chain_map[request_id] = request_chain_for_edge(
                 request_start_edge)
+
+    def feature_check(self, feature: PageGraphFeature) -> bool:
+        if self.graph_version is None:
+            return False
+        min_graph_version = min_version_for_feature(feature)
+        return self.graph_version >= min_graph_version
 
     def unattributed_requests(self) -> list[RequestChain]:
         prefetched_requests = []
@@ -257,5 +270,5 @@ class PageGraph:
 
 
 def from_path(input_path: str, debug: bool = False) -> PageGraph:
-    check_pagegraph_version(input_path)
-    return PageGraph(NWX.read_graphml(input_path), debug)
+    graph_version = check_pagegraph_version(input_path)
+    return PageGraph(NWX.read_graphml(input_path), graph_version, debug)

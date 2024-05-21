@@ -1,3 +1,11 @@
+Version 0.6.5
+---
+Add ability to gate some functionality behind graph versions.
+
+Report frame information for the `scripts` command if parsing graphs
+versions 0.6.3 or later.
+
+
 Version 0.6.4
 ---
 Added two new commands: `elm` for querying information about a specific
