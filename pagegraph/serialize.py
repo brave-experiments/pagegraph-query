@@ -1,7 +1,7 @@
 from dataclasses import dataclass, fields
 from typing import Any, cast
 
-from pagegraph.graph.types import BlinkId, PageGraphId, Url
+from pagegraph.types import BlinkId, PageGraphId, Url, RequestId
 
 
 @dataclass
@@ -14,16 +14,6 @@ class FrameReport(Report):
     nid: PageGraphId
     url: Url | None
     blink_id: BlinkId
-
-
-@dataclass
-class RequestReport(Report):
-    nid: PageGraphId
-    url: Url
-    type: str
-    hash: str | None
-    size: int | None
-    headers: str | None
 
 
 @dataclass
@@ -42,6 +32,37 @@ class JSStructureReport(Report):
 class JSInvokeReport(Report):
     args: Any
     result: Any
+
+
+@dataclass
+class RequestReport(Report):
+    nid: PageGraphId
+    url: Url | None
+
+
+@dataclass
+class RequestCompleteReport(Report):
+    nid: PageGraphId
+    size: int
+    hash: str
+    headers: str
+    status: str = "complete"
+
+
+@dataclass
+class RequestErrorReport(Report):
+    nid: PageGraphId
+    headers: str | None
+    status: str = "error"
+
+
+@dataclass
+class RequestChainReport(Report):
+    request_id: RequestId
+    request_type: str
+    request: RequestReport
+    redirects: list[RequestReport]
+    result: RequestCompleteReport | RequestErrorReport | None
 
 
 class Reportable:

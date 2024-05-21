@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Union
 
-from pagegraph.graph.types import FrameId
-from pagegraph.graph.serialize import Reportable, JSInvokeReport
+from pagegraph.types import FrameId
+from pagegraph.serialize import Reportable, JSInvokeReport
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph

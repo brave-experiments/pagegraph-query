@@ -2,10 +2,9 @@ from dataclasses import dataclass
 from typing import cast, Any, Dict, List, TYPE_CHECKING
 
 import pagegraph.graph
-from pagegraph.graph.edge import Edge
-from pagegraph.graph.serialize import FrameReport, RequestReport
-from pagegraph.graph.serialize import DOMElementReport, JSStructureReport
-from pagegraph.graph.serialize import JSInvokeReport, Report
+from pagegraph.serialize import FrameReport, RequestReport
+from pagegraph.serialize import DOMElementReport, JSStructureReport
+from pagegraph.serialize import JSInvokeReport, Report, RequestChainReport
 
 
 @dataclass
@@ -54,27 +53,28 @@ def subframes(input_path: str, local_only: bool,
 
 @dataclass
 class RequestsCommandReport(Report):
-    request: RequestReport
+    request: RequestChainReport
     frame: FrameReport
 
 
 def requests(input_path: str, frame_nid: str | None,
              debug: bool) -> list[RequestsCommandReport]:
     pg = pagegraph.graph.from_path(input_path, debug)
-    report: list[RequestsCommandReport] = []
+    reports: list[RequestsCommandReport] = []
 
-    for resource_node in pg.resource_nodes():
-        for response_edge in resource_node.outgoing_edges():
-            request_frame_id = response_edge.frame_id()
-            requester_node = response_edge.incoming_node()
-            if frame_nid and frame_nid != request_frame_id:
-                continue
-            request_frame = pg.domroot_for_frame_id(request_frame_id)
+    for request_start_edge in pg.request_start_edges():
+        request_frame_id = request_start_edge.frame_id()
+        if frame_nid and request_frame_id != frame_nid:
+            continue
+        request_id = request_start_edge.request_id()
+        request_chain = pg.request_chain_for_id(request_id)
+        request_frame = pg.domroot_for_frame_id(request_frame_id)
 
-            request_report = response_edge.to_report()
-            frame_report = request_frame.to_report()
-            report.append(RequestsCommandReport(request_report, frame_report))
-    return report
+        request_chain_report = request_chain.to_report()
+        frame_report = request_frame.to_report()
+        report = RequestsCommandReport(request_chain_report, frame_report)
+        reports.append(report)
+    return reports
 
 
 @dataclass

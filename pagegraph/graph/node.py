@@ -1,22 +1,25 @@
 from __future__ import annotations
 
+from abc import abstractmethod
+from dataclasses import dataclass
 from enum import StrEnum
 from functools import lru_cache
 from itertools import chain
 import sys
 from typing import cast, Dict, Iterable, List, Self, Set, Tuple, TypeVar, Type
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 from pagegraph.graph.element import PageGraphElement
 from pagegraph.graph.edge import Edge
 from pagegraph.graph.js import JSCallResult
-from pagegraph.graph.types import BlinkId, EdgeIterator, ChildNode
-from pagegraph.graph.types import PageGraphId, PageGraphNodeId, PageGraphEdgeId
-from pagegraph.graph.types import PageGraphEdgeKey, NodeIterator, Url
-from pagegraph.graph.types import FrameSummary, ParentNode, FrameId
-from pagegraph.graph.types import RequesterNode, RequestResponseTypesEdge
-from pagegraph.graph.serialize import Reportable, FrameReport, DOMElementReport
-from pagegraph.graph.serialize import JSStructureReport
+from pagegraph.graph.requests import RequestResponse
+from pagegraph.types import BlinkId, EdgeIterator, ChildNode
+from pagegraph.types import PageGraphId, PageGraphNodeId, PageGraphEdgeId
+from pagegraph.types import PageGraphEdgeKey, NodeIterator, Url
+from pagegraph.types import FrameSummary, ParentNode, FrameId
+from pagegraph.types import RequesterNode, RequestId
+from pagegraph.serialize import Reportable, FrameReport, DOMElementReport
+from pagegraph.serialize import JSStructureReport
 from pagegraph.util import is_url_local
 
 
@@ -27,34 +30,36 @@ if TYPE_CHECKING:
     from pagegraph.graph.edge import RequestStartEdge, RequestErrorEdge
     from pagegraph.graph.edge import RequestCompleteEdge, RequestRedirectEdge
     from pagegraph.graph.edge import JSCallEdge, JSResultEdge
+    from pagegraph.graph.edge import RequestResponseEdge
 
 
 class Node(PageGraphElement):
 
-    parent_node_types: List["Node.Types"] = []
-    child_node_types: List["Node.Types"] = []
-    incoming_edge_types: List["Edge.Types"] = []
-    outgoing_edge_types: List["Edge.Types"] = []
+    # Used as class properties
+    incoming_node_types: Union[List["Node.Types"], None] = None
+    outgoing_node_types: Union[List["Node.Types"], None] = None
+    incoming_edge_types: Union[List["Edge.Types"], None] = None
+    outgoing_edge_types: Union[List["Edge.Types"], None] = None
 
     class Types(StrEnum):
-        FRAME_OWNER = "frame owner"
-        SCRIPT = "script"
-        PARSER = "parser"
-        HTML_NODE = "HTML element"
-        TEXT_NODE = "text node"
-        DOM_ROOT = "DOM root"
-        SHIELDS = "Brave Shields"
         ADS_SHIELDS = "shieldsAds shield"
-        TRACKERS_SHIELDS = "trackers shield"
-        JS_SHIELDS = "javascript shield"
-        FP_SHIELDS = "fingerprintingV2 shield"
-        STORAGE = "storage"
         COOKIE_JAR = "cookie jar"
-        LOCAL_STORAGE = "local storage"
-        SESSION_STORAGE = "session storage"
+        DOM_ROOT = "DOM root"
         EXTENSIONS = "extensions"
-        RESOURCE = "resource"
+        FP_SHIELDS = "fingerprintingV2 shield"
+        FRAME_OWNER = "frame owner"
+        HTML_NODE = "HTML element"
         JS_BUILTIN = "JS builtin"
+        JS_SHIELDS = "javascript shield"
+        LOCAL_STORAGE = "local storage"
+        PARSER = "parser"
+        RESOURCE = "resource"
+        SCRIPT = "script"
+        SESSION_STORAGE = "session storage"
+        SHIELDS = "Brave Shields"
+        STORAGE = "storage"
+        TEXT_NODE = "text node"
+        TRACKERS_SHIELDS = "trackers shield"
         WEB_API = "web API"
 
     class RawAttrs(StrEnum):
@@ -285,23 +290,23 @@ class Node(PageGraphElement):
         return output
 
     def validate(self) -> bool:
-        if len(self.__class__.parent_node_types) > 0:
-            valid_parent_node_types = self.__class__.parent_node_types
+        if self.__class__.incoming_node_types is not None:
+            valid_incoming_node_types = self.__class__.incoming_node_types
             for parent_node in self.parent_nodes():
                 node_type = parent_node.node_type()
-                if node_type not in valid_parent_node_types:
-                    self.throw(f"Unexpected parent node type: {node_type}")
+                if node_type not in valid_incoming_node_types:
+                    self.throw(f"Unexpected incoming node type: {node_type}")
                     return False
 
-        if len(self.__class__.child_node_types) > 0:
-            valid_child_node_types = self.__class__.child_node_types
+        if self.__class__.outgoing_node_types is not None:
+            valid_outgoing_node_types = self.__class__.outgoing_node_types
             for child_node in self.child_nodes():
                 node_type = child_node.node_type()
-                if node_type not in valid_child_node_types:
-                    self.throw(f"Unexpected child node type: {node_type}")
+                if node_type not in valid_outgoing_node_types:
+                    self.throw(f"Unexpected outgoing node type: {node_type}")
                     return False
 
-        if len(self.__class__.incoming_edge_types) > 0:
+        if self.__class__.incoming_edge_types is not None:
             valid_incoming_edge_types = self.__class__.incoming_edge_types
             for edge in self.incoming_edges():
                 edge_type = edge.edge_type()
@@ -309,7 +314,7 @@ class Node(PageGraphElement):
                     self.throw(f"Unexpected incoming edge type: {edge_type}")
                     return False
 
-        if len(self.__class__.outgoing_edge_types) > 0:
+        if self.__class__.outgoing_edge_types is not None:
             valid_outgoing_edge_types = self.__class__.outgoing_edge_types
             for edge in self.outgoing_edges():
                 edge_type = edge.edge_type()
@@ -336,7 +341,6 @@ class ScriptNode(Node):
         Edge.Types.REQUEST_COMPLETE,
         Edge.Types.REQUEST_ERROR,
         Edge.Types.REQUEST_REDIRECT,
-        Edge.Types.REQUEST_RESPONSE,
         Edge.Types.STORAGE_READ_RESULT,
     ]
 
@@ -385,6 +389,7 @@ class DOMElementNode(Node):
     def blink_id(self) -> BlinkId:
         return self.data()[Node.RawAttrs.BLINK_ID.value]
 
+    @abstractmethod
     def tag_name(self) -> str:
         raise NotImplementedError()
 
@@ -609,7 +614,7 @@ class DOMRootNode(DOMElementNode, Reportable):
 
 class ParserNode(Node):
 
-    parent_node_types = [
+    incoming_node_types = [
         Node.Types.FRAME_OWNER,
         # The RESOURCE case is uncommon, but occurs when something is
         # fetched that doesn't have a representation in the graph,
@@ -658,13 +663,24 @@ class ResourceNode(Node):
     outgoing_edge_types = [
         Edge.Types.REQUEST_COMPLETE,
         Edge.Types.REQUEST_ERROR,
-        Edge.Types.REQUEST_REDIRECT
+        Edge.Types.REQUEST_REDIRECT,
     ]
 
     incoming_edge_types = [
+        # Incoming redirect edges denote a request that was redirected
+        # to this resource, from another resource. In this case,
+        # both the incoming and outgoing node for the redirect edge
+        # will be `ResourceNode` nodes.
         Edge.Types.REQUEST_REDIRECT,
-        Edge.Types.REQUEST_START
+        Edge.Types.REQUEST_START,
     ]
+
+    # Instance properties
+    requests_map: dict[RequestId, RequestResponse]
+
+    def __init__(self, graph: "PageGraph", pg_id: PageGraphId):
+        self.requests_map = {}
+        super().__init__(graph, pg_id)
 
     def is_resource_node(self) -> bool:
         return True
@@ -675,7 +691,7 @@ class ResourceNode(Node):
     def incoming_edges(self) -> Iterable["RequestStartEdge"]:
         return [cast("RequestStartEdge", e) for e in super().incoming_edges()]
 
-    def outgoing_edges(self) -> Iterable[RequestResponseTypesEdge]:
+    def outgoing_edges(self) -> Iterable["RequestResponseEdge"]:
         for edge in super().outgoing_edges():
             if edge.is_request_complete_edge():
                 yield cast("RequestCompleteEdge", edge)
@@ -688,6 +704,43 @@ class ResourceNode(Node):
         for edge in self.incoming_edges():
             incoming_node = edge.incoming_node()
             yield incoming_node
+
+    def build_caches(self) -> None:
+        for incoming_edge in self.incoming_edges():
+            request_id = incoming_edge.request_id()
+            if self.pg.debug:
+                if request_id in self.requests_map:
+                    self.throw("Found duplicate request id")
+            request_response = RequestResponse(incoming_edge)
+            self.requests_map[request_id] = request_response
+
+        for outgoing_edge in self.outgoing_edges():
+            request_id = outgoing_edge.request_id()
+            if self.pg.debug:
+                if request_id not in self.requests_map:
+                    self.throw("Response without request for resource")
+                if self.requests_map[request_id].response is not None:
+                    self.throw("Second response for request for resource")
+            self.requests_map[request_id].response = outgoing_edge
+
+    # def request_for_id(self, request_id: RequestId) -> "RequestStartEdge":
+    #     if len(self.requests_map) == 0:
+    #         self.build_request_map()
+    #     cur_request_edge = self.requests_map[request_id].request
+    #     while not cur_request_edge.is_request_start_edge():
+    #         new_resource_node = cur_request_edge.incoming_node()
+    #         cur_request_edge = new_resource_node.request_for_id(request_id)
+    #     if self.pg.debug:
+    #         if not cur_request_edge:
+    #             self.throw("Unable to trace to start of this req")
+    #     return cur_request_edge
+
+    def response_for_id(self,
+                        request_id: RequestId) -> "RequestResponseEdge" | None:
+        if self.pg.debug:
+            if request_id not in self.requests_map:
+                self.throw("Unexpected request id")
+        return self.requests_map[request_id].response
 
 
 class JSStructureNode(Node, Reportable):

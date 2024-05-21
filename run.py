@@ -5,7 +5,7 @@ import os
 import sys
 
 import pagegraph.commands
-import pagegraph.graph.serialize
+import pagegraph.serialize
 
 
 def subframes_cmd(args):
@@ -87,7 +87,7 @@ JS_CALLS_PARSER.set_defaults(func=js_calls_cmd)
 try:
     ARGS = PARSER.parse_args()
     RESULT = ARGS.func(ARGS)
-    REPORT = pagegraph.graph.serialize.to_jsonable(RESULT)
+    REPORT = pagegraph.serialize.to_jsonable(RESULT)
     print(json.dumps(REPORT))
 except ValueError as e:
     print(f"Invalid argument: {e}", file=sys.stderr)

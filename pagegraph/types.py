@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 
 BlinkId = str
 FrameId = str
+RequestId = int
 EdgeIterator = Iterable["Edge"]
 NodeIterator = Iterable["Node"]
 PageGraphId = str
@@ -19,8 +20,6 @@ PageGraphEdgeId = PageGraphId
 PageGraphEdgeKey = tuple[PageGraphNodeId, PageGraphNodeId, PageGraphEdgeId]
 Url = str
 
-RequestResponseTypesEdge = Union[
-    "RequestCompleteEdge", "RequestErrorEdge", "RequestRedirectEdge"]
 DOMNode = Union["DOMRootNode", "HTMLNode", "TextNode", "FrameOwnerNode"]
 ParentNode = Union["DOMRootNode", "HTMLNode", "FrameOwnerNode"]
 ChildNode = Union["HTMLNode", "TextNode", "FrameOwnerNode"]

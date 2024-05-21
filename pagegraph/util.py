@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 
 from packaging.version import parse
 
-from pagegraph.graph.types import Url
+from pagegraph.types import Url
 from pagegraph import VERSION
 
 

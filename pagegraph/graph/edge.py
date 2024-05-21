@@ -1,12 +1,12 @@
+from abc import ABC, abstractmethod
 from enum import StrEnum
 from json import loads, JSONDecodeError
 from typing import Any, cast, Dict, List, TypeVar, Type, TYPE_CHECKING, Union
 
 from pagegraph.graph.element import PageGraphElement
-from pagegraph.graph.types import PageGraphNodeId, PageGraphEdgeId
-from pagegraph.graph.types import BlinkId, PageGraphEdgeKey, RequesterNode
-from pagegraph.graph.types import ChildNode, ParentNode, FrameId
-from pagegraph.graph.serialize import Reportable, RequestReport
+from pagegraph.types import PageGraphNodeId, PageGraphEdgeId, Url
+from pagegraph.types import BlinkId, PageGraphEdgeKey, RequesterNode
+from pagegraph.types import ChildNode, ParentNode, FrameId, RequestId
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
@@ -16,6 +16,50 @@ if TYPE_CHECKING:
 
 class Edge(PageGraphElement):
 
+    # Used as class properties
+    #
+    # Note that these are defined as lists of type str, but what they
+    # really are is the str values for the Node.Types StrEnum. THis
+    # is necessary to prevent the dependency loop.
+    # That these are valid node type enum strs is checked at runtime
+    # if in debug mode.
+    incoming_node_type_names: Union[List[str], None] = None  # Node.Types
+    outgoing_node_type_names: Union[List[str], None] = None  # Node.Types
+
+    # The below are automatically generated from the above,
+    # but at runtime to again prevent the dependency loop.
+    incoming_node_types: Union[List["Node.Types"], None] = None
+    outgoing_node_types: Union[List["Node.Types"], None] = None
+
+    @classmethod
+    def __make_incoming_node_types(cls) -> Union[List["Node.Types"], None]:
+        if cls.incoming_node_type_names is None:
+            return None
+
+        if cls.incoming_node_types:
+            return cls.incoming_node_types
+
+        from pagegraph.graph.node import Node
+        cls.incoming_node_types = []
+        for node_type_name in cls.incoming_node_type_names:
+            cls.incoming_node_types.append(Node.Types(node_type_name))
+        return cls.incoming_node_types
+
+    @classmethod
+    def __make_outgoing_node_types(cls) -> Union[List["Node.Types"], None]:
+        if cls.outgoing_node_type_names is None:
+            return None
+
+        if cls.outgoing_node_types:
+            return cls.outgoing_node_types
+
+        from pagegraph.graph.node import Node
+        cls.outgoing_node_types = []
+        for node_type_name in cls.outgoing_node_type_names:
+            cls.outgoing_node_types.append(Node.Types(node_type_name))
+        return cls.outgoing_node_types
+
+    # Used as instance properties
     incoming_node_id: PageGraphNodeId
     outgoing_node_id: PageGraphNodeId
 
@@ -33,7 +77,6 @@ class Edge(PageGraphElement):
         REQUEST_COMPLETE = "request complete"
         REQUEST_ERROR = "request error"
         REQUEST_REDIRECT = "request redirect"
-        REQUEST_RESPONSE = "request response"
         EVENT_LISTENER = "event listener"
         EVENT_LISTENER_ADD = "add event listener"
         EVENT_LISTENER_REMOVE = "remove event listener"
@@ -54,6 +97,8 @@ class Edge(PageGraphElement):
         HASH = "response hash"
         HEADERS = "headers"
         PARENT_BLINK_ID = "parent"
+        REQUEST_ID = "request id"
+        RESOURCE_TYPE = "resource type"
         SIZE = "size"
         TIMESTAMP = "timestamp"
         TYPE = "edge type"
@@ -121,14 +166,32 @@ class Edge(PageGraphElement):
         return self.incoming_node_id, self.outgoing_node_id, self._id
 
     def describe(self) -> str:
+        incoming_node = self.incoming_node()
+        outgoing_node = self.outgoing_node()
+
         output = f"edge eid={self.id()}\n"
-        output += f"- parent node nid={self.incoming_node().id()}\n"
-        output += f"- child node nid={self.outgoing_node().id()}\n"
+        output += (
+            f"- incoming: {incoming_node.node_type()}, {incoming_node.id()}\n"
+            f"- outgoing: {outgoing_node.node_type()}, {outgoing_node.id()}\n"
+        )
         for attr_name, attr_value in self.data().items():
             output += f"- {attr_name}={str(attr_value).replace("\n", "\\n")}\n"
         return output
 
     def validate(self) -> bool:
+        valid_incoming_node_types = self.__class__.__make_incoming_node_types()
+        if valid_incoming_node_types is not None:
+            node_type = self.incoming_node().node_type()
+            if node_type not in valid_incoming_node_types:
+                self.throw(f"Unexpected incoming node type: {node_type}")
+                return False
+
+        valid_outgoing_node_types = self.__class__.__make_outgoing_node_types()
+        if valid_outgoing_node_types is not None:
+            node_type = self.outgoing_node().node_type()
+            if node_type not in valid_outgoing_node_types:
+                self.throw(f"Unexpected outgoing node type: {node_type}")
+                return False
         return True
 
 
@@ -141,20 +204,56 @@ class FrameIdAttributedEdge(Edge):
 
 
 class AttributeDeleteEdge(FrameIdAttributedEdge):
-    pass
+
+    incoming_node_type_names = [
+        "script",  # Node.Types.SCRIPT
+    ]
+
+    outgoing_node_type_names = [
+        "HTML element",  # Node.Types.HTML_NODE
+    ]
 
 
 class AttributeSetEdge(FrameIdAttributedEdge):
-    pass
+
+    incoming_node_type_names = [
+        "parser",  # Node.Types.PARSER
+        "script",  # Node.Types.SCRIPT
+    ]
+
+    outgoing_node_type_names = [
+        "frame owner",  # Node.Types.FRAME_OWNER
+        "HTML element",  # Node.Types.HTML_NODE
+    ]
 
 
 class CrossDOMEdge(Edge):
+
+    incoming_node_type_names = [
+        "frame owner",  # Node.Types.FRAME_OWNER
+    ]
+
+    outgoing_node_type_names = [
+        "parser",  # Node.Types.PARSER
+    ]
 
     def is_cross_dom_edge(self) -> bool:
         return True
 
 
 class ExecuteEdge(Edge):
+
+    incoming_node_type_names = [
+        "HTML element",  # Node.Types.HTML_NODE
+        # Encodes JS URLs
+        "parser",  # Node.Types.PARSER
+        "script",  # Node.Types.SCRIPT
+    ]
+
+    outgoing_node_type_names = [
+        "script",  # Node.Types.SCRIPT
+    ]
+
     def is_execute_edge(self) -> bool:
         return True
 
@@ -165,10 +264,24 @@ class ExecuteEdge(Edge):
 
 
 class ExecuteFromAttributeEdge(ExecuteEdge):
-    pass
+
+    incoming_node_type_names = [
+        "HTML element",  # Node.Types.HTML_NODE
+    ]
+
+    outgoing_node_type_names = [
+        "script",  # Node.Types.SCRIPT
+    ]
 
 
 class StructureEdge(Edge):
+
+    incoming_node_type_names = [
+        "DOM root",  # Node.Types.DOM_ROOT
+        "frame owner",  # Node.Types.FRAME_OWNER
+        "HTML element",  # Node.Types.HTML_NODE
+        "parser",  # Node.Types.PARSER
+    ]
 
     def is_structure_edge(self) -> bool:
         return True
@@ -180,6 +293,56 @@ class StructureEdge(Edge):
 
 class RequestStartEdge(FrameIdAttributedEdge):
 
+    incoming_node_type_names = [
+        "DOM root",  # Node.Types.DOM_ROOT
+        "HTML element",  # Node.Types.HTML_NODE
+        "parser",  # Node.Types.PARSER
+        "script",  # Node.Types.SCRIPT
+    ]
+
+    outgoing_node_type_names = [
+        "resource",  # Node.Types.RESOURCE
+    ]
+
+    # Values are defined by Blink, in `Resource::ResourceTypeToString`.
+    # See third_party/blink/renderer/platform/loader/fetch/resource.h.
+    # The OTHER catch all case covers the additional types
+    # defined in `blink::Resource::InitiatorTypeNameToString`.
+    class ResourceType(StrEnum):
+        ATTRIBUTION_RESOURCE = "Attribution resource"
+        AUDIO = "Audio"
+        CSS_RESOURCE = "CSS resource"
+        CSS_RESOURCE_UA = "User Agent CSS resource"
+        CSS_STYLESHEET = "CSS stylesheet"
+        DICTIONARY = "Dictionary"
+        DOCUMENT = "Document"
+        FETCH = "Fetch"
+        FONT = "Font"
+        ICON = "Icon"
+        IMAGE = "Image"
+        INTERNAL_RESOURCE = "Internal resource"
+        LINK_ELM_RESOURCE = "Link element resource"
+        LINK_PREFETCH = "Link prefetch resource"
+        MANIFEST = "Manifest"
+        MOCK = "Mock"
+        PROCESSING_INSTRUCTION = "Processing instruction"
+        RAW = "Raw"
+        REQUEST = "Request"
+        SCRIPT = "Script"
+        SPECULATION_RULE = "SpeculationRule"
+        SVG = "SVG document"
+        SVG_USE_ELM_RESOURCE = "SVG Use element resource"
+        TEXT_TRACK = "Text track"
+        TRACK = "Track"
+        VIDEO = "Video"
+        XML_HTTP_REQUEST = "XMLHttpRequest"
+        XML_RESOURCE = "XML resource"
+        XSL_STYLESHEET = "XSL stylesheet"
+        OTHER = "Other"  # Fallback / catchall case
+
+    def request_id(self) -> RequestId:
+        return int(self.data()[Edge.RawAttrs.REQUEST_ID.value])
+
     def is_request_start_edge(self) -> bool:
         return True
 
@@ -188,17 +351,28 @@ class RequestStartEdge(FrameIdAttributedEdge):
         assert node.is_requester_node_type()
         return cast(RequesterNode, node)
 
+    def outgoing_node(self) -> "ResourceNode":
+        node = super().outgoing_node()
+        if self.pg.debug:
+            if not node.is_resource_node():
+                self.throw("Unexpected outgoing node type")
+        return cast("ResourceNode", node)
 
-class RequestCompleteEdge(FrameIdAttributedEdge, Reportable):
+    def resource_type(self) -> "RequestStartEdge.ResourceType":
+        resource_type_raw = self.data()[Edge.RawAttrs.RESOURCE_TYPE.value]
+        try:
+            return RequestStartEdge.ResourceType(resource_type_raw)
+        except ValueError:
+            return RequestStartEdge.ResourceType.OTHER
 
-    def to_report(self) -> RequestReport:
-        resource_node = self.incoming_node()
-        return RequestReport(
-            resource_node.id(), resource_node.url(),
-            "complete", self.hash(), self.size(), self.headers())
+    def url(self) -> Url:
+        return self.outgoing_node().url()
 
-    def is_request_complete_edge(self) -> bool:
-        return True
+
+class RequestResponseEdge(FrameIdAttributedEdge):
+
+    def request_id(self) -> RequestId:
+        return int(self.data()[Edge.RawAttrs.REQUEST_ID.value])
 
     def incoming_node(self) -> "ResourceNode":
         node = super().incoming_node()
@@ -206,6 +380,27 @@ class RequestCompleteEdge(FrameIdAttributedEdge, Reportable):
             if not node.is_resource_node():
                 self.throw("Unexpected incoming node type")
         return cast("ResourceNode", node)
+
+    def request_start_edge(self) -> "RequestStartEdge":
+        request_id = self.request_id()
+        request_chain = self.pg.request_chain_for_id(request_id)
+        return request_chain.request
+
+
+class RequestCompleteEdge(RequestResponseEdge):
+
+    incoming_node_type_names = [
+        "resource",  # Node.Types.RESOURCE
+    ]
+
+    outgoing_node_type_names = [
+        "HTML element",  # Node.Types.HTML_NODE
+        "parser",  # Node.Types.PARSER
+        "script",  # Node.Types.SCRIPT
+    ]
+
+    def is_request_complete_edge(self) -> bool:
+        return True
 
     def outgoing_node(self) -> RequesterNode:
         node = super().outgoing_node()
@@ -224,23 +419,20 @@ class RequestCompleteEdge(FrameIdAttributedEdge, Reportable):
         return self.data()[self.RawAttrs.HASH.value]
 
 
-class RequestErrorEdge(FrameIdAttributedEdge, Reportable):
+class RequestErrorEdge(RequestResponseEdge):
 
-    def to_report(self) -> RequestReport:
-        resource_node = self.incoming_node()
-        return RequestReport(
-            resource_node.id(), resource_node.url(),
-            "error", None, None, None)
+    incoming_node_type_names = [
+        "resource",  # Node.Types.RESOURCE
+    ]
+
+    outgoing_node_type_names = [
+        "HTML element",  # Node.Types.HTML_NODE
+        "parser",  # Node.Types.PARSER
+        "script",  # Node.Types.SCRIPT
+    ]
 
     def is_request_error_edge(self) -> bool:
         return True
-
-    def incoming_node(self) -> "ResourceNode":
-        node = super().incoming_node()
-        if self.pg.debug:
-            if not node.is_resource_node():
-                self.throw("Unexpected incoming node type")
-        return cast("ResourceNode", node)
 
     def outgoing_node(self) -> RequesterNode:
         node = super().outgoing_node()
@@ -249,37 +441,68 @@ class RequestErrorEdge(FrameIdAttributedEdge, Reportable):
                 self.throw("Unexpected outgoing node type")
         return cast(RequesterNode, node)
 
+    def headers(self) -> str | None:
+        try:
+            return self.data()[self.RawAttrs.HEADERS.value]
+        except KeyError:
+            return None
 
-class RequestRedirectEdge(FrameIdAttributedEdge, Reportable):
 
-    def incoming_node(self) -> "ResourceNode":
-        node = super().incoming_node()
+class RequestRedirectEdge(RequestResponseEdge):
+
+    incoming_node_type_names = [
+        "resource",  # Node.Types.RESOURCE
+    ]
+
+    outgoing_node_type_names = [
+        "resource",  # Node.Types.RESOURCE
+    ]
+
+    def outgoing_node(self) -> "ResourceNode":
+        node = super().outgoing_node()
         if self.pg.debug:
             if not node.is_resource_node():
-                self.throw("Unexpected incoming node type")
+                self.throw("Unexpected outgoing node type")
         return cast("ResourceNode", node)
-
-    def to_report(self) -> RequestReport:
-        resource_node = self.incoming_node()
-        return RequestReport(
-            resource_node.id(), resource_node.url(),
-            "redirect", None, None, None)
 
     def is_request_redirect_edge(self) -> bool:
         return True
 
-
-class RequestResponseEdge(FrameIdAttributedEdge):
-    pass
+    def url(self) -> Url:
+        return self.outgoing_node().url()
 
 
 class NodeCreateEdge(FrameIdAttributedEdge):
+
+    incoming_node_type_names = [
+        "parser",  # Node.Types.PARSER
+        "script",  # Node.Types.SCRIPT
+    ]
+
+    outgoing_node_type_names = [
+        "DOM root",  # Node.Types.DOM_ROOT
+        "frame owner",  # Node.Types.FRAME_OWNER
+        "HTML element",  # Node.Types.HTML_NODE
+        "text node",  # Node.Types.TEXT_NODE
+    ]
 
     def is_create_edge(self) -> bool:
         return True
 
 
 class NodeInsertEdge(FrameIdAttributedEdge):
+
+    incoming_node_type_names = [
+        "parser",  # Node.Types.PARSER
+        "script",  # Node.Types.SCRIPT
+    ]
+
+    outgoing_node_type_names = [
+        "DOM root",  # Node.Types.DOM_ROOT
+        "frame owner",  # Node.Types.FRAME_OWNER
+        "HTML element",  # Node.Types.HTML_NODE
+        "text node",  # Node.Types.TEXT_NODE
+    ]
 
     def is_insert_edge(self) -> bool:
         return True
@@ -315,7 +538,16 @@ class NodeInsertEdge(FrameIdAttributedEdge):
 
 
 class NodeRemoveEdge(FrameIdAttributedEdge):
-    pass
+    incoming_node_type_names = [
+        "script",  # Node.Types.SCRIPT
+    ]
+
+    outgoing_node_type_names = [
+        "DOM root",  # Node.Types.DOM_ROOT
+        "frame owner",  # Node.Types.FRAME_OWNER
+        "HTML element",  # Node.Types.HTML_NODE
+        "text node",  # Node.Types.TEXT_NODE
+    ]
 
 
 class EventListenerEdge(Edge):
@@ -427,7 +659,6 @@ TYPE_MAPPING: Dict[Edge.Types, Type[Edge]] = dict([
     (Edge.Types.REQUEST_START, RequestStartEdge),
     (Edge.Types.REQUEST_COMPLETE, RequestCompleteEdge),
     (Edge.Types.REQUEST_REDIRECT, RequestRedirectEdge),
-    (Edge.Types.REQUEST_RESPONSE, RequestResponseEdge),
     (Edge.Types.EVENT_LISTENER, EventListenerEdge),
     (Edge.Types.EVENT_LISTENER_ADD, EventListenerAddEdge),
     (Edge.Types.EVENT_LISTENER_REMOVE, EventListenerRemoveEdge),

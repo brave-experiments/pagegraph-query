@@ -1,3 +1,14 @@
+Version 0.6.3
+---
+Added graph structure type checks for edges.
+
+Further cleaned up how reports are serialized.
+
+Corrected handling of redirection flows for requests through the graph,
+and exposed that information in the `RequestChainReport` structure
+and the `requests` command.
+
+
 Version 0.6.2
 ---
 Add new `js-calls` query command, to allow querying what JS calls were
@@ -7,6 +18,7 @@ Rework how JSON reports are defined and implemented, to allow it to
 be `mypy` checked, and to make the reports more consistent.
 
 Much faster.
+
 
 Version 0.6.1
 ---
