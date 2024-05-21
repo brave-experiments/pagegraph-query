@@ -1,6 +1,5 @@
-from abc import abstractmethod
 import sys
-from typing import Any, Dict, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING, Union
 
 from pagegraph.types import PageGraphId
 
@@ -10,6 +9,10 @@ if TYPE_CHECKING:
 
 class PageGraphElement:
 
+    # Class properties
+    summary_methods: Union[dict[str, str], None] = None
+
+    # Instance properties
     pg: "PageGraph"
     _id: PageGraphId
 
@@ -23,19 +26,24 @@ class PageGraphElement:
     def id(self) -> PageGraphId:
         return self._id
 
-    @abstractmethod
+    def summary_fields(self) -> Union[None, dict[str, str]]:
+        if self.__class__.summary_methods is None:
+            return None
+        summary: dict[str, str] = {}
+        for name, method_name in self.__class__.summary_methods.items():
+            func = getattr(self, method_name)
+            summary[name] = str(func())
+        return summary
+
     def validate(self) -> bool:
         raise NotImplementedError()
 
-    @abstractmethod
-    def data(self) -> Dict[str, Any]:
+    def data(self) -> dict[str, Any]:
         raise NotImplementedError("Child class must implement 'data'")
 
-    @abstractmethod
     def timestamp(self) -> int:
         raise NotImplementedError("Child class must implement 'timestamp'")
 
-    @abstractmethod
     def describe(self) -> str:
         raise NotImplementedError("Child class must implement 'describe'")
 

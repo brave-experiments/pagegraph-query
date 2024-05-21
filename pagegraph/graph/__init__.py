@@ -1,6 +1,6 @@
 from functools import lru_cache
 from itertools import chain
-from typing import Any, cast, Dict, Iterable, List, Tuple
+from typing import Any, cast
 
 import networkx as NWX  # type: ignore
 
@@ -25,17 +25,17 @@ class PageGraph:
     graph: NWX.MultiDiGraph
     r_graph: NWX.MultiDiGraph
 
-    __blink_id_map: Dict[BlinkId, DOMNode] = {}
-    __request_chain_map: Dict[RequestId, RequestChain] = {}
+    __blink_id_map: dict[BlinkId, DOMNode] = {}
+    __request_chain_map: dict[RequestId, RequestChain] = {}
 
-    __nodes_by_type: Dict[Node.Types, List[Node]] = {}
-    __edges_by_type: Dict[Edge.Types, List[Edge]] = {}
-    __edge_cache: List[Edge] = []
-    __edge_id_cache: Dict[PageGraphId, Tuple[Any, Any]] = {}
+    __nodes_by_type: dict[Node.Types, list[Node]] = {}
+    __edges_by_type: dict[Edge.Types, list[Edge]] = {}
+    __edge_cache: list[Edge] = []
+    __edge_id_cache: dict[PageGraphId, tuple[Any, Any]] = {}
 
-    __inserted_below_map: Dict[ParentNode, List[ChildNode]] = {}
+    __inserted_below_map: dict[ParentNode, list[ChildNode]] = {}
     # Mapping from a frame id to the most recent DOM node seen for the frame
-    __frame_id_map: Dict[FrameId, DOMRootNode] = {}
+    __frame_id_map: dict[FrameId, DOMRootNode] = {}
 
     def __init__(self, graph: NWX.MultiDiGraph, debug: bool = False):
         self.graph = graph
@@ -85,6 +85,14 @@ class PageGraph:
             self.__request_chain_map[request_id] = request_chain_for_edge(
                 request_start_edge)
 
+    def unattributed_requests(self) -> list[RequestChain]:
+        prefetched_requests = []
+        for request_start_edge in self.request_start_edges():
+            request_id = request_start_edge.request_id()
+            request_chain = self.request_chain_for_id(request_id)
+            prefetched_requests.append(request_chain)
+        return prefetched_requests
+
     def request_chain_for_id(self, request_id: RequestId) -> RequestChain:
         if self.debug:
             if request_id not in self.__request_chain_map:
@@ -104,13 +112,13 @@ class PageGraph:
         self.__edge_cache = edges
         return edges
 
-    def insert_edges(self) -> List[NodeInsertEdge]:
+    def insert_edges(self) -> list[NodeInsertEdge]:
         edges = self.edges_of_type(Edge.Types.NODE_INSERT)
-        return cast(List[NodeInsertEdge], edges)
+        return cast(list[NodeInsertEdge], edges)
 
-    def request_start_edges(self) -> List[RequestStartEdge]:
+    def request_start_edges(self) -> list[RequestStartEdge]:
         edges = self.edges_of_type(Edge.Types.REQUEST_START)
-        return cast(List[RequestStartEdge], edges)
+        return cast(list[RequestStartEdge], edges)
 
     def node_for_blink_id(self, blink_id: BlinkId) -> Node:
         if self.debug:
@@ -125,7 +133,7 @@ class PageGraph:
             node.throw("Unexpected blink id in mapping table")
         return cast(HTMLNode, node)
 
-    def dom_nodes(self) -> List[DOMNode]:
+    def dom_nodes(self) -> list[DOMNode]:
         node_types = [
             Node.Types.DOM_ROOT,
             Node.Types.HTML_NODE,
@@ -135,12 +143,12 @@ class PageGraph:
         nodes = []
         for node_type in node_types:
             nodes += self.nodes_of_type(node_type)
-        return cast(List[DOMNode], nodes)
+        return cast(list[DOMNode], nodes)
 
-    def nodes_of_type(self, node_type: Node.Types) -> List[Node]:
+    def nodes_of_type(self, node_type: Node.Types) -> list[Node]:
         return self.__nodes_by_type[node_type]
 
-    def edges_of_type(self, edge_type: Edge.Types) -> List[Edge]:
+    def edges_of_type(self, edge_type: Edge.Types) -> list[Edge]:
         return self.__edges_by_type[edge_type]
 
     def domroot_for_frame_id(self, frame_id: FrameId) -> DOMRootNode:
@@ -149,42 +157,42 @@ class PageGraph:
                 raise Exception(f"frame_id not in __frame_id_map:{frame_id}")
         return self.__frame_id_map[frame_id]
 
-    def resource_nodes(self) -> Iterable[ResourceNode]:
+    def resource_nodes(self) -> list[ResourceNode]:
         node_iterator = self.nodes_of_type(Node.Types.RESOURCE)
-        return cast(Iterable[ResourceNode], node_iterator)
+        return cast(list[ResourceNode], node_iterator)
 
-    def script_nodes(self) -> Iterable[ScriptNode]:
+    def script_nodes(self) -> list[ScriptNode]:
         node_iterator = self.nodes_of_type(Node.Types.SCRIPT)
-        return cast(Iterable[ScriptNode], node_iterator)
+        return cast(list[ScriptNode], node_iterator)
 
-    def html_nodes(self) -> Iterable[HTMLNode]:
+    def html_nodes(self) -> list[HTMLNode]:
         node_iterator = self.nodes_of_type(Node.Types.HTML_NODE)
-        return cast(Iterable[HTMLNode], node_iterator)
+        return cast(list[HTMLNode], node_iterator)
 
-    def parser_nodes(self) -> Iterable[ParserNode]:
+    def parser_nodes(self) -> list[ParserNode]:
         node_iterator = self.nodes_of_type(Node.Types.PARSER)
-        return cast(Iterable[ParserNode], node_iterator)
+        return cast(list[ParserNode], node_iterator)
 
-    def frame_owner_nodes(self) -> Iterable[FrameOwnerNode]:
+    def frame_owner_nodes(self) -> list[FrameOwnerNode]:
         node_iterator = self.nodes_of_type(Node.Types.FRAME_OWNER)
-        return cast(Iterable[FrameOwnerNode], node_iterator)
+        return cast(list[FrameOwnerNode], node_iterator)
 
-    def domroots(self) -> Iterable[DOMRootNode]:
+    def domroots(self) -> list[DOMRootNode]:
         node_iterator = self.nodes_of_type(Node.Types.DOM_ROOT)
-        return cast(Iterable[DOMRootNode], node_iterator)
+        return cast(list[DOMRootNode], node_iterator)
 
-    def js_structure_nodes(self) -> Iterable[JSStructureNode]:
+    def js_structure_nodes(self) -> list[JSStructureNode]:
         js_builtin_iterator = self.nodes_of_type(Node.Types.JS_BUILTIN)
         webapi_iterator = self.nodes_of_type(Node.Types.WEB_API)
         js_structures = chain(js_builtin_iterator, webapi_iterator)
-        return cast(Iterable[JSStructureNode], js_structures)
+        return cast(list[JSStructureNode], js_structures)
 
-    def js_call_edges(self) -> Iterable[JSCallEdge]:
+    def js_call_edges(self) -> list[JSCallEdge]:
         edge_iterator = self.edges_of_type(Edge.Types.JS_CALL)
-        return cast(Iterable[JSCallEdge], edge_iterator)
+        return cast(list[JSCallEdge], edge_iterator)
 
     def child_dom_nodes(self,
-                        parent_node: ParentNode) -> List[ChildNode] | None:
+                        parent_node: ParentNode) -> list[ChildNode] | None:
         """Returns all nodes that were ever a child of the parent node,
         at any point during the page's lifetime."""
         if parent_node not in self.__inserted_below_map:
@@ -227,14 +235,14 @@ class PageGraph:
             self.__inserted_below_map[parent_node].append(inserted_node)
         return edge
 
-    def iframe_nodes(self) -> List[FrameOwnerNode]:
+    def iframe_nodes(self) -> list[FrameOwnerNode]:
         nodes = []
         for node in self.frame_owner_nodes():
             if node.tag_name() == "IFRAME":
                 nodes.append(node)
         return nodes
 
-    def toplevel_domroot_nodes(self) -> List[DOMRootNode]:
+    def toplevel_domroot_nodes(self) -> list[DOMRootNode]:
         nodes = []
         for node in self.parser_nodes():
             if not node.is_toplevel_parser():

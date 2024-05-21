@@ -7,6 +7,9 @@ from pagegraph.graph.element import PageGraphElement
 from pagegraph.types import PageGraphNodeId, PageGraphEdgeId, Url
 from pagegraph.types import BlinkId, PageGraphEdgeKey, RequesterNode
 from pagegraph.types import ChildNode, ParentNode, FrameId, RequestId
+from pagegraph.serialize import EdgeReport, BriefEdgeReport
+from pagegraph.serialize import NodeReport, BriefNodeReport
+
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
@@ -110,6 +113,41 @@ class Edge(PageGraphElement):
         self.outgoing_node_id = child_id
         super().__init__(graph, id)
 
+    def to_edge_report(
+            self, depth: int = 0,
+            seen: None | set[Union["Node", "Edge"]] = None) -> EdgeReport:
+        if seen is None:
+            seen = set([self])
+
+        incoming_node = self.incoming_node()
+        incoming_node_report: None | NodeReport | BriefNodeReport | str = None
+        if incoming_node:
+            if incoming_node in seen:
+                incoming_node_report = f"(recursion {incoming_node.id()})"
+            elif depth > 0:
+                incoming_node_report = incoming_node.to_node_report(depth - 1)
+            else:
+                incoming_node_report = incoming_node.to_brief_report()
+
+        outgoing_node = self.outgoing_node()
+        outgoing_node_report: None | NodeReport | BriefNodeReport | str = None
+        if outgoing_node:
+            if outgoing_node in seen:
+                outgoing_node_report = f"(recursion {outgoing_node.id()})"
+            if depth > 0:
+                outgoing_node_report = outgoing_node.to_node_report(depth - 1)
+            else:
+                outgoing_node_report = outgoing_node.to_brief_report()
+
+        return EdgeReport(
+            self.id(), self.edge_type(), self.summary_fields(),
+            incoming_node_report,
+            outgoing_node_report)
+
+    def to_brief_report(self) -> BriefEdgeReport:
+        return BriefEdgeReport(self.id(), self.edge_type(),
+                               self.summary_fields())
+
     def incoming_node(self) -> "Node":
         return self.pg.node(self.incoming_node_id)
 
@@ -207,6 +245,7 @@ class AttributeDeleteEdge(FrameIdAttributedEdge):
 
     incoming_node_type_names = [
         "script",  # Node.Types.SCRIPT
+        "parser",  # TEMP
     ]
 
     outgoing_node_type_names = [
@@ -304,6 +343,11 @@ class RequestStartEdge(FrameIdAttributedEdge):
         "resource",  # Node.Types.RESOURCE
     ]
 
+    summary_methods = {
+        "url": "url",
+        "resource type": "resource_type",
+    }
+
     # Values are defined by Blink, in `Resource::ResourceTypeToString`.
     # See third_party/blink/renderer/platform/loader/fetch/resource.h.
     # The OTHER catch all case covers the additional types
@@ -398,6 +442,11 @@ class RequestCompleteEdge(RequestResponseEdge):
         "parser",  # Node.Types.PARSER
         "script",  # Node.Types.SCRIPT
     ]
+
+    summary_methods = {
+        "size": "size",
+        "hash": "hash",
+    }
 
     def is_request_complete_edge(self) -> bool:
         return True
@@ -540,6 +589,7 @@ class NodeInsertEdge(FrameIdAttributedEdge):
 class NodeRemoveEdge(FrameIdAttributedEdge):
     incoming_node_type_names = [
         "script",  # Node.Types.SCRIPT
+        "parser",  # TEMP
     ]
 
     outgoing_node_type_names = [

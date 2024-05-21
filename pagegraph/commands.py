@@ -1,10 +1,12 @@
 from dataclasses import dataclass
-from typing import cast, Any, Dict, List, TYPE_CHECKING
+from typing import cast, Any, TYPE_CHECKING, Union
 
 import pagegraph.graph
-from pagegraph.serialize import FrameReport, RequestReport
+from pagegraph.types import PageGraphId
+from pagegraph.serialize import FrameReport, RequestReport, ScriptReport
 from pagegraph.serialize import DOMElementReport, JSStructureReport
 from pagegraph.serialize import JSInvokeReport, Report, RequestChainReport
+from pagegraph.serialize import NodeReport, EdgeReport
 
 
 @dataclass
@@ -86,12 +88,15 @@ class JSCallsCommandReport(Report):
 
 
 def js_calls(input_path: str, frame: str | None, cross_frame: bool,
-             method: str | None, debug: bool) -> list[JSCallsCommandReport]:
+             method: str | None, pg_id: PageGraphId | None,
+             debug: bool) -> list[JSCallsCommandReport]:
     pg = pagegraph.graph.from_path(input_path, debug)
-    report: list[JSCallsCommandReport] = []
+    reports: list[JSCallsCommandReport] = []
 
     js_structure_nodes = pg.js_structure_nodes()
     for js_node in js_structure_nodes:
+        if pg_id and js_node.id() != pg_id:
+            continue
         if method and method not in js_node.name():
             continue
 
@@ -107,5 +112,35 @@ def js_calls(input_path: str, frame: str | None, cross_frame: bool,
             js_call_report = JSCallsCommandReport(
                 js_node.to_report(), call_result.to_report(),
                 call_context.to_report(), receiver_context.to_report())
-            report.append(js_call_report)
-    return report
+            reports.append(js_call_report)
+    return reports
+
+
+@dataclass
+class ScriptsCommandReport(Report):
+    script: ScriptReport
+    # frame: FrameReport
+
+
+def scripts(input_path: str, frame: str | None, pg_id: PageGraphId | None,
+            include_source: bool, debug: bool) -> list[ScriptsCommandReport]:
+    pg = pagegraph.graph.from_path(input_path, debug)
+    reports: list[ScriptsCommandReport] = []
+    for script_node in pg.script_nodes():
+        if pg_id and script_node.id() != pg_id:
+            continue
+        script_report = script_node.to_report(include_source)
+        report = ScriptsCommandReport(script_report)
+        reports.append(report)
+    return reports
+
+
+def element_query(input_path: str, pg_id: PageGraphId, depth: int,
+                  debug: bool) -> Union[NodeReport | EdgeReport]:
+    pg = pagegraph.graph.from_path(input_path, debug)
+    if pg_id.startswith("n"):
+        return pg.node(pg_id).to_node_report(depth)
+    elif pg_id.startswith("e"):
+        return pg.edge(pg_id).to_edge_report(depth)
+    else:
+        raise ValueError("Invalid element id, should be either n## or e##.")

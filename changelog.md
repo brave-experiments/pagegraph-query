@@ -1,3 +1,10 @@
+Version 0.6.4
+---
+Added two new commands: `elm` for querying information about a specific
+graph element (and its surrounding subgraph), and `scripts` for querying
+information about relationship chains between scripts on a page.
+
+
 Version 0.6.3
 ---
 Added graph structure type checks for edges.

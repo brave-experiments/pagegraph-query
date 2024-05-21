@@ -55,6 +55,11 @@ class RequestChain(Reportable):
             request_id, resource_type, start_report,  redirect_reports,
             result_report)
 
+    def hash(self) -> str | None:
+        if self.result and self.result.is_request_complete_edge():
+            return cast("RequestCompleteEdge", self.result).hash()
+        return None
+
 
 def request_chain_for_edge(request_edge: "RequestStartEdge") -> RequestChain:
     request_id = request_edge.request_id()
