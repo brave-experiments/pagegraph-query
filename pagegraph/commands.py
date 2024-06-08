@@ -23,7 +23,7 @@ def subframes(input_path: str, local_only: bool,
     report: list[SubFramesCommandReport] = []
 
     for iframe_node in pg.iframe_nodes():
-        parent_frame = iframe_node.domroot()
+        parent_frame = iframe_node.domroot_for_creation()
         if parent_frame is None:
             iframe_node.throw("Couldn't find owner of iframe")
             continue

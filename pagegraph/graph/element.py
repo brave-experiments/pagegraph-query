@@ -54,3 +54,8 @@ class PageGraphElement:
         sys.stderr.write(self.describe())
         sys.stderr.write("\n")
         raise Exception(desc)
+
+
+def sort_elements(elements: list[Any],
+                  *args: Any, **kwargs: Any) -> list[Any]:
+    return sorted(elements, key=lambda x: x.id())

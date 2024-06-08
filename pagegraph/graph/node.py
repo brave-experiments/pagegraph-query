@@ -9,7 +9,7 @@ from itertools import chain
 import sys
 from typing import Any, cast, Type, TYPE_CHECKING, Union
 
-from pagegraph.graph.element import PageGraphElement
+from pagegraph.graph.element import PageGraphElement, sort_elements
 from pagegraph.graph.edge import Edge
 from pagegraph.graph.js import JSCallResult
 from pagegraph.graph.requests import RequestResponse, RequestChain
@@ -232,26 +232,29 @@ class Node(PageGraphElement):
     def timestamp(self) -> int:
         return int(self.data()[self.RawAttrs.TIMESTAMP])
 
-    def creator_node(self) -> "ScriptNode" | "ParserNode":
-        creator_node: Union[None, "ScriptNode", "ParserNode"] = None
+    def creation_edge(self) -> "NodeCreateEdge" | None:
         for edge in self.incoming_edges():
             if edge.is_create_edge():
-                creator_edge = cast("NodeCreateEdge", edge)
-                node = creator_edge.incoming_node()
-                if self.pg.debug:
-                    if not node.is_script() and not node.is_parser():
-                        self.throw("Unexpected parent creator node")
-                if node.is_script():
-                    creator_node = cast("ScriptNode", node)
-                    break
-                else:
-                    creator_node = cast("ParserNode", node)
-                    break
+                return cast("NodeCreateEdge", edge)
+        return None
+
+    def creator_node(self) -> "ScriptNode" | "ParserNode":
+        creator_node: Union[None, "ScriptNode", "ParserNode"] = None
+        creation_edge = self.creation_edge()
+        if not creation_edge:
+            self.throw("Could not find a creator for this node")
+
+        assert creation_edge
+        node = creation_edge.incoming_node()
+
         if self.pg.debug:
-            if not creator_node:
-                self.throw("Could not find a creator for this node")
-        assert creator_node
-        return creator_node
+            if not node.is_script() and not node.is_parser():
+                self.throw("Unexpected parent creator node")
+
+        if node.is_script():
+            return cast("ScriptNode", node)
+        else:
+            return cast("ParserNode", node)
 
     def created_nodes(self) -> list[Node]:
         created_nodes = []
@@ -260,52 +263,13 @@ class Node(PageGraphElement):
                 created_nodes.append(edge.outgoing_node())
         return created_nodes
 
-    def domroot(self) -> DOMRootNode | None:
-        """In the simplest case, we try and find a DOMRoot by recursively
-        looking to see what created our creator, until we get to a parser node,
-        and then we just choose the correct DOMRoot from the list of possible
-        candidates (see below for how we do that)."""
-        domroots_for_parser = None
-
-        creator_node = self.creator_node()
-        while creator_node:
-            if creator_node.is_parser():
-                parser_node = cast(ParserNode, creator_node)
-                domroots_for_parser = parser_node.domroots()
-                break
-            c_node = creator_node.creator_node()
-            if c_node is not None:
-                if self.pg.debug:
-                    if not c_node.is_parser() and not c_node.is_script():
-                        self.throw("Unexpected parent creation edge")
-                if c_node.is_parser():
-                    creator_node = cast(ParserNode, c_node)
-                else:
-                    creator_node = cast(ScriptNode, c_node)
-
-        if not domroots_for_parser:
-            self.throw("Unable to find a DOMRoot")
-        domroots_for_parser = cast(list[DOMRootNode], domroots_for_parser)
-
-        # We 'cheat' here by finding the docroot node that has an id
-        # closest to, but not larger than, the this node (since any
-        # document with a higher pg id had to be created after this node,
-        # and so could not contain the given node).
-        domroots_sorted = sorted(domroots_for_parser, key=lambda x: x.id())
-
-        # The list now contains DOMRoots, from last created to earliest
-        # created.
-        domroots_sorted.reverse()
-        owning_domroot = None
-        for a_domroot in domroots_sorted:
-            if a_domroot.int_id() < self.int_id():
-                owning_domroot = a_domroot
-                break
-            break
-
-        if not owning_domroot:
-            self.throw("All DOMRoots for parser are younger than this node")
-        return cast(DOMRootNode, owning_domroot)
+    def domroot_for_creation(self) -> DOMRootNode | None:
+        creation_edge = self.creation_edge()
+        if self.pg.debug:
+            if not creation_edge:
+                self.throw("No incoming creation edge")
+        assert creation_edge
+        return creation_edge.domroot_for_frame_id()
 
     def executed_scripts(self) -> list[ScriptNode]:
         if self.pg.debug:
@@ -600,12 +564,58 @@ class DOMElementNode(Node):
     def tag_name(self) -> str:
         raise NotImplementedError()
 
-    def insert_edge(self) -> "NodeInsertEdge" | None:
-        insert_edge: None | "NodeInsertEdge" = None
+    def insertion_edges(self) -> list["NodeInsertEdge"]:
+        insertion_edges: list["NodeInsertEdge"] = []
         for edge in self.incoming_edges():
-            insert_edge = cast("NodeInsertEdge", edge)
-            break
-        return insert_edge
+            insertion_edges.append(cast("NodeInsertEdge", edge))
+        return cast(list["NodeInsertEdge"], sort_elements(insertion_edges))
+
+    def insert_edge(self) -> "NodeInsertEdge" | None:
+        """Return the most recent edge describing when this element
+        was appended to a document."""
+        insertion_edges = self.insertion_edges()
+        try:
+            return insertion_edges[-1]
+        except IndexError:
+            return None
+
+    def parent_at_serialization(self) -> None | ParentNode:
+        for incoming_edge in self.incoming_edges():
+            if incoming_edge.is_structure_edge():
+                structure_edge = cast("StructureEdge", incoming_edge)
+                return structure_edge.incoming_node()
+        return None
+
+    def domroot_of_document(self) -> DOMRootNode | None:
+        """Returns the DOMRoot for the most last document the element
+        was attached to. Note that this *does not* mean the this element
+        was attached to the document at serialization (since the element
+        could have been attached and then removed), *nor* does it mean
+        that this was the only document this element was attached to
+        (since the element could have been moved between documents)."""
+        insert_edge = self.insert_edge()
+        if not insert_edge:
+            return None
+        return insert_edge.domroot_for_frame_id()
+
+    def domroot_at_serialization(self) -> DOMRootNode | None:
+        """Get the DOMRoot node for the document this element is attached
+        to at serialization time. Note that this could be `None` (if
+        this element is not attached to a document at serialization),
+        and could differ from the domroot of the context the element
+        was created in (if this element was moved between documents
+        during page execution)."""
+        current_node = self.parent_at_serialization()
+        while current_node:
+            if current_node.is_domroot():
+                return cast(DOMRootNode, current_node)
+            current_node = current_node.parent_at_serialization()
+        return None
+
+        parent_node_from_structure = self._domroot_from_parent_node_path()
+        if parent_node_from_structure:
+            return parent_node_from_structure
+        return cast(DOMRootNode, super().domroot())
 
 
 class HTMLNode(DOMElementNode, Reportable):
@@ -645,18 +655,6 @@ class HTMLNode(DOMElementNode, Reportable):
                 return cast(DOMRootNode, parent_node)
             return cast(HTMLNode, parent_node)._domroot_from_parent_node_path()
         return None
-
-    def domroot(self) -> DOMRootNode:
-        """First, see if we can figure out what DOMRoot this HTML Element
-        existed in by looking at document structure. We do this to
-        make correct attribute frames created cross dom, in local child frames
-        (since, if we checked for frame-ownership by creator, we'd wind
-        up with the cross-dom script's frame, and not the frame
-        this element was in)"""
-        parent_node_from_structure = self._domroot_from_parent_node_path()
-        if parent_node_from_structure:
-            return parent_node_from_structure
-        return cast(DOMRootNode, super().domroot())
 
     def requests(self) -> list[RequestChain]:
         chains: list[RequestChain] = []
@@ -746,7 +744,7 @@ class DOMRootNode(DOMElementNode, Reportable):
         if not owning_frame:
             self.throw("Could not find parent frame")
             return None
-        return owning_frame.domroot()
+        return owning_frame.domroot_at_serialization()
 
     def frame_owner_nodes(self) -> list[FrameOwnerNode]:
         frame_owner_nodes = []
@@ -871,10 +869,6 @@ class ParserNode(Node):
 
     def is_parser(self) -> bool:
         return True
-
-    def domroot(self) -> DOMRootNode | None:
-        self.throw("Tried to ask for DOMRoot of a parser")
-        return super().domroot()  # deadcode, to please mypy
 
     def frame_owner_node(self) -> FrameOwnerNode | None:
         parent_nodes_list = list(self.parent_nodes())

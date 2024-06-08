@@ -236,9 +236,14 @@ class Edge(PageGraphElement):
 
 class FrameIdAttributedEdge(Edge):
 
+    def domroot_for_frame_id(self) -> "DOMRootNode":
+        frame_id = self.frame_id()
+        return self.pg.domroot_for_frame_id(frame_id)
+
     def frame_id(self) -> FrameId:
-        if self.RawAttrs.FRAME_ID.value not in self.data():
-            self.throw("")
+        if self.pg.debug:
+            if self.RawAttrs.FRAME_ID.value not in self.data():
+                self.throw("No frame id recorded")
         return self.data()[self.RawAttrs.FRAME_ID.value]
 
 
@@ -325,6 +330,10 @@ class StructureEdge(Edge):
 
     def is_structure_edge(self) -> bool:
         return True
+
+    def incoming_node(self) -> ParentNode:
+        incoming_node = super().incoming_node()
+        return cast(ParentNode, incoming_node)
 
     def outgoing_node(self) -> ChildNode:
         outgoing_node = super().outgoing_node()

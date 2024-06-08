@@ -30,13 +30,7 @@ class JSCallResult(Reportable):
         return report
 
     def call_context(self) -> "DOMRootNode":
-        calling_script = self.call_edge.incoming_node()
-        domroot = calling_script.domroot()
-        if self.pg.debug:
-            if not domroot:
-                calling_script.throw("Could not find DOMRoot for script")
-        assert domroot
-        return domroot
+        return self.call_edge.domroot_for_frame_id()
 
     def receiver_context(self) -> "DOMRootNode":
         receiver_context_frame_id = self.call_edge.frame_id()
