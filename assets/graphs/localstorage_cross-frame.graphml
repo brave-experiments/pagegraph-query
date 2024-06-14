@@ -1,0 +1,417 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><desc><version>0.7.1</version><about>https://github.com/brave/brave-browser/wiki/PageGraph</about><is_root>true</is_root><frame_id>0</frame_id><url>http://[::]:8000/localstorage_cross-frame.html</url><time><start>0</start><end>3052</end></time></desc><key id="d2" for="edge" attr.name="attr name" attr.type="string"/><key id="d3" for="edge" attr.name="before" attr.type="int"/><key id="d4" for="node" attr.name="binding" attr.type="string"/><key id="d5" for="node" attr.name="binding event" attr.type="string"/><key id="d6" for="node" attr.name="binding type" attr.type="string"/><key id="d7" for="edge" attr.name="block type" attr.type="string"/><key id="d8" for="edge" attr.name="args" attr.type="string"/><key id="d9" for="edge" attr.name="edge type" attr.type="string"/><key id="d10" for="edge" attr.name="event listener id" attr.type="int"/><key id="d11" for="edge" attr.name="frame id" attr.type="int"/><key id="d12" for="node" attr.name="frame id" attr.type="int"/><key id="d14" for="node" attr.name="host" attr.type="string"/><key id="d15" for="node" attr.name="incognito" attr.type="string"/><key id="d16" for="node" attr.name="is deleted" attr.type="boolean"/><key id="d1" for="node" attr.name="is attached" attr.type="boolean"/><key id="d17" for="edge" attr.name="is style" attr.type="boolean"/><key id="d18" for="edge" attr.name="key" attr.type="string"/><key id="d19" for="node" attr.name="method" attr.type="string"/><key id="d20" for="node" attr.name="node id" attr.type="int"/><key id="d21" for="node" attr.name="tag name" attr.type="string"/><key id="d22" for="node" attr.name="text" attr.type="string"/><key id="d23" for="node" attr.name="node type" attr.type="string"/><key id="d24" for="edge" attr.name="id" attr.type="string"/><key id="d25" for="node" attr.name="id" attr.type="string"/><key id="d26" for="edge" attr.name="timestamp" attr.type="string"/><key id="d27" for="node" attr.name="timestamp" attr.type="string"/><key id="d28" for="edge" attr.name="parent" attr.type="int"/><key id="d29" for="node" attr.name="primary pattern" attr.type="string"/><key id="d30" for="edge" attr.name="request id" attr.type="string"/><key id="d31" for="edge" attr.name="resource type" attr.type="string"/><key id="d32" for="edge" attr.name="response hash" attr.type="string"/><key id="d33" for="node" attr.name="rule" attr.type="string"/><key id="d34" for="edge" attr.name="script id" attr.type="int"/><key id="d35" for="node" attr.name="script id" attr.type="int"/><key id="d36" for="edge" attr.name="script position" attr.type="int"/><key id="d37" for="node" attr.name="script type" attr.type="string"/><key id="d38" for="node" attr.name="secondary pattern" attr.type="string"/><key id="d40" for="node" attr.name="source" attr.type="string"/><key id="d41" for="edge" attr.name="status" attr.type="string"/><key id="d42" for="node" attr.name="is success" attr.type="boolean"/><key id="d43" for="node" attr.name="url" attr.type="string"/><key id="d44" for="edge" attr.name="value" attr.type="string"/><key id="d39" for="edge" attr.name="size" attr.type="string"/><key id="d13" for="edge" attr.name="headers" attr.type="string"/><graph id="G" edgedefault="directed"><node id="n1"><data key="d23">Brave Shields</data><data key="d25">1</data><data key="d27">0</data></node><node id="n2"><data key="d23">shieldsAds shield</data><data key="d25">2</data><data key="d27">0</data></node><node id="n3"><data key="d23">trackers shield</data><data key="d25">3</data><data key="d27">0</data></node><node id="n4"><data key="d23">javascript shield</data><data key="d25">4</data><data key="d27">0</data></node><node id="n5"><data key="d23">fingerprintingV2 shield</data><data key="d25">5</data><data key="d27">0</data></node><node id="n10"><data key="d23">storage</data><data key="d25">10</data><data key="d27">0</data></node><node id="n11"><data key="d23">cookie jar</data><data key="d25">11</data><data key="d27">0</data></node><node id="n12"><data key="d23">local storage</data><data key="d25">12</data><data key="d27">0</data></node><node id="n13"><data key="d23">session storage</data><data key="d25">13</data><data key="d27">0</data></node><node id="n17"><data key="d23">DOM root</data><data key="d25">17</data><data key="d27">0</data><data key="d20">1</data><data key="d16">false</data><data key="d21">#document</data><data key="d43"/><data key="d1">true</data></node><edge id="e148" source="n17" target="n23"><data key="d9">document</data><data key="d24">148</data><data key="d26">3053</data></edge><node id="n18"><data key="d23">parser</data><data key="d25">18</data><data key="d27">0</data></node><node id="n19"><data key="d23">extensions</data><data key="d25">19</data><data key="d27">0</data></node><node id="n23"><data key="d23">HTML element</data><data key="d25">23</data><data key="d27">0</data><data key="d20">2</data><data key="d16">false</data><data key="d21">HTML</data></node><edge id="e149" source="n23" target="n26"><data key="d9">document</data><data key="d24">149</data><data key="d26">3053</data></edge><edge id="e150" source="n23" target="n28"><data key="d9">document</data><data key="d24">150</data><data key="d26">3053</data></edge><node id="n26"><data key="d23">HTML element</data><data key="d25">26</data><data key="d27">0</data><data key="d20">3</data><data key="d16">false</data><data key="d21">HEAD</data></node><node id="n28"><data key="d23">HTML element</data><data key="d25">28</data><data key="d27">0</data><data key="d20">4</data><data key="d16">false</data><data key="d21">BODY</data></node><node id="n32"><data key="d23">DOM root</data><data key="d25">32</data><data key="d27">3</data><data key="d20">5</data><data key="d16">false</data><data key="d21">#document</data><data key="d43">about:blank</data><data key="d1">true</data></node><edge id="e151" source="n32" target="n38"><data key="d9">document</data><data key="d24">151</data><data key="d26">3053</data></edge><node id="n33"><data key="d23">parser</data><data key="d25">33</data><data key="d27">3</data></node><node id="n34"><data key="d23">extensions</data><data key="d25">34</data><data key="d27">3</data></node><node id="n38"><data key="d23">HTML element</data><data key="d25">38</data><data key="d27">6</data><data key="d20">6</data><data key="d16">false</data><data key="d21">HTML</data></node><edge id="e152" source="n38" target="n41"><data key="d9">document</data><data key="d24">152</data><data key="d26">3053</data></edge><edge id="e153" source="n38" target="n43"><data key="d9">document</data><data key="d24">153</data><data key="d26">3053</data></edge><node id="n41"><data key="d23">HTML element</data><data key="d25">41</data><data key="d27">6</data><data key="d20">7</data><data key="d16">false</data><data key="d21">HEAD</data></node><node id="n43"><data key="d23">HTML element</data><data key="d25">43</data><data key="d27">6</data><data key="d20">8</data><data key="d16">false</data><data key="d21">BODY</data></node><node id="n47"><data key="d23">DOM root</data><data key="d25">47</data><data key="d27">29</data><data key="d20">9</data><data key="d16">false</data><data key="d21">#document</data><data key="d43">http://[::]:8000/localstorage_cross-frame.html</data><data key="d1">true</data></node><edge id="e154" source="n47" target="n53"><data key="d9">document</data><data key="d24">154</data><data key="d26">3053</data></edge><node id="n48"><data key="d23">parser</data><data key="d25">48</data><data key="d27">29</data></node><node id="n49"><data key="d23">extensions</data><data key="d25">49</data><data key="d27">29</data></node><node id="n53"><data key="d23">HTML element</data><data key="d25">53</data><data key="d27">32</data><data key="d20">10</data><data key="d16">false</data><data key="d21">HTML</data></node><edge id="e155" source="n53" target="n58"><data key="d9">document</data><data key="d24">155</data><data key="d26">3053</data></edge><edge id="e156" source="n53" target="n60"><data key="d9">document</data><data key="d24">156</data><data key="d26">3053</data></edge><node id="n56"><data key="d23">script</data><data key="d25">56</data><data key="d27">33</data><data key="d35">7</data><data key="d37">unknown</data><data key="d40">/******/ (() =&gt; { // webpackBootstrap
+var __webpack_exports__ = {};
+/*!****************************************************************************************!*\
+  !*** ./components/brave_extension/extension/brave_extension/content_element_picker.ts ***!
+  \****************************************************************************************/
+// Copyright (c) 2021 The Brave Authors. All rights reserved.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this file,
+// you can obtain one at https://mozilla.org/MPL/2.0/.
+// Notify the background script as soon as the content script has loaded.
+// chrome.tabs.insertCSS may sometimes fail to inject CSS in a newly navigated
+// page when using the chrome.webNavigation API.
+// See: https://bugs.chromium.org/p/chromium/issues/detail?id=331654#c15
+// The RenderView should always be ready when the content script begins, so
+// this message is used to trigger CSS insertion instead.
+let pickerFrame;
+// When the picker is activated, it eats all pointer events and takes up the
+// entire screen. All calls to document.elementFromPoint(..) will return the
+// frame. We disable pointer events for the duration of the query to get
+// around this.
+const elementFromFrameCoords = (x, y) =&gt; {
+    if (!pickerFrame) {
+        return null;
+    }
+    pickerFrame.style.setProperty('pointer-events', 'none', 'important');
+    const elem = document.elementFromPoint(x, y);
+    pickerFrame.style.setProperty('pointer-events', 'auto', 'important');
+    return elem;
+};
+var SpecificityFlags;
+(function (SpecificityFlags) {
+    SpecificityFlags[SpecificityFlags["Id"] = 1] = "Id";
+    SpecificityFlags[SpecificityFlags["Hierarchy"] = 2] = "Hierarchy";
+    SpecificityFlags[SpecificityFlags["Attributes"] = 4] = "Attributes";
+    SpecificityFlags[SpecificityFlags["Class"] = 8] = "Class";
+    SpecificityFlags[SpecificityFlags["NthOfType"] = 16] = "NthOfType";
+})(SpecificityFlags || (SpecificityFlags = {}));
+const mostSpecificMask = 0b11111;
+var Selector;
+(function (Selector) {
+    Selector[Selector["Id"] = 0] = "Id";
+    Selector[Selector["Class"] = 1] = "Class";
+    Selector[Selector["Attributes"] = 2] = "Attributes";
+    Selector[Selector["NthOfType"] = 3] = "NthOfType";
+})(Selector || (Selector = {}));
+class ElementSelectorBuilder {
+    constructor(elem) {
+        this.rules = [];
+        this.tag = '';
+        this.elem = elem;
+        this.hasId = false;
+    }
+    addRule(rule) {
+        if (rule.type &lt; Selector.Id || rule.type &gt; Selector.NthOfType) {
+            console.log(`Unexpected selector: ${rule.type}`);
+            return;
+        }
+        if (Array.isArray(rule.value) &amp;&amp; rule.value.length === 0) {
+            return;
+        }
+        if (rule.type === Selector.Id) {
+            this.hasId = true;
+        }
+        this.rules.push(rule);
+    }
+    addTag(tag) {
+        this.tag = tag;
+    }
+    size() {
+        return this.rules.length;
+    }
+    toString(mask = mostSpecificMask) {
+        let selector = this.tag + '';
+        for (const rule of this.rules) {
+            if (!(mask &amp; SpecificityFlags.Id) &amp;&amp; rule.type === Selector.Id) {
+                continue;
+            }
+            if (!(mask &amp; SpecificityFlags.Class) &amp;&amp; rule.type === Selector.Class) {
+                continue;
+            }
+            if (!(mask &amp; SpecificityFlags.Attributes) &amp;&amp; rule.type === Selector.Attributes) {
+                continue;
+            }
+            if (!(mask &amp; SpecificityFlags.NthOfType) &amp;&amp; rule.type === Selector.NthOfType) {
+                continue;
+            }
+            if (this.hasId &amp;&amp; (mask &amp; SpecificityFlags.Id) &amp;&amp; rule.type === Selector.Class) {
+                continue;
+            }
+            switch (rule.type) {
+                case Selector.Id: {
+                    selector += '#' + rule.value;
+                    break;
+                }
+                case Selector.Class: {
+                    selector += '.' + rule.value.join('.');
+                    break;
+                }
+                case Selector.Attributes: {
+                    for (const attribute of rule.value) {
+                        const sourceAttr = this.elem.getAttribute(attribute.attr);
+                        let op = '*=';
+                        if (attribute.attr === sourceAttr) {
+                            op = '=';
+                        }
+                        else if (attribute.attr.startsWith(sourceAttr)) {
+                            op = '^=';
+                        }
+                        selector += `[${attribute.attr}${op}"${attribute.value}"]`;
+                    }
+                    break;
+                }
+                case Selector.NthOfType: {
+                    // NOTE: this selector is not valid without calling addTag(..)
+                    selector += `:nth-of-type(${rule.value})`;
+                    break;
+                }
+                default: { /* Unreachable */ }
+            }
+        }
+        return selector;
+    }
+}
+// We search for a CSS selector for the target element. We want the most specific identifiers.
+const cssSelectorFromElement = (elem) =&gt; {
+    var _a, _b, _c, _d;
+    const builder = new ElementSelectorBuilder(elem);
+    // ID
+    if (elem.id.length &gt; 0) {
+        builder.addRule({
+            type: Selector.Id,
+            value: CSS.escape(elem.id)
+        });
+    }
+    // Class names
+    if (elem.classList.length &gt; 0) {
+        builder.addRule({
+            type: Selector.Class,
+            value: Array.from(elem.classList).map((c) =&gt; CSS.escape(c))
+        });
+    }
+    const tag = CSS.escape(elem.localName);
+    // Attributes. Only try these if we have no matches.
+    if (builder.size() === 0) {
+        const attributes = [];
+        switch (tag) {
+            case 'a': {
+                // Get URL, removing query parameters and hash
+                const url = (_a = elem.getAttribute('href')) === null || _a === void 0 ? void 0 : _a.trim().split(/[?#]/)[0];
+                if (url !== undefined &amp;&amp; url.length &gt; 0) {
+                    attributes.push({
+                        attr: 'href',
+                        value: url
+                    });
+                }
+                break;
+            }
+            case 'iframe': {
+                const url = (_b = elem.getAttribute('src')) === null || _b === void 0 ? void 0 : _b.trim();
+                if (url !== undefined &amp;&amp; url.length &gt; 0) {
+                    attributes.push({
+                        attr: 'src',
+                        value: url.slice(0, 256)
+                    });
+                }
+                break;
+            }
+            case 'img': {
+                let data = (_c = elem.getAttribute('src')) === null || _c === void 0 ? void 0 : _c.trim();
+                if (data !== undefined &amp;&amp; data.length &gt; 0) {
+                    // https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs
+                    if (data.startsWith('data:')) {
+                        data = data.split(',')[1].slice(0, 256);
+                    }
+                }
+                if (data === undefined || data.length === 0) {
+                    let alttext = (_d = elem.getAttribute('alt')) === null || _d === void 0 ? void 0 : _d.trim();
+                    if (alttext !== undefined &amp;&amp; alttext.length &gt; 0) {
+                        attributes.push({
+                            attr: 'alt',
+                            value: alttext
+                        });
+                    }
+                }
+                else {
+                    attributes.push({
+                        attr: 'src',
+                        value: data
+                    });
+                }
+                break;
+            }
+            default: {
+                break;
+            }
+        }
+        if (attributes.length &gt; 0) {
+            builder.addRule({
+                type: Selector.Attributes,
+                value: attributes
+            });
+        }
+    }
+    const querySelectorNoExcept = (node, selector) =&gt; {
+        if (node !== null) {
+            try {
+                let r = node.querySelectorAll(selector);
+                return Array.from(r);
+            }
+            catch (e) { /* Deliberately left empty */ }
+        }
+        return [];
+    };
+    if (builder.size() === 0 || querySelectorNoExcept(elem.parentElement, builder.toString()).length &gt; 1) {
+        builder.addTag(tag);
+        if (querySelectorNoExcept(elem.parentElement, builder.toString()).length &gt; 1) {
+            let index = 1;
+            let sibling = elem.previousElementSibling;
+            while (sibling !== null) {
+                if (sibling.localName === tag) {
+                    index++;
+                }
+                sibling = sibling.previousElementSibling;
+            }
+            builder.addRule({
+                type: Selector.NthOfType,
+                value: index
+            });
+        }
+    }
+    return builder;
+};
+const elementPickerOnKeydown = (event) =&gt; {
+    if (event.key === 'Escape') {
+        event.stopPropagation();
+        event.preventDefault();
+        quitElementPicker();
+    }
+};
+const elementPickerViewportChanged = () =&gt; {
+    recalculateAndSendTargets(targetedElems);
+};
+const quitElementPicker = () =&gt; {
+    if (pickerFrame !== null) {
+        document.documentElement.removeChild(pickerFrame);
+    }
+    // Tear down element picker listeners
+    document.removeEventListener('keydown', elementPickerOnKeydown, true);
+    document.removeEventListener('resize', elementPickerViewportChanged);
+    document.removeEventListener('scroll', elementPickerViewportChanged);
+};
+const launchElementPicker = () =&gt; {
+    pickerFrame = document.createElement('iframe');
+    // "src" is a web accessible resource since the URI is chrome-extension://.
+    // This ensures a malicious page cannot modify the iframe contents.
+    pickerFrame.src = chrome.runtime.getURL('elementPicker.html');
+    const pickerCSSStyle = [
+        'background: transparent',
+        'border: 0',
+        'border-radius: 0',
+        'box-shadow: none',
+        'color-scheme: light dark',
+        'display: block',
+        'height: 100%',
+        'left: 0',
+        'margin: 0',
+        'max-height: none',
+        'max-width: none',
+        'opacity: 1',
+        'outline: 0',
+        'padding: 0',
+        'pointer-events: auto',
+        'position: fixed',
+        'top: 0',
+        'visibility: visible',
+        'width: 100%',
+        'z-index: 2147483647',
+        ''
+    ].join(' !important;');
+    // TODO(keur): To harden this we can use chrome.tabs.insertCSS(). Not a
+    // big priority since the page can always remove the iframe if it wants.
+    pickerFrame.style.cssText = pickerCSSStyle;
+    // We don't append to the body because we are setting the frame's
+    // width and height to be 100%. Prevents the picker from only being
+    // able to hover the iframe.
+    document.documentElement.appendChild(pickerFrame);
+    // Setup listeners to assist element picker
+    document.addEventListener('keydown', elementPickerOnKeydown, true);
+    document.addEventListener('resize', elementPickerViewportChanged);
+    document.addEventListener('scroll', elementPickerViewportChanged);
+};
+const targetRectFromElement = (elem) =&gt; {
+    const rect = elem.getBoundingClientRect();
+    return {
+        x: rect.left,
+        y: rect.top,
+        width: rect.right - rect.left,
+        height: rect.bottom - rect.top
+    };
+};
+let lastHoveredElem = null;
+let targetedElems = [];
+const recalculateAndSendTargets = (elems) =&gt; {
+    targetedElems = elems;
+    const coords = elems.map((e) =&gt; targetRectFromElement(e));
+    chrome.runtime.sendMessage({ type: 'highlightElements', coords: coords });
+};
+const onTargetSelected = (selected, index) =&gt; {
+    if (lastHoveredElem === null) {
+        return '';
+    }
+    let elem = selected;
+    const selectorBuilders = [];
+    const specificityMasks = [
+        0b01101,
+        0b11101,
+        0b01011,
+        0b10011,
+        0b11111 // All selector rules (default)
+    ];
+    const mask = specificityMasks[index];
+    if (mask &amp; SpecificityFlags.Hierarchy) {
+        while (elem !== null &amp;&amp; elem !== document.body) {
+            selectorBuilders.push(cssSelectorFromElement(elem));
+            elem = elem.parentElement;
+        }
+    }
+    else {
+        selectorBuilders.push(cssSelectorFromElement(selected));
+    }
+    // TODO: insert the body if using nth-type-of
+    let i = 0;
+    for (; i &lt; selectorBuilders.length; i++) {
+        const b = selectorBuilders[i];
+        if ((mask &amp; SpecificityFlags.Id) &amp;&amp; b.hasId ||
+            document.querySelectorAll(b.toString(mask)).length === 1) {
+            break;
+        }
+    }
+    const selector = selectorBuilders
+        .slice(0, i + 1)
+        .reverse()
+        .map((b) =&gt; b.toString(mask))
+        .join(' &gt; ');
+    return selector;
+};
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) =&gt; {
+    const action = typeof msg === 'string' ? msg : msg.type;
+    switch (action) {
+        case 'elementPickerLaunch':
+            launchElementPicker();
+            break;
+        case 'quitElementPicker':
+            quitElementPicker();
+            break;
+        case 'elementPickerHoverCoordsChanged': {
+            const { coords } = msg;
+            const elem = elementFromFrameCoords(coords.x, coords.y);
+            if (elem !== null &amp;&amp; (elem instanceof HTMLElement) &amp;&amp; elem !== lastHoveredElem) {
+                recalculateAndSendTargets([elem]);
+                lastHoveredElem = elem;
+            }
+            break;
+        }
+        case 'elementPickerUserSelectedTarget': {
+            const { specificity } = msg;
+            if (lastHoveredElem !== null &amp;&amp; (lastHoveredElem instanceof HTMLElement)) {
+                const selector = onTargetSelected(lastHoveredElem, specificity);
+                recalculateAndSendTargets(Array.from(document.querySelectorAll(selector)));
+                sendResponse({
+                    isValid: selector !== '',
+                    selector: selector.trim()
+                });
+            }
+            break;
+        }
+        case 'elementPickerUserModifiedRule': {
+            const selector = msg.selector;
+            if (selector.length &gt; 0) {
+                recalculateAndSendTargets(Array.from(document.querySelectorAll(selector)));
+            }
+            break;
+        }
+        case 'elementPickerUserCreatedRule': {
+            // Append the hostname and forward to the background script
+            chrome.runtime.sendMessage({
+                type: 'cosmeticFilterCreate',
+                selector: msg.selector
+            });
+            quitElementPicker();
+            break;
+        }
+    }
+});
+
+/******/ })()
+;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,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ZSxLQUFLLElBQUksSUFBSSxDQUFDLGVBQWUsWUFBWSxXQUFXLENBQUMsRUFBRTtnQkFDeEUsTUFBTSxRQUFRLEdBQUcsZ0JBQWdCLENBQUMsZUFBZSxFQUFFLFdBQVcsQ0FBQztnQkFDL0QseUJBQXlCLENBQUMsS0FBSyxDQUFDLElBQUksQ0FBQyxRQUFRLENBQUMsZ0JBQWdCLENBQUMsUUFBUSxDQUFDLENBQUMsQ0FBQztnQkFDMUUsWUFBWSxDQUFDO29CQUNYLE9BQU8sRUFBRSxRQUFRLEtBQUssRUFBRTtvQkFDeEIsUUFBUSxFQUFFLFFBQVEsQ0FBQyxJQUFJLEVBQUU7aUJBQzFCLENBQUM7YUFDSDtZQUNELE1BQUs7U0FDTjtRQUNELEtBQUssK0JBQStCLENBQUMsQ0FBQztZQUNwQyxNQUFNLFFBQVEsR0FBRyxHQUFHLENBQUMsUUFBUTtZQUM3QixJQUFJLFFBQVEsQ0FBQyxNQUFNLEdBQUcsQ0FBQyxFQUFFO2dCQUN2Qix5QkFBeUIsQ0FBQyxLQUFLLENBQUMsSUFBSSxDQUFDLFFBQVEsQ0FBQyxnQkFBZ0IsQ0FBQyxRQUFRLENBQUMsQ0FBQyxDQUFDO2FBQzNFO1lBQ0QsTUFBSztTQUNOO1FBQ0QsS0FBSyw4QkFBOEIsQ0FBQyxDQUFDO1lBQ25DLDJEQUEyRDtZQUMzRCxNQUFNLENBQUMsT0FBTyxDQUFDLFdBQVcsQ0FBQztnQkFDekIsSUFBSSxFQUFFLHNCQUFzQjtnQkFDNUIsUUFBUSxFQUFFLEdBQUcsQ0FBQyxRQUFRO2FBQ3ZCLENBQUM7WUFDRixpQkFBaUIsRUFBRTtZQUNuQixNQUFLO1NBQ047S0FDRjtBQUNILENBQUMsQ0FBQyIsInNvdXJjZXMiOlsid2VicGFjazovL2JyYXZlLWNvcmUvLi9jb21wb25lbnRzL2JyYXZlX2V4dGVuc2lvbi9leHRlbnNpb24vYnJhdmVfZXh0ZW5zaW9uL2NvbnRlbnRfZWxlbWVudF9waWNrZXIudHMiXSwic291cmNlc0NvbnRlbnQiOlsiLy8gQ29weXJpZ2h0IChjKSAyMDIxIFRoZSBCcmF2ZSBBdXRob3JzLiBBbGwgcmlnaHRzIHJlc2VydmVkLlxuLy8gVGhpcyBTb3VyY2UgQ29kZSBGb3JtIGlzIHN1YmplY3QgdG8gdGhlIHRlcm1zIG9mIHRoZSBNb3ppbGxhIFB1YmxpY1xuLy8gTGljZW5zZSwgdi4gMi4wLiBJZiBhIGNvcHkgb2YgdGhlIE1QTCB3YXMgbm90IGRpc3RyaWJ1dGVkIHdpdGggdGhpcyBmaWxlLFxuLy8geW91IGNhbiBvYnRhaW4gb25lIGF0IGh0dHBzOi8vbW96aWxsYS5vcmcvTVBMLzIuMC8uXG5cbi8vIE5vdGlmeSB0aGUgYmFja2dyb3VuZCBzY3JpcHQgYXMgc29vbiBhcyB0aGUgY29udGVudCBzY3JpcHQgaGFzIGxvYWRlZC5cbi8vIGNocm9tZS50YWJzLmluc2VydENTUyBtYXkgc29tZXRpbWVzIGZhaWwgdG8gaW5qZWN0IENTUyBpbiBhIG5ld2x5IG5hdmlnYXRlZFxuLy8gcGFnZSB3aGVuIHVzaW5nIHRoZSBjaHJvbWUud2ViTmF2aWdhdGlvbiBBUEkuXG4vLyBTZWU6IGh0dHBzOi8vYnVncy5jaHJvbWl1bS5vcmcvcC9jaHJvbWl1bS9pc3N1ZXMvZGV0YWlsP2lkPTMzMTY1NCNjMTVcbi8vIFRoZSBSZW5kZXJWaWV3IHNob3VsZCBhbHdheXMgYmUgcmVhZHkgd2hlbiB0aGUgY29udGVudCBzY3JpcHQgYmVnaW5zLCBzb1xuLy8gdGhpcyBtZXNzYWdlIGlzIHVzZWQgdG8gdHJpZ2dlciBDU1MgaW5zZXJ0aW9uIGluc3RlYWQuXG5cbmxldCBwaWNrZXJGcmFtZTogSFRNTElGcmFtZUVsZW1lbnQgfCBudWxsXG5cbi8vIFdoZW4gdGhlIHBpY2tlciBpcyBhY3RpdmF0ZWQsIGl0IGVhdHMgYWxsIHBvaW50ZXIgZXZlbnRzIGFuZCB0YWtlcyB1cCB0aGVcbi8vIGVudGlyZSBzY3JlZW4uIEFsbCBjYWxscyB0byBkb2N1bWVudC5lbGVtZW50RnJvbVBvaW50KC4uKSB3aWxsIHJldHVybiB0aGVcbi8vIGZyYW1lLiBXZSBkaXNhYmxlIHBvaW50ZXIgZXZlbnRzIGZvciB0aGUgZHVyYXRpb24gb2YgdGhlIHF1ZXJ5IHRvIGdldFxuLy8gYXJvdW5kIHRoaXMuXG5jb25zdCBlbGVtZW50RnJvbUZyYW1lQ29vcmRzID0gKHg6IG51bWJlciwgeTogbnVtYmVyKTogRWxlbWVudCB8IG51bGwgPT4ge1xuICBpZiAoIXBpY2tlckZyYW1lKSB7IHJldHVybiBudWxsIH1cbiAgcGlja2VyRnJhbWUuc3R5bGUuc2V0UHJvcGVydHkoJ3BvaW50ZXItZXZlbnRzJywgJ25vbmUnLCAnaW1wb3J0YW50JylcbiAgY29uc3QgZWxlbSA9IGRvY3VtZW50LmVsZW1lbnRGcm9tUG9pbnQoeCwgeSlcbiAgcGlja2VyRnJhbWUuc3R5bGUuc2V0UHJvcGVydHkoJ3BvaW50ZXItZXZlbnRzJywgJ2F1dG8nLCAnaW1wb3J0YW50JylcbiAgcmV0dXJuIGVsZW1cbn1cblxuZW51bSBTcGVjaWZpY2l0eUZsYWdzIHtcbiAgSWQgPSAoMSA8PCAwKSxcbiAgSGllcmFyY2h5ID0gKDEgPDwgMSksXG4gIEF0dHJpYnV0ZXMgPSAoMSA8PCAyKSxcbiAgQ2xhc3MgPSAoMSA8PCAzKSxcbiAgTnRoT2ZUeXBlID0gKDEgPDwgNClcbn1cblxuY29uc3QgbW9zdFNwZWNpZmljTWFzayA9IDBiMTExMTFcblxuZW51bSBTZWxlY3RvciB7XG4gIElkLFxuICBDbGFzcyxcbiAgQXR0cmlidXRlcyxcbiAgTnRoT2ZUeXBlXG59XG5cbmludGVyZmFjZSBSdWxlIHtcbiAgdHlwZTogU2VsZWN0b3JcbiAgdmFsdWU6IGFueVxufVxuXG5jbGFzcyBFbGVtZW50U2VsZWN0b3JCdWlsZGVyIHtcbiAgcHVibGljIGhhc0lkOiBib29sZWFuXG4gIHByaXZhdGUgcmVhZG9ubHkgZWxlbTogRWxlbWVudFxuICBwcml2YXRlIHJlYWRvbmx5IHJ1bGVzOiBSdWxlW11cbiAgcHJpdmF0ZSB0YWc6IHN0cmluZ1xuXG4gIGNvbnN0cnVjdG9yIChlbGVtOiBFbGVtZW50KSB7XG4gICAgdGhpcy5ydWxlcyA9IFtdXG4gICAgdGhpcy50YWcgPSAnJ1xuICAgIHRoaXMuZWxlbSA9IGVsZW1cbiAgICB0aGlzLmhhc0lkID0gZmFsc2VcbiAgfVxuXG4gIGFkZFJ1bGUgKHJ1bGU6IFJ1bGUpOiB2b2lkIHtcbiAgICBpZiAocnVsZS50eXBlIDwgU2VsZWN0b3IuSWQgfHwgcnVsZS50eXBlID4gU2VsZWN0b3IuTnRoT2ZUeXBlKSB7XG4gICAgICBjb25zb2xlLmxvZyhgVW5leHBlY3RlZCBzZWxlY3RvcjogJHtydWxlLnR5cGV9YClcbiAgICAgIHJldHVyblxuICAgIH1cbiAgICBpZiAoQXJyYXkuaXNBcnJheShydWxlLnZhbHVlKSAmJiBydWxlLnZhbHVlLmxlbmd0aCA9PT0gMCkge1xuICAgICAgcmV0dXJuXG4gICAgfVxuICAgIGlmIChydWxlLnR5cGUgPT09IFNlbGVjdG9yLklkKSB7IHRoaXMuaGFzSWQgPSB0cnVlIH1cbiAgICB0aGlzLnJ1bGVzLnB1c2gocnVsZSlcbiAgfVxuXG4gIGFkZFRhZyAodGFnOiBzdHJpbmcpOiB2b2lkIHtcbiAgICB0aGlzLnRhZyA9IHRhZ1xuICB9XG5cbiAgc2l6ZSAoKTogbnVtYmVyIHtcbiAgICByZXR1cm4gdGhpcy5ydWxlcy5sZW5ndGhcbiAgfVxuXG4gIHRvU3RyaW5nIChtYXNrOiBudW1iZXIgPSBtb3N0U3BlY2lmaWNNYXNrKTogc3RyaW5nIHtcbiAgICBsZXQgc2VsZWN0b3IgPSB0aGlzLnRhZyArICcnXG4gICAgZm9yIChjb25zdCBydWxlIG9mIHRoaXMucnVsZXMpIHtcbiAgICAgIGlmICghKG1hc2sgJiBTcGVjaWZpY2l0eUZsYWdzLklkKSAmJiBydWxlLnR5cGUgPT09IFNlbGVjdG9yLklkKSB7XG4gICAgICAgIGNvbnRpbnVlXG4gICAgICB9XG4gICAgICBpZiAoIShtYXNrICYgU3BlY2lmaWNpdHlGbGFncy5DbGFzcykgJiYgcnVsZS50eXBlID09PSBTZWxlY3Rvci5DbGFzcykge1xuICAgICAgICBjb250aW51ZVxuICAgICAgfVxuICAgICAgaWYgKCEobWFzayAmIFNwZWNpZmljaXR5RmxhZ3MuQXR0cmlidXRlcykgJiYgcnVsZS50eXBlID09PSBTZWxlY3Rvci5BdHRyaWJ1dGVzKSB7XG4gICAgICAgIGNvbnRpbnVlXG4gICAgICB9XG4gICAgICBpZiAoIShtYXNrICYgU3BlY2lmaWNpdHlGbGFncy5OdGhPZlR5cGUpICYmIHJ1bGUudHlwZSA9PT0gU2VsZWN0b3IuTnRoT2ZUeXBlKSB7XG4gICAgICAgIGNvbnRpbnVlXG4gICAgICB9XG4gICAgICBpZiAodGhpcy5oYXNJZCAmJiAobWFzayAmIFNwZWNpZmljaXR5RmxhZ3MuSWQpICYmIHJ1bGUudHlwZSA9PT0gU2VsZWN0b3IuQ2xhc3MpIHtcbiAgICAgICAgY29udGludWVcbiAgICAgIH1cblxuICAgICAgc3dpdGNoIChydWxlLnR5cGUpIHtcbiAgICAgICAgY2FzZSBTZWxlY3Rvci5JZDoge1xuICAgICAgICAgIHNlbGVjdG9yICs9ICcjJyArIHJ1bGUudmFsdWVcbiAgICAgICAgICBicmVha1xuICAgICAgICB9XG4gICAgICAgIGNhc2UgU2VsZWN0b3IuQ2xhc3M6IHtcbiAgICAgICAgICBzZWxlY3RvciArPSAnLicgKyBydWxlLnZhbHVlLmpvaW4oJy4nKVxuICAgICAgICAgIGJyZWFrXG4gICAgICAgIH1cbiAgICAgICAgY2FzZSBTZWxlY3Rvci5BdHRyaWJ1dGVzOiB7XG4gICAgICAgICAgZm9yIChjb25zdCBhdHRyaWJ1dGUgb2YgcnVsZS52YWx1ZSkge1xuICAgICAgICAgICAgY29uc3Qgc291cmNlQXR0ciA9IHRoaXMuZWxlbS5nZXRBdHRyaWJ1dGUoYXR0cmlidXRlLmF0dHIpXG4gICAgICAgICAgICBsZXQgb3AgPSAnKj0nXG4gICAgICAgICAgICBpZiAoYXR0cmlidXRlLmF0dHIgPT09IHNvdXJjZUF0dHIpIHtcbiAgICAgICAgICAgICAgb3AgPSAnPSdcbiAgICAgICAgICAgIH0gZWxzZSBpZiAoYXR0cmlidXRlLmF0dHIuc3RhcnRzV2l0aChzb3VyY2VBdHRyKSkge1xuICAgICAgICAgICAgICBvcCA9ICdePSdcbiAgICAgICAgICAgIH1cbiAgICAgICAgICAgIHNlbGVjdG9yICs9IGBbJHthdHRyaWJ1dGUuYXR0cn0ke29wfVwiJHthdHRyaWJ1dGUudmFsdWV9XCJdYFxuICAgICAgICAgIH1cbiAgICAgICAgICBicmVha1xuICAgICAgICB9XG4gICAgICAgIGNhc2UgU2VsZWN0b3IuTnRoT2ZUeXBlOiB7XG4gICAgICAgICAgLy8gTk9URTogdGhpcyBzZWxlY3RvciBpcyBub3QgdmFsaWQgd2l0aG91dCBjYWxsaW5nIGFkZFRhZyguLilcbiAgICAgICAgICBzZWxlY3RvciArPSBgOm50aC1vZi10eXBlKCR7cnVsZS52YWx1ZX0pYFxuICAgICAgICAgIGJyZWFrXG4gICAgICAgIH1cbiAgICAgICAgZGVmYXVsdDogeyAvKiBVbnJlYWNoYWJsZSAqLyB9XG4gICAgICB9XG4gICAgfVxuICAgIHJldHVybiBzZWxlY3RvclxuICB9XG59XG5cbi8vIFdlIHNlYXJjaCBmb3IgYSBDU1Mgc2VsZWN0b3IgZm9yIHRoZSB0YXJnZXQgZWxlbWVudC4gV2Ugd2FudCB0aGUgbW9zdCBzcGVjaWZpYyBpZGVudGlmaWVycy5cbmNvbnN0IGNzc1NlbGVjdG9yRnJvbUVsZW1lbnQgPSAoZWxlbTogRWxlbWVudCk6IEVsZW1lbnRTZWxlY3RvckJ1aWxkZXIgPT4ge1xuICBjb25zdCBidWlsZGVyID0gbmV3IEVsZW1lbnRTZWxlY3RvckJ1aWxkZXIoZWxlbSlcblxuICAvLyBJRFxuICBpZiAoZWxlbS5pZC5sZW5ndGggPiAwKSB7XG4gICAgYnVpbGRlci5hZGRSdWxlKHtcbiAgICAgIHR5cGU6IFNlbGVjdG9yLklkLFxuICAgICAgdmFsdWU6IENTUy5lc2NhcGUoZWxlbS5pZClcbiAgICB9KVxuICB9XG5cbiAgLy8gQ2xhc3MgbmFtZXNcbiAgaWYgKGVsZW0uY2xhc3NMaXN0Lmxlbmd0aCA+IDApIHtcbiAgICBidWlsZGVyLmFkZFJ1bGUoe1xuICAgICAgdHlwZTogU2VsZWN0b3IuQ2xhc3MsXG4gICAgICB2YWx1ZTogQXJyYXkuZnJvbShlbGVtLmNsYXNzTGlzdCkubWFwKChjOiBzdHJpbmcpID0+IENTUy5lc2NhcGUoYykpXG4gICAgfSlcbiAgfVxuXG4gIGNvbnN0IHRhZyA9IENTUy5lc2NhcGUoZWxlbS5sb2NhbE5hbWUpXG5cbiAgLy8gQXR0cmlidXRlcy4gT25seSB0cnkgdGhlc2UgaWYgd2UgaGF2ZSBubyBtYXRjaGVzLlxuICBpZiAoYnVpbGRlci5zaXplKCkgPT09IDApIHtcbiAgICBjb25zdCBhdHRyaWJ1dGVzID0gW11cbiAgICBzd2l0Y2ggKHRhZykge1xuICAgICAgY2FzZSAnYSc6IHtcbiAgICAgICAgLy8gR2V0IFVSTCwgcmVtb3ZpbmcgcXVlcnkgcGFyYW1ldGVycyBhbmQgaGFzaFxuICAgICAgICBjb25zdCB1cmwgPSBlbGVtLmdldEF0dHJpYnV0ZSgnaHJlZicpPy50cmltKCkuc3BsaXQoL1s/I10vKVswXVxuICAgICAgICBpZiAodXJsICE9PSB1bmRlZmluZWQgJiYgdXJsLmxlbmd0aCA+IDApIHtcbiAgICAgICAgICBhdHRyaWJ1dGVzLnB1c2goe1xuICAgICAgICAgICAgYXR0cjogJ2hyZWYnLFxuICAgICAgICAgICAgdmFsdWU6IHVybFxuICAgICAgICAgIH0pXG4gICAgICAgIH1cbiAgICAgICAgYnJlYWtcbiAgICAgIH1cbiAgICAgIGNhc2UgJ2lmcmFtZSc6IHtcbiAgICAgICAgY29uc3QgdXJsID0gZWxlbS5nZXRBdHRyaWJ1dGUoJ3NyYycpPy50cmltKClcbiAgICAgICAgaWYgKHVybCAhPT0gdW5kZWZpbmVkICYmIHVybC5sZW5ndGggPiAwKSB7XG4gICAgICAgICAgYXR0cmlidXRlcy5wdXNoKHtcbiAgICAgICAgICAgIGF0dHI6ICdzcmMnLFxuICAgICAgICAgICAgdmFsdWU6IHVybC5zbGljZSgwLCAyNTYpXG4gICAgICAgICAgfSlcbiAgICAgICAgfVxuICAgICAgICBicmVha1xuICAgICAgfVxuICAgICAgY2FzZSAnaW1nJzoge1xuICAgICAgICBsZXQgZGF0YSA9IGVsZW0uZ2V0QXR0cmlidXRlKCdzcmMnKT8udHJpbSgpXG4gICAgICAgIGlmIChkYXRhICE9PSB1bmRlZmluZWQgJiYgZGF0YS5sZW5ndGggPiAwKSB7XG4gICAgICAgICAgLy8gaHR0cHM6Ly9kZXZlbG9wZXIubW96aWxsYS5vcmcvZW4tVVMvZG9jcy9XZWIvSFRUUC9CYXNpY3Nfb2ZfSFRUUC9EYXRhX1VSSXNcbiAgICAgICAgICBpZiAoZGF0YS5zdGFydHNXaXRoKCdkYXRhOicpKSB7XG4gICAgICAgICAgICBkYXRhID0gZGF0YS5zcGxpdCgnLCcpWzFdLnNsaWNlKDAsIDI1NilcbiAgICAgICAgICB9XG4gICAgICAgIH1cbiAgICAgICAgaWYgKGRhdGEgPT09IHVuZGVmaW5lZCB8fCBkYXRhLmxlbmd0aCA9PT0gMCkge1xuICAgICAgICAgIGxldCBhbHR0ZXh0ID0gZWxlbS5nZXRBdHRyaWJ1dGUoJ2FsdCcpPy50cmltKClcbiAgICAgICAgICBpZiAoYWx0dGV4dCAhPT0gdW5kZWZpbmVkICYmIGFsdHRleHQubGVuZ3RoID4gMCkge1xuICAgICAgICAgICAgYXR0cmlidXRlcy5wdXNoKHtcbiAgICAgICAgICAgICAgYXR0cjogJ2FsdCcsXG4gICAgICAgICAgICAgIHZhbHVlOiBhbHR0ZXh0XG4gICAgICAgICAgICB9KVxuICAgICAgICAgIH1cbiAgICAgICAgfSBlbHNlIHtcbiAgICAgICAgICBhdHRyaWJ1dGVzLnB1c2goe1xuICAgICAgICAgICAgYXR0cjogJ3NyYycsXG4gICAgICAgICAgICB2YWx1ZTogZGF0YVxuICAgICAgICAgIH0pXG4gICAgICAgIH1cbiAgICAgICAgYnJlYWtcbiAgICAgIH1cbiAgICAgIGRlZmF1bHQ6IHsgYnJlYWsgfVxuICAgIH1cbiAgICBpZiAoYXR0cmlidXRlcy5sZW5ndGggPiAwKSB7XG4gICAgICBidWlsZGVyLmFkZFJ1bGUoe1xuICAgICAgICB0eXBlOiBTZWxlY3Rvci5BdHRyaWJ1dGVzLFxuICAgICAgICB2YWx1ZTogYXR0cmlidXRlc1xuICAgICAgfSlcbiAgICB9XG4gIH1cblxuICBjb25zdCBxdWVyeVNlbGVjdG9yTm9FeGNlcHQgPSAobm9kZTogRWxlbWVudCB8IG51bGwsIHNlbGVjdG9yOiBzdHJpbmcpOiBFbGVtZW50W10gPT4ge1xuICAgIGlmIChub2RlICE9PSBudWxsKSB7XG4gICAgICB0cnkge1xuICAgICAgICBsZXQgciA9IG5vZGUucXVlcnlTZWxlY3RvckFsbChzZWxlY3RvcilcbiAgICAgICAgcmV0dXJuIEFycmF5LmZyb20ocilcbiAgICAgIH0gY2F0Y2ggKGUpIHsgLyogRGVsaWJlcmF0ZWx5IGxlZnQgZW1wdHkgKi8gfVxuICAgIH1cbiAgICByZXR1cm4gW11cbiAgfVxuXG4gIGlmIChidWlsZGVyLnNpemUoKSA9PT0gMCB8fCBxdWVyeVNlbGVjdG9yTm9FeGNlcHQoZWxlbS5wYXJlbnRFbGVtZW50LCBidWlsZGVyLnRvU3RyaW5nKCkpLmxlbmd0aCA+IDEpIHtcbiAgICBidWlsZGVyLmFkZFRhZyh0YWcpXG4gICAgaWYgKHF1ZXJ5U2VsZWN0b3JOb0V4Y2VwdChlbGVtLnBhcmVudEVsZW1lbnQsIGJ1aWxkZXIudG9TdHJpbmcoKSkubGVuZ3RoID4gMSkge1xuICAgICAgbGV0IGluZGV4ID0gMVxuICAgICAgbGV0IHNpYmxpbmc6IEVsZW1lbnQgfCBudWxsID0gZWxlbS5wcmV2aW91c0VsZW1lbnRTaWJsaW5nXG4gICAgICB3aGlsZSAoc2libGluZyAhPT0gbnVsbCkge1xuICAgICAgICBpZiAoc2libGluZy5sb2NhbE5hbWUgPT09IHRhZykgeyBpbmRleCsrIH1cbiAgICAgICAgc2libGluZyA9IHNpYmxpbmcucHJldmlvdXNFbGVtZW50U2libGluZ1xuICAgICAgfVxuICAgICAgYnVpbGRlci5hZGRSdWxlKHtcbiAgICAgICAgdHlwZTogU2VsZWN0b3IuTnRoT2ZUeXBlLFxuICAgICAgICB2YWx1ZTogaW5kZXhcbiAgICAgIH0pXG4gICAgfVxuICB9XG4gIHJldHVybiBidWlsZGVyXG59XG5cbmNvbnN0IGVsZW1lbnRQaWNrZXJPbktleWRvd24gPSAoZXZlbnQ6IEtleWJvYXJkRXZlbnQpOiB2b2lkID0+IHtcbiAgaWYgKGV2ZW50LmtleSA9PT0gJ0VzY2FwZScpIHtcbiAgICBldmVudC5zdG9wUHJvcGFnYXRpb24oKVxuICAgIGV2ZW50LnByZXZlbnREZWZhdWx0KClcbiAgICBxdWl0RWxlbWVudFBpY2tlcigpXG4gIH1cbn1cblxuY29uc3QgZWxlbWVudFBpY2tlclZpZXdwb3J0Q2hhbmdlZCA9ICgpID0+IHtcbiAgcmVjYWxjdWxhdGVBbmRTZW5kVGFyZ2V0cyh0YXJnZXRlZEVsZW1zKVxufVxuXG5jb25zdCBxdWl0RWxlbWVudFBpY2tlciA9ICgpID0+IHtcbiAgaWYgKHBpY2tlckZyYW1lICE9PSBudWxsKSB7XG4gICAgZG9jdW1lbnQuZG9jdW1lbnRFbGVtZW50LnJlbW92ZUNoaWxkKHBpY2tlckZyYW1lKVxuICB9XG5cbiAgLy8gVGVhciBkb3duIGVsZW1lbnQgcGlja2VyIGxpc3RlbmVyc1xuICBkb2N1bWVudC5yZW1vdmVFdmVudExpc3RlbmVyKCdrZXlkb3duJywgZWxlbWVudFBpY2tlck9uS2V5ZG93biwgdHJ1ZSlcbiAgZG9jdW1lbnQucmVtb3ZlRXZlbnRMaXN0ZW5lcigncmVzaXplJywgZWxlbWVudFBpY2tlclZpZXdwb3J0Q2hhbmdlZClcbiAgZG9jdW1lbnQucmVtb3ZlRXZlbnRMaXN0ZW5lcignc2Nyb2xsJywgZWxlbWVudFBpY2tlclZpZXdwb3J0Q2hhbmdlZClcbn1cblxuY29uc3QgbGF1bmNoRWxlbWVudFBpY2tlciA9ICgpID0+IHtcbiAgcGlja2VyRnJhbWUgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCdpZnJhbWUnKVxuICAvLyBcInNyY1wiIGlzIGEgd2ViIGFjY2Vzc2libGUgcmVzb3VyY2Ugc2luY2UgdGhlIFVSSSBpcyBjaHJvbWUtZXh0ZW5zaW9uOi8vLlxuICAvLyBUaGlzIGVuc3VyZXMgYSBtYWxpY2lvdXMgcGFnZSBjYW5ub3QgbW9kaWZ5IHRoZSBpZnJhbWUgY29udGVudHMuXG4gIHBpY2tlckZyYW1lLnNyYyA9IGNocm9tZS5ydW50aW1lLmdldFVSTCgnZWxlbWVudFBpY2tlci5odG1sJylcbiAgY29uc3QgcGlja2VyQ1NTU3R5bGU6IHN0cmluZyA9IFtcbiAgICAnYmFja2dyb3VuZDogdHJhbnNwYXJlbnQnLFxuICAgICdib3JkZXI6IDAnLFxuICAgICdib3JkZXItcmFkaXVzOiAwJyxcbiAgICAnYm94LXNoYWRvdzogbm9uZScsXG4gICAgJ2NvbG9yLXNjaGVtZTogbGlnaHQgZGFyaycsXG4gICAgJ2Rpc3BsYXk6IGJsb2NrJyxcbiAgICAnaGVpZ2h0OiAxMDAlJyxcbiAgICAnbGVmdDogMCcsXG4gICAgJ21hcmdpbjogMCcsXG4gICAgJ21heC1oZWlnaHQ6IG5vbmUnLFxuICAgICdtYXgtd2lkdGg6IG5vbmUnLFxuICAgICdvcGFjaXR5OiAxJyxcbiAgICAnb3V0bGluZTogMCcsXG4gICAgJ3BhZGRpbmc6IDAnLFxuICAgICdwb2ludGVyLWV2ZW50czogYXV0bycsXG4gICAgJ3Bvc2l0aW9uOiBmaXhlZCcsXG4gICAgJ3RvcDogMCcsXG4gICAgJ3Zpc2liaWxpdHk6IHZpc2libGUnLFxuICAgICd3aWR0aDogMTAwJScsXG4gICAgJ3otaW5kZXg6IDIxNDc0ODM2NDcnLFxuICAgICcnXG4gIF0uam9pbignICFpbXBvcnRhbnQ7JylcbiAgLy8gVE9ETyhrZXVyKTogVG8gaGFyZGVuIHRoaXMgd2UgY2FuIHVzZSBjaHJvbWUudGFicy5pbnNlcnRDU1MoKS4gTm90IGFcbiAgLy8gYmlnIHByaW9yaXR5IHNpbmNlIHRoZSBwYWdlIGNhbiBhbHdheXMgcmVtb3ZlIHRoZSBpZnJhbWUgaWYgaXQgd2FudHMuXG4gIHBpY2tlckZyYW1lLnN0eWxlLmNzc1RleHQgPSBwaWNrZXJDU1NTdHlsZVxuXG4gIC8vIFdlIGRvbid0IGFwcGVuZCB0byB0aGUgYm9keSBiZWNhdXNlIHdlIGFyZSBzZXR0aW5nIHRoZSBmcmFtZSdzXG4gIC8vIHdpZHRoIGFuZCBoZWlnaHQgdG8gYmUgMTAwJS4gUHJldmVudHMgdGhlIHBpY2tlciBmcm9tIG9ubHkgYmVpbmdcbiAgLy8gYWJsZSB0byBob3ZlciB0aGUgaWZyYW1lLlxuICBkb2N1bWVudC5kb2N1bWVudEVsZW1lbnQuYXBwZW5kQ2hpbGQocGlja2VyRnJhbWUpXG5cbiAgLy8gU2V0dXAgbGlzdGVuZXJzIHRvIGFzc2lzdCBlbGVtZW50IHBpY2tlclxuICBkb2N1bWVudC5hZGRFdmVudExpc3RlbmVyKCdrZXlkb3duJywgZWxlbWVudFBpY2tlck9uS2V5ZG93biwgdHJ1ZSlcbiAgZG9jdW1lbnQuYWRkRXZlbnRMaXN0ZW5lcigncmVzaXplJywgZWxlbWVudFBpY2tlclZpZXdwb3J0Q2hhbmdlZClcbiAgZG9jdW1lbnQuYWRkRXZlbnRMaXN0ZW5lcignc2Nyb2xsJywgZWxlbWVudFBpY2tlclZpZXdwb3J0Q2hhbmdlZClcbn1cblxuaW50ZXJmYWNlIFRhcmdldFJlY3Qge1xuICB4OiBudW1iZXJcbiAgeTogbnVtYmVyXG4gIHdpZHRoOiBudW1iZXJcbiAgaGVpZ2h0OiBudW1iZXJcbn1cblxuY29uc3QgdGFyZ2V0UmVjdEZyb21FbGVtZW50ID0gKGVsZW06IEVsZW1lbnQpOiBUYXJnZXRSZWN0ID0+IHtcbiAgY29uc3QgcmVjdCA9IGVsZW0uZ2V0Qm91bmRpbmdDbGllbnRSZWN0KClcbiAgcmV0dXJuIHtcbiAgICB4OiByZWN0LmxlZnQsXG4gICAgeTogcmVjdC50b3AsXG4gICAgd2lkdGg6IHJlY3QucmlnaHQgLSByZWN0LmxlZnQsXG4gICAgaGVpZ2h0OiByZWN0LmJvdHRvbSAtIHJlY3QudG9wXG4gIH1cbn1cblxubGV0IGxhc3RIb3ZlcmVkRWxlbTogSFRNTEVsZW1lbnQgfCBudWxsID0gbnVsbFxubGV0IHRhcmdldGVkRWxlbXM6IEVsZW1lbnRbXSA9IFtdXG5cbmNvbnN0IHJlY2FsY3VsYXRlQW5kU2VuZFRhcmdldHMgPSAoZWxlbXM6IEVsZW1lbnRbXSkgPT4ge1xuICB0YXJnZXRlZEVsZW1zID0gZWxlbXNcbiAgY29uc3QgY29vcmRzOiBUYXJnZXRSZWN0W10gPSBlbGVtcy5tYXAoKGU6IEVsZW1lbnQpID0+IHRhcmdldFJlY3RGcm9tRWxlbWVudChlKSlcbiAgY2hyb21lLnJ1bnRpbWUuc2VuZE1lc3NhZ2UoeyB0eXBlOiAnaGlnaGxpZ2h0RWxlbWVudHMnLCBjb29yZHM6IGNvb3JkcyB9KVxufVxuXG5jb25zdCBvblRhcmdldFNlbGVjdGVkID0gKHNlbGVjdGVkOiBFbGVtZW50IHwgbnVsbCwgaW5kZXg6IG51bWJlcik6IHN0cmluZyA9PiB7XG4gIGlmIChsYXN0SG92ZXJlZEVsZW0gPT09IG51bGwpIHsgcmV0dXJuICcnIH1cblxuICBsZXQgZWxlbTogRWxlbWVudCB8IG51bGwgPSBzZWxlY3RlZFxuICBjb25zdCBzZWxlY3RvckJ1aWxkZXJzID0gW11cbiAgY29uc3Qgc3BlY2lmaWNpdHlNYXNrcyA9IFtcbiAgICAwYjAxMTAxLCAvLyBObyBET00gaGllcmFyY2h5LCBubyBudGgtb2YtdHlwZVxuICAgIDBiMTExMDEsIC8vIE5vIERPTSBoaWVyYXJjaHlcbiAgICAwYjAxMDExLCAvLyBObyBudGgtb2YtdHlwZSwgbm8gYXR0cmlidXRlc1xuICAgIDBiMTAwMTEsIC8vIE5vIGF0dHJpYnV0ZXMsIG5vIGNsYXNzIG5hbWVzXG4gICAgMGIxMTExMSAvLyBBbGwgc2VsZWN0b3IgcnVsZXMgKGRlZmF1bHQpXG4gIF1cbiAgY29uc3QgbWFzazogbnVtYmVyID0gc3BlY2lmaWNpdHlNYXNrc1tpbmRleF1cblxuICBpZiAobWFzayAmIFNwZWNpZmljaXR5RmxhZ3MuSGllcmFyY2h5KSB7XG4gICAgd2hpbGUgKGVsZW0gIT09IG51bGwgJiYgZWxlbSAhPT0gZG9jdW1lbnQuYm9keSkge1xuICAgICAgc2VsZWN0b3JCdWlsZGVycy5wdXNoKGNzc1NlbGVjdG9yRnJvbUVsZW1lbnQoZWxlbSkpXG4gICAgICBlbGVtID0gZWxlbS5wYXJlbnRFbGVtZW50XG4gICAgfVxuICB9IGVsc2Uge1xuICAgIHNlbGVjdG9yQnVpbGRlcnMucHVzaChjc3NTZWxlY3RvckZyb21FbGVtZW50KHNlbGVjdGVkISkpXG4gIH1cbiAgLy8gVE9ETzogaW5zZXJ0IHRoZSBib2R5IGlmIHVzaW5nIG50aC10eXBlLW9mXG5cbiAgbGV0IGkgPSAwXG4gIGZvciAoOyBpIDwgc2VsZWN0b3JCdWlsZGVycy5sZW5ndGg7IGkrKykge1xuICAgIGNvbnN0IGIgPSBzZWxlY3RvckJ1aWxkZXJzW2ldXG4gICAgaWYgKChtYXNrICYgU3BlY2lmaWNpdHlGbGFncy5JZCkgJiYgYi5oYXNJZCB8fFxuICAgICAgICBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKGIudG9TdHJpbmcobWFzaykpLmxlbmd0aCA9PT0gMSkge1xuICAgICAgYnJlYWtcbiAgICB9XG4gIH1cbiAgY29uc3Qgc2VsZWN0b3IgPSBzZWxlY3RvckJ1aWxkZXJzXG4gICAgICAuc2xpY2UoMCwgaSArIDEpXG4gICAgICAucmV2ZXJzZSgpXG4gICAgICAubWFwKChiKSA9PiBiLnRvU3RyaW5nKG1hc2spKVxuICAgICAgLmpvaW4oJyA+ICcpXG4gIHJldHVybiBzZWxlY3RvclxufVxuXG5jaHJvbWUucnVudGltZS5vbk1lc3NhZ2UuYWRkTGlzdGVuZXIoKG1zZywgc2VuZGVyLCBzZW5kUmVzcG9uc2UpID0+IHtcbiAgY29uc3QgYWN0aW9uID0gdHlwZW9mIG1zZyA9PT0gJ3N0cmluZycgPyBtc2cgOiBtc2cudHlwZVxuICBzd2l0Y2ggKGFjdGlvbikge1xuICAgIGNhc2UgJ2VsZW1lbnRQaWNrZXJMYXVuY2gnOlxuICAgICAgbGF1bmNoRWxlbWVudFBpY2tlcigpXG4gICAgICBicmVha1xuICAgIGNhc2UgJ3F1aXRFbGVtZW50UGlja2VyJzpcbiAgICAgIHF1aXRFbGVtZW50UGlja2VyKClcbiAgICAgIGJyZWFrXG4gICAgY2FzZSAnZWxlbWVudFBpY2tlckhvdmVyQ29vcmRzQ2hhbmdlZCc6IHtcbiAgICAgIGNvbnN0IHsgY29vcmRzIH0gPSBtc2dcbiAgICAgIGNvbnN0IGVsZW0gPSBlbGVtZW50RnJvbUZyYW1lQ29vcmRzKGNvb3Jkcy54LCBjb29yZHMueSlcbiAgICAgIGlmIChlbGVtICE9PSBudWxsICYmIChlbGVtIGluc3RhbmNlb2YgSFRNTEVsZW1lbnQpICYmIGVsZW0gIT09IGxhc3RIb3ZlcmVkRWxlbSkge1xuICAgICAgICByZWNhbGN1bGF0ZUFuZFNlbmRUYXJnZXRzKFtlbGVtXSlcbiAgICAgICAgbGFzdEhvdmVyZWRFbGVtID0gZWxlbVxuICAgICAgfVxuICAgICAgYnJlYWtcbiAgICB9XG4gICAgY2FzZSAnZWxlbWVudFBpY2tlclVzZXJTZWxlY3RlZFRhcmdldCc6IHtcbiAgICAgIGNvbnN0IHsgc3BlY2lmaWNpdHkgfSA9IG1zZ1xuICAgICAgaWYgKGxhc3RIb3ZlcmVkRWxlbSAhPT0gbnVsbCAmJiAobGFzdEhvdmVyZWRFbGVtIGluc3RhbmNlb2YgSFRNTEVsZW1lbnQpKSB7XG4gICAgICAgIGNvbnN0IHNlbGVjdG9yID0gb25UYXJnZXRTZWxlY3RlZChsYXN0SG92ZXJlZEVsZW0sIHNwZWNpZmljaXR5KVxuICAgICAgICByZWNhbGN1bGF0ZUFuZFNlbmRUYXJnZXRzKEFycmF5LmZyb20oZG9jdW1lbnQucXVlcnlTZWxlY3RvckFsbChzZWxlY3RvcikpKVxuICAgICAgICBzZW5kUmVzcG9uc2Uoe1xuICAgICAgICAgIGlzVmFsaWQ6IHNlbGVjdG9yICE9PSAnJyxcbiAgICAgICAgICBzZWxlY3Rvcjogc2VsZWN0b3IudHJpbSgpXG4gICAgICAgIH0pXG4gICAgICB9XG4gICAgICBicmVha1xuICAgIH1cbiAgICBjYXNlICdlbGVtZW50UGlja2VyVXNlck1vZGlmaWVkUnVsZSc6IHtcbiAgICAgIGNvbnN0IHNlbGVjdG9yID0gbXNnLnNlbGVjdG9yXG4gICAgICBpZiAoc2VsZWN0b3IubGVuZ3RoID4gMCkge1xuICAgICAgICByZWNhbGN1bGF0ZUFuZFNlbmRUYXJnZXRzKEFycmF5LmZyb20oZG9jdW1lbnQucXVlcnlTZWxlY3RvckFsbChzZWxlY3RvcikpKVxuICAgICAgfVxuICAgICAgYnJlYWtcbiAgICB9XG4gICAgY2FzZSAnZWxlbWVudFBpY2tlclVzZXJDcmVhdGVkUnVsZSc6IHtcbiAgICAgIC8vIEFwcGVuZCB0aGUgaG9zdG5hbWUgYW5kIGZvcndhcmQgdG8gdGhlIGJhY2tncm91bmQgc2NyaXB0XG4gICAgICBjaHJvbWUucnVudGltZS5zZW5kTWVzc2FnZSh7XG4gICAgICAgIHR5cGU6ICdjb3NtZXRpY0ZpbHRlckNyZWF0ZScsXG4gICAgICAgIHNlbGVjdG9yOiBtc2cuc2VsZWN0b3JcbiAgICAgIH0pXG4gICAgICBxdWl0RWxlbWVudFBpY2tlcigpXG4gICAgICBicmVha1xuICAgIH1cbiAgfVxufSlcbiJdLCJuYW1lcyI6W10sInNvdXJjZVJvb3QiOiIifQ==</data><data key="d43"/></node><node id="n58"><data key="d23">HTML element</data><data key="d25">58</data><data key="d27">34</data><data key="d20">11</data><data key="d16">false</data><data key="d21">HEAD</data></node><node id="n60"><data key="d23">HTML element</data><data key="d25">60</data><data key="d27">34</data><data key="d20">12</data><data key="d16">false</data><data key="d21">BODY</data></node><edge id="e157" source="n60" target="n64"><data key="d9">document</data><data key="d24">157</data><data key="d26">3054</data></edge><edge id="e158" source="n60" target="n99"><data key="d9">document</data><data key="d24">158</data><data key="d26">3054</data></edge><edge id="e159" source="n60" target="n102"><data key="d9">document</data><data key="d24">159</data><data key="d26">3054</data></edge><edge id="e160" source="n60" target="n67"><data key="d9">document</data><data key="d24">160</data><data key="d26">3054</data></edge><edge id="e161" source="n60" target="n142"><data key="d9">document</data><data key="d24">161</data><data key="d26">3054</data></edge><node id="n64"><data key="d23">text node</data><data key="d25">64</data><data key="d27">34</data><data key="d20">13</data><data key="d16">false</data><data key="d22">
+  </data></node><node id="n67"><data key="d23">frame owner</data><data key="d25">67</data><data key="d27">34</data><data key="d20">14</data><data key="d16">false</data><data key="d21">IFRAME</data></node><node id="n71"><data key="d23">DOM root</data><data key="d25">71</data><data key="d27">34</data><data key="d20">15</data><data key="d16">false</data><data key="d21">#document</data><data key="d43">about:blank</data><data key="d1">true</data></node><edge id="e162" source="n71" target="n78"><data key="d9">document</data><data key="d24">162</data><data key="d26">3054</data></edge><node id="n72"><data key="d23">parser</data><data key="d25">72</data><data key="d27">34</data></node><node id="n73"><data key="d23">extensions</data><data key="d25">73</data><data key="d27">34</data></node><node id="n78"><data key="d23">HTML element</data><data key="d25">78</data><data key="d27">35</data><data key="d20">16</data><data key="d16">false</data><data key="d21">HTML</data></node><edge id="e163" source="n78" target="n81"><data key="d9">document</data><data key="d24">163</data><data key="d26">3054</data></edge><edge id="e164" source="n78" target="n83"><data key="d9">document</data><data key="d24">164</data><data key="d26">3054</data></edge><node id="n81"><data key="d23">HTML element</data><data key="d25">81</data><data key="d27">35</data><data key="d20">17</data><data key="d16">false</data><data key="d21">HEAD</data></node><node id="n83"><data key="d23">HTML element</data><data key="d25">83</data><data key="d27">35</data><data key="d20">18</data><data key="d16">false</data><data key="d21">BODY</data></node><node id="n87"><data key="d23">DOM root</data><data key="d25">87</data><data key="d27">35</data><data key="d20">19</data><data key="d16">false</data><data key="d21">#document</data><data key="d43">about:blank</data><data key="d1">true</data></node><edge id="e165" source="n87" target="n90"><data key="d9">document</data><data key="d24">165</data><data key="d26">3054</data></edge><node id="n90"><data key="d23">HTML element</data><data key="d25">90</data><data key="d27">37</data><data key="d20">20</data><data key="d16">false</data><data key="d21">HTML</data></node><edge id="e166" source="n90" target="n93"><data key="d9">document</data><data key="d24">166</data><data key="d26">3054</data></edge><edge id="e167" source="n90" target="n95"><data key="d9">document</data><data key="d24">167</data><data key="d26">3054</data></edge><node id="n93"><data key="d23">HTML element</data><data key="d25">93</data><data key="d27">37</data><data key="d20">21</data><data key="d16">false</data><data key="d21">HEAD</data></node><node id="n95"><data key="d23">HTML element</data><data key="d25">95</data><data key="d27">37</data><data key="d20">22</data><data key="d16">false</data><data key="d21">BODY</data></node><node id="n99"><data key="d23">text node</data><data key="d25">99</data><data key="d27">37</data><data key="d20">23</data><data key="d16">false</data><data key="d22">
+  </data></node><node id="n102"><data key="d23">HTML element</data><data key="d25">102</data><data key="d27">37</data><data key="d20">24</data><data key="d16">false</data><data key="d21">SCRIPT</data></node><edge id="e168" source="n102" target="n105"><data key="d9">document</data><data key="d24">168</data><data key="d26">3054</data></edge><node id="n105"><data key="d23">text node</data><data key="d25">105</data><data key="d27">37</data><data key="d20">25</data><data key="d16">false</data><data key="d22">
+    const frameElm = document.getElementsByTagName("iframe")[0]
+    document.body.appendChild(frameElm)
+    window.localStorage.frame = "top"
+    frameElm.contentWindow.localStorage.frame = "child";
+  </data></node><node id="n108"><data key="d23">script</data><data key="d25">108</data><data key="d27">37</data><data key="d35">8</data><data key="d37">inline</data><data key="d40">
+    const frameElm = document.getElementsByTagName("iframe")[0]
+    document.body.appendChild(frameElm)
+    window.localStorage.frame = "top"
+    frameElm.contentWindow.localStorage.frame = "child";
+  </data><data key="d43"/></node><node id="n112"><data key="d23">DOM root</data><data key="d25">112</data><data key="d27">38</data><data key="d20">26</data><data key="d16">false</data><data key="d21">#document</data><data key="d43">about:blank</data><data key="d1">true</data></node><edge id="e169" source="n112" target="n119"><data key="d9">document</data><data key="d24">169</data><data key="d26">3054</data></edge><node id="n113"><data key="d23">parser</data><data key="d25">113</data><data key="d27">38</data></node><node id="n114"><data key="d23">extensions</data><data key="d25">114</data><data key="d27">38</data></node><node id="n119"><data key="d23">HTML element</data><data key="d25">119</data><data key="d27">38</data><data key="d20">27</data><data key="d16">false</data><data key="d21">HTML</data></node><edge id="e170" source="n119" target="n122"><data key="d9">document</data><data key="d24">170</data><data key="d26">3054</data></edge><edge id="e171" source="n119" target="n124"><data key="d9">document</data><data key="d24">171</data><data key="d26">3054</data></edge><node id="n122"><data key="d23">HTML element</data><data key="d25">122</data><data key="d27">38</data><data key="d20">28</data><data key="d16">false</data><data key="d21">HEAD</data></node><node id="n124"><data key="d23">HTML element</data><data key="d25">124</data><data key="d27">38</data><data key="d20">29</data><data key="d16">false</data><data key="d21">BODY</data></node><node id="n128"><data key="d23">DOM root</data><data key="d25">128</data><data key="d27">39</data><data key="d20">30</data><data key="d16">false</data><data key="d21">#document</data><data key="d43">about:blank</data><data key="d1">true</data></node><edge id="e172" source="n128" target="n131"><data key="d9">document</data><data key="d24">172</data><data key="d26">3054</data></edge><node id="n131"><data key="d23">HTML element</data><data key="d25">131</data><data key="d27">40</data><data key="d20">31</data><data key="d16">false</data><data key="d21">HTML</data></node><edge id="e173" source="n131" target="n134"><data key="d9">document</data><data key="d24">173</data><data key="d26">3054</data></edge><edge id="e174" source="n131" target="n136"><data key="d9">document</data><data key="d24">174</data><data key="d26">3054</data></edge><node id="n134"><data key="d23">HTML element</data><data key="d25">134</data><data key="d27">41</data><data key="d20">32</data><data key="d16">false</data><data key="d21">HEAD</data></node><node id="n136"><data key="d23">HTML element</data><data key="d25">136</data><data key="d27">41</data><data key="d20">33</data><data key="d16">false</data><data key="d21">BODY</data></node><node id="n142"><data key="d23">text node</data><data key="d25">142</data><data key="d27">41</data><data key="d20">34</data><data key="d16">false</data><data key="d22">
+</data></node><node id="n145"><data key="d23">resource</data><data key="d25">145</data><data key="d27">53</data><data key="d43">http://[::]:8000/favicon.ico</data></node><edge id="e6" source="n1" target="n2"><data key="d9">shield</data><data key="d24">6</data><data key="d26">0</data></edge><edge id="e7" source="n1" target="n3"><data key="d9">shield</data><data key="d24">7</data><data key="d26">0</data></edge><edge id="e8" source="n1" target="n4"><data key="d9">shield</data><data key="d24">8</data><data key="d26">0</data></edge><edge id="e9" source="n1" target="n5"><data key="d9">shield</data><data key="d24">9</data><data key="d26">0</data></edge><edge id="e14" source="n10" target="n11"><data key="d9">storage bucket</data><data key="d24">14</data><data key="d26">0</data></edge><edge id="e15" source="n10" target="n12"><data key="d9">storage bucket</data><data key="d24">15</data><data key="d26">0</data></edge><edge id="e16" source="n10" target="n13"><data key="d9">storage bucket</data><data key="d24">16</data><data key="d26">0</data></edge><edge id="e20" source="n18" target="n19"><data key="d9">structure</data><data key="d24">20</data><data key="d26">0</data></edge><edge id="e21" source="n18" target="n17"><data key="d9">structure</data><data key="d24">21</data><data key="d26">0</data></edge><edge id="e22" source="n18" target="n17"><data key="d9">create node</data><data key="d24">22</data><data key="d26">0</data><data key="d11">0</data></edge><edge id="e24" source="n18" target="n23"><data key="d9">create node</data><data key="d24">24</data><data key="d26">0</data><data key="d11">1</data></edge><edge id="e25" source="n18" target="n23"><data key="d9">insert node</data><data key="d24">25</data><data key="d26">0</data><data key="d11">1</data><data key="d28">1</data></edge><edge id="e27" source="n18" target="n26"><data key="d9">create node</data><data key="d24">27</data><data key="d26">0</data><data key="d11">1</data></edge><edge id="e29" source="n18" target="n28"><data key="d9">create node</data><data key="d24">29</data><data key="d26">0</data><data key="d11">1</data></edge><edge id="e30" source="n18" target="n26"><data key="d9">insert node</data><data key="d24">30</data><data key="d26">0</data><data key="d11">1</data><data key="d28">2</data></edge><edge id="e31" source="n18" target="n28"><data key="d9">insert node</data><data key="d24">31</data><data key="d26">0</data><data key="d11">1</data><data key="d28">2</data><data key="d3">3</data></edge><edge id="e35" source="n33" target="n34"><data key="d9">structure</data><data key="d24">35</data><data key="d26">3</data></edge><edge id="e36" source="n33" target="n32"><data key="d9">structure</data><data key="d24">36</data><data key="d26">3</data></edge><edge id="e37" source="n33" target="n32"><data key="d9">create node</data><data key="d24">37</data><data key="d26">3</data><data key="d11">0</data></edge><edge id="e39" source="n33" target="n38"><data key="d9">create node</data><data key="d24">39</data><data key="d26">6</data><data key="d11">5</data></edge><edge id="e40" source="n33" target="n38"><data key="d9">insert node</data><data key="d24">40</data><data key="d26">6</data><data key="d11">5</data><data key="d28">5</data></edge><edge id="e42" source="n33" target="n41"><data key="d9">create node</data><data key="d24">42</data><data key="d26">6</data><data key="d11">5</data></edge><edge id="e44" source="n33" target="n43"><data key="d9">create node</data><data key="d24">44</data><data key="d26">6</data><data key="d11">5</data></edge><edge id="e45" source="n33" target="n41"><data key="d9">insert node</data><data key="d24">45</data><data key="d26">6</data><data key="d11">5</data><data key="d28">6</data></edge><edge id="e46" source="n33" target="n43"><data key="d9">insert node</data><data key="d24">46</data><data key="d26">6</data><data key="d11">5</data><data key="d28">6</data><data key="d3">7</data></edge><edge id="e50" source="n48" target="n49"><data key="d9">structure</data><data key="d24">50</data><data key="d26">29</data></edge><edge id="e51" source="n48" target="n47"><data key="d9">structure</data><data key="d24">51</data><data key="d26">29</data></edge><edge id="e52" source="n48" target="n47"><data key="d9">create node</data><data key="d24">52</data><data key="d26">29</data><data key="d11">0</data></edge><edge id="e54" source="n48" target="n53"><data key="d9">create node</data><data key="d24">54</data><data key="d26">32</data><data key="d11">9</data></edge><edge id="e55" source="n48" target="n53"><data key="d9">insert node</data><data key="d24">55</data><data key="d26">32</data><data key="d11">9</data><data key="d28">9</data></edge><edge id="e57" source="n48" target="n56"><data key="d9">execute</data><data key="d24">57</data><data key="d26">34</data><data key="d11">9</data></edge><edge id="e59" source="n48" target="n58"><data key="d9">create node</data><data key="d24">59</data><data key="d26">34</data><data key="d11">9</data></edge><edge id="e61" source="n48" target="n60"><data key="d9">create node</data><data key="d24">61</data><data key="d26">34</data><data key="d11">9</data></edge><edge id="e62" source="n48" target="n58"><data key="d9">insert node</data><data key="d24">62</data><data key="d26">34</data><data key="d11">9</data><data key="d28">10</data></edge><edge id="e63" source="n48" target="n60"><data key="d9">insert node</data><data key="d24">63</data><data key="d26">34</data><data key="d11">9</data><data key="d28">10</data><data key="d3">11</data></edge><edge id="e65" source="n48" target="n64"><data key="d9">create node</data><data key="d24">65</data><data key="d26">34</data><data key="d11">9</data></edge><edge id="e66" source="n48" target="n64"><data key="d9">insert node</data><data key="d24">66</data><data key="d26">34</data><data key="d11">9</data><data key="d28">12</data></edge><edge id="e68" source="n48" target="n67"><data key="d9">create node</data><data key="d24">68</data><data key="d26">34</data><data key="d11">9</data></edge><edge id="e69" source="n48" target="n67"><data key="d9">insert node</data><data key="d24">69</data><data key="d26">34</data><data key="d11">9</data><data key="d28">12</data><data key="d3">13</data></edge><edge id="e70" source="n48" target="n67"><data key="d9">set attribute</data><data key="d24">70</data><data key="d26">34</data><data key="d11">9</data><data key="d18">src</data><data key="d17">false</data><data key="d44">about:blank</data></edge><edge id="e74" source="n72" target="n73"><data key="d9">structure</data><data key="d24">74</data><data key="d26">34</data></edge><edge id="e75" source="n72" target="n71"><data key="d9">structure</data><data key="d24">75</data><data key="d26">34</data></edge><edge id="e76" source="n67" target="n71"><data key="d9">cross DOM</data><data key="d24">76</data><data key="d26">34</data></edge><edge id="e77" source="n72" target="n71"><data key="d9">create node</data><data key="d24">77</data><data key="d26">34</data><data key="d11">9</data></edge><edge id="e79" source="n72" target="n78"><data key="d9">create node</data><data key="d24">79</data><data key="d26">35</data><data key="d11">15</data></edge><edge id="e80" source="n72" target="n78"><data key="d9">insert node</data><data key="d24">80</data><data key="d26">35</data><data key="d11">15</data><data key="d28">15</data></edge><edge id="e82" source="n72" target="n81"><data key="d9">create node</data><data key="d24">82</data><data key="d26">35</data><data key="d11">15</data></edge><edge id="e84" source="n72" target="n83"><data key="d9">create node</data><data key="d24">84</data><data key="d26">35</data><data key="d11">15</data></edge><edge id="e85" source="n72" target="n81"><data key="d9">insert node</data><data key="d24">85</data><data key="d26">35</data><data key="d11">15</data><data key="d28">16</data></edge><edge id="e86" source="n72" target="n83"><data key="d9">insert node</data><data key="d24">86</data><data key="d26">35</data><data key="d11">15</data><data key="d28">16</data><data key="d3">17</data></edge><edge id="e88" source="n67" target="n87"><data key="d9">cross DOM</data><data key="d24">88</data><data key="d26">35</data></edge><edge id="e89" source="n72" target="n87"><data key="d9">create node</data><data key="d24">89</data><data key="d26">35</data><data key="d11">9</data></edge><edge id="e91" source="n72" target="n90"><data key="d9">create node</data><data key="d24">91</data><data key="d26">37</data><data key="d11">19</data></edge><edge id="e92" source="n72" target="n90"><data key="d9">insert node</data><data key="d24">92</data><data key="d26">37</data><data key="d11">19</data><data key="d28">19</data></edge><edge id="e94" source="n72" target="n93"><data key="d9">create node</data><data key="d24">94</data><data key="d26">37</data><data key="d11">19</data></edge><edge id="e96" source="n72" target="n95"><data key="d9">create node</data><data key="d24">96</data><data key="d26">37</data><data key="d11">19</data></edge><edge id="e97" source="n72" target="n93"><data key="d9">insert node</data><data key="d24">97</data><data key="d26">37</data><data key="d11">19</data><data key="d28">20</data></edge><edge id="e98" source="n72" target="n95"><data key="d9">insert node</data><data key="d24">98</data><data key="d26">37</data><data key="d11">19</data><data key="d28">20</data><data key="d3">21</data></edge><edge id="e100" source="n48" target="n99"><data key="d9">create node</data><data key="d24">100</data><data key="d26">37</data><data key="d11">9</data></edge><edge id="e101" source="n48" target="n99"><data key="d9">insert node</data><data key="d24">101</data><data key="d26">37</data><data key="d11">9</data><data key="d28">12</data><data key="d3">14</data></edge><edge id="e103" source="n48" target="n102"><data key="d9">create node</data><data key="d24">103</data><data key="d26">37</data><data key="d11">9</data></edge><edge id="e104" source="n48" target="n102"><data key="d9">insert node</data><data key="d24">104</data><data key="d26">37</data><data key="d11">9</data><data key="d28">12</data><data key="d3">23</data></edge><edge id="e106" source="n48" target="n105"><data key="d9">create node</data><data key="d24">106</data><data key="d26">37</data><data key="d11">9</data></edge><edge id="e107" source="n48" target="n105"><data key="d9">insert node</data><data key="d24">107</data><data key="d26">37</data><data key="d11">9</data><data key="d28">24</data></edge><edge id="e109" source="n102" target="n108"><data key="d9">execute</data><data key="d24">109</data><data key="d26">37</data><data key="d11">9</data></edge><edge id="e110" source="n108" target="n67"><data key="d9">remove node</data><data key="d24">110</data><data key="d26">38</data><data key="d11">9</data></edge><edge id="e111" source="n108" target="n67"><data key="d9">insert node</data><data key="d24">111</data><data key="d26">38</data><data key="d11">9</data><data key="d28">12</data><data key="d3">24</data></edge><edge id="e115" source="n113" target="n114"><data key="d9">structure</data><data key="d24">115</data><data key="d26">38</data></edge><edge id="e116" source="n113" target="n112"><data key="d9">structure</data><data key="d24">116</data><data key="d26">38</data></edge><edge id="e117" source="n67" target="n112"><data key="d9">cross DOM</data><data key="d24">117</data><data key="d26">38</data></edge><edge id="e118" source="n108" target="n112"><data key="d9">create node</data><data key="d24">118</data><data key="d26">38</data><data key="d11">9</data></edge><edge id="e120" source="n108" target="n119"><data key="d9">create node</data><data key="d24">120</data><data key="d26">38</data><data key="d11">26</data></edge><edge id="e121" source="n108" target="n119"><data key="d9">insert node</data><data key="d24">121</data><data key="d26">38</data><data key="d11">26</data><data key="d28">26</data></edge><edge id="e123" source="n108" target="n122"><data key="d9">create node</data><data key="d24">123</data><data key="d26">38</data><data key="d11">26</data></edge><edge id="e125" source="n108" target="n124"><data key="d9">create node</data><data key="d24">125</data><data key="d26">38</data><data key="d11">26</data></edge><edge id="e126" source="n108" target="n122"><data key="d9">insert node</data><data key="d24">126</data><data key="d26">38</data><data key="d11">26</data><data key="d28">27</data></edge><edge id="e127" source="n108" target="n124"><data key="d9">insert node</data><data key="d24">127</data><data key="d26">38</data><data key="d11">26</data><data key="d28">27</data><data key="d3">28</data></edge><edge id="e129" source="n67" target="n128"><data key="d9">cross DOM</data><data key="d24">129</data><data key="d26">39</data></edge><edge id="e130" source="n108" target="n128"><data key="d9">create node</data><data key="d24">130</data><data key="d26">39</data><data key="d11">9</data></edge><edge id="e132" source="n108" target="n131"><data key="d9">create node</data><data key="d24">132</data><data key="d26">40</data><data key="d11">30</data></edge><edge id="e133" source="n108" target="n131"><data key="d9">insert node</data><data key="d24">133</data><data key="d26">40</data><data key="d11">30</data><data key="d28">30</data></edge><edge id="e135" source="n108" target="n134"><data key="d9">create node</data><data key="d24">135</data><data key="d26">41</data><data key="d11">30</data></edge><edge id="e137" source="n108" target="n136"><data key="d9">create node</data><data key="d24">137</data><data key="d26">41</data><data key="d11">30</data></edge><edge id="e138" source="n108" target="n134"><data key="d9">insert node</data><data key="d24">138</data><data key="d26">41</data><data key="d11">30</data><data key="d28">31</data></edge><edge id="e139" source="n108" target="n136"><data key="d9">insert node</data><data key="d24">139</data><data key="d26">41</data><data key="d11">30</data><data key="d28">31</data><data key="d3">32</data></edge><edge id="e140" source="n108" target="n12"><data key="d9">storage set</data><data key="d24">140</data><data key="d26">41</data><data key="d11">9</data><data key="d18">frame</data><data key="d44">"top"</data></edge><edge id="e141" source="n108" target="n12"><data key="d9">storage set</data><data key="d24">141</data><data key="d26">41</data><data key="d11">30</data><data key="d18">frame</data><data key="d44">"child"</data></edge><edge id="e143" source="n48" target="n142"><data key="d9">create node</data><data key="d24">143</data><data key="d26">41</data><data key="d11">9</data></edge><edge id="e144" source="n48" target="n142"><data key="d9">insert node</data><data key="d24">144</data><data key="d26">41</data><data key="d11">9</data><data key="d28">12</data><data key="d3">14</data></edge><edge id="e146" source="n48" target="n145"><data key="d9">request start</data><data key="d24">146</data><data key="d26">53</data><data key="d30">2</data><data key="d41">started</data><data key="d11">9</data><data key="d31">Resource</data></edge><edge id="e147" source="n145" target="n48"><data key="d9">request complete</data><data key="d24">147</data><data key="d26">57</data><data key="d30">2</data><data key="d41">complete</data><data key="d11">9</data><data key="d13">cooked-response:"Date" "Fri, 14 Jun 2024 11:44:08 GMT"
+cooked-response:"Server" "SimpleHTTP/0.6 Python/3.12.3"
+cooked-response:"Connection" "close"
+cooked-response:"Content-Length" "335"
+cooked-response:"Content-Type" "text/html;charset=utf-8"
+</data><data key="d39">520</data><data key="d31">Resource</data><data key="d32">hgtT7W6moM9gL65jLPzSjbz2N/hai+4o0u6cbMkIFmk=</data></edge></graph></graphml>

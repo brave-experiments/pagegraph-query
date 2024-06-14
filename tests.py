@@ -17,7 +17,7 @@ def setup_cmd(args: argparse.Namespace, other_args: list[str]) -> None:
 
 
 def run_cmd(args: argparse.Namespace, other_args: list[str]) -> None:
-    pagegraph.tests.commands.run(args.verbose)
+    pagegraph.tests.commands.run(args.filter, args.verbose)
 
 
 PARSER = argparse.ArgumentParser(
@@ -73,6 +73,10 @@ SETUP_PARSER.set_defaults(func=setup_cmd)
 RUN_PARSER = SUBPARSERS.add_parser(
     "run",
     help="Run the unittest test suite.")
+RUN_PARSER.add_argument(
+    "--filter",
+    default=None,
+    help="If provided, will only run tests that match this name.")
 RUN_PARSER.add_argument(
     "-v", "--verbose",
     default=False,

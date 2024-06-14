@@ -1,0 +1,9 @@
+<body>
+  <iframe src="about:blank"></iframe>
+  <script>
+    const frameElm = document.getElementsByTagName("iframe")[0]
+    document.body.appendChild(frameElm)
+    window.localStorage.frame = "top"
+    frameElm.contentWindow.localStorage.frame = "child";
+  </script>
+</body>

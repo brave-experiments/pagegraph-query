@@ -1,6 +1,7 @@
 import pathlib
 import sys
 import subprocess
+from typing import Optional
 
 import pagegraph.tests.util.paths as PG_PATHS
 import pagegraph.tests.commands.cases as PG_CASES
@@ -34,9 +35,12 @@ def setup(tool_path: str, testcase_filter: None, port: int,
     handle = PG_SERVER.start(PG_PATHS.testcases(), port, verbose)
     try:
         for test_case in test_cases:
+            output_path = PG_CASES.graph_path_for_case(test_case)
+            if output_path.is_file():
+                print(f" - skipping bc {output_path} already exists")
+                continue
             print(f" - generating graph for {test_case.name}")
             input_url = PG_SERVER.url_for_case(test_case, port)
-            output_path = PG_CASES.graph_path_for_case(test_case)
             PG_CRAWL.run(pg_crawl_dir, input_url, output_path, verbose,
                          other_args)
     except subprocess.CalledProcessError as e:
@@ -45,7 +49,7 @@ def setup(tool_path: str, testcase_filter: None, port: int,
     PG_SERVER.shutdown(handle)
 
 
-def run(verbose: bool) -> None:
+def run(testcase_filter: Optional[str], verbose: bool) -> None:
     unittest_files: list[str] = []
     for child in PG_PATHS.unittests().iterdir():
         if not child.is_file() or child.name == "__init__.py":
@@ -58,5 +62,10 @@ def run(verbose: bool) -> None:
     simple_test_arg = [
         "/usr/bin/env", "python3",
         "-m", "unittest",
-    ] + unittest_files
+    ]
+
+    if testcase_filter:
+        simple_test_arg += ["-k", testcase_filter]
+
+    simple_test_arg += unittest_files
     subprocess.run(simple_test_arg)

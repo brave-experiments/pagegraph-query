@@ -203,6 +203,9 @@ class Node(PageGraphElement, ABC):
             self.as_parser_node()
         )
 
+    def as_storage_area_node(self) -> Optional["StorageAreaNode"]:
+        return None
+
     def as_text_node(self) -> Optional["TextNode"]:
         return None
 
@@ -225,6 +228,15 @@ class Node(PageGraphElement, ABC):
         return None
 
     def as_resource_node(self) -> Optional["ResourceNode"]:
+        return None
+
+    def as_cookie_jar_node(self) -> Optional["CookieJarNode"]:
+        return None
+
+    def as_local_storage_node(self) -> Optional["LocalStorageNode"]:
+        return None
+
+    def as_session_storage_node(self) -> Optional["SessionStorageNode"]:
         return None
 
     def is_toplevel_parser(self) -> bool:
@@ -1030,7 +1042,7 @@ class StorageNode(Node):
         return self
 
 
-class CookieJarNode(Node):
+class StorageAreaNode(Node, ABC):
     incoming_edge_types = [
         Edge.Types.STORAGE_BUCKET,
         Edge.Types.STORAGE_CLEAR,
@@ -1042,40 +1054,28 @@ class CookieJarNode(Node):
     outgoing_edge_types = [
         Edge.Types.STORAGE_READ_RESULT
     ]
+
+    def as_storage_area_node(self) -> Optional["StorageAreaNode"]:
+        return (
+            self.as_cookie_jar_node() or
+            self.as_local_storage_node() or
+            self.as_session_storage_node()
+        )
+
+
+class CookieJarNode(StorageAreaNode):
 
     def as_cookie_jar_node(self) -> Optional["CookieJarNode"]:
         return self
 
 
-class LocalStorageNode(Node):
-    incoming_edge_types = [
-        Edge.Types.STORAGE_BUCKET,
-        Edge.Types.STORAGE_CLEAR,
-        Edge.Types.STORAGE_DELETE,
-        Edge.Types.STORAGE_READ_CALL,
-        Edge.Types.STORAGE_SET,
-    ]
-
-    outgoing_edge_types = [
-        Edge.Types.STORAGE_READ_RESULT
-    ]
+class LocalStorageNode(StorageAreaNode):
 
     def as_local_storage_node(self) -> Optional["LocalStorageNode"]:
         return self
 
 
-class SessionStorageNode(Node):
-    incoming_edge_types = [
-        Edge.Types.STORAGE_BUCKET,
-        Edge.Types.STORAGE_CLEAR,
-        Edge.Types.STORAGE_DELETE,
-        Edge.Types.STORAGE_READ_CALL,
-        Edge.Types.STORAGE_SET,
-    ]
-
-    outgoing_edge_types = [
-        Edge.Types.STORAGE_READ_RESULT
-    ]
+class SessionStorageNode(StorageAreaNode):
 
     def as_session_storage_node(self) -> Optional["SessionStorageNode"]:
         return self

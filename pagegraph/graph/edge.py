@@ -17,8 +17,8 @@ from pagegraph.versions import Feature
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
     from pagegraph.graph.node import Node, ScriptNode, DOMRootNode, HTMLNode
-    from pagegraph.graph.node import JSStructureNode, ResourceNode
-    from pagegraph.graph.node import FrameOwnerNode, ParserNode
+    from pagegraph.graph.node import JSStructureNode, ResourceNode, ParserNode
+    from pagegraph.graph.node import FrameOwnerNode, StorageAreaNode
 
 
 class Edge(PageGraphElement, ABC):
@@ -731,29 +731,67 @@ class StorageBucketEdge(Edge):
         return self
 
 
-class StorageReadCallEdge(FrameIdAttributedEdge):
+class StorageCallEdge(FrameIdAttributedEdge, ABC):
+
+    incoming_node_type_names = [
+        "script",  # Node.Types.SCRIPT
+    ]
+
+    outgoing_node_type_names = [
+        "local storage",  # Node.Types.LOCAL_STORAGE
+        "session storage",  # Node.Types.SESSION_STORAGE
+        "cookie jar",  # Node.Types.COOKIE_JAR
+    ]
+
+    def incoming_node(self) -> "ScriptNode":
+        script_node = super().incoming_node().as_script_node()
+        assert script_node
+        return script_node
+
+    def outgoing_node(self) -> "StorageAreaNode":
+        outgoing_node = super().outgoing_node().as_storage_area_node()
+        assert outgoing_node
+        return outgoing_node
+
+
+class StorageReadCallEdge(StorageCallEdge):
     def as_storage_read_call_edge(self) -> Optional["StorageReadCallEdge"]:
         return self
+
+    def key(self) -> str:
+        return self.data()[Edge.RawAttrs.KEY.value]
 
 
 class StorageReadResultEdge(FrameIdAttributedEdge):
     def as_storage_read_result_edge(self) -> Optional["StorageReadResultEdge"]:
         return self
 
+    def value(self) -> str:
+        return self.data()[Edge.RawAttrs.VALUE.value]
 
-class StorageSetEdge(FrameIdAttributedEdge):
-    def as_storage_set_edge(self) -> Optional["StorageSetEdge"]:
+
+class StorageSetEdge(StorageCallEdge):
+    def as_storage_set_dge(self) -> Optional["StorageSetEdge"]:
         return self
 
+    def key(self) -> str:
+        return self.data()[Edge.RawAttrs.KEY.value]
 
-class StorageClearEdge(FrameIdAttributedEdge):
+    def value(self) -> str:
+        return self.data()[Edge.RawAttrs.VALUE.value]
+
+
+class StorageClearEdge(StorageCallEdge):
     def as_storage_clear_edge(self) -> Optional["StorageClearEdge"]:
         return self
 
 
-class StorageDeleteEdge(FrameIdAttributedEdge):
+class StorageDeleteEdge(StorageCallEdge):
     def as_storage_delete_edge(self) -> Optional["StorageDeleteEdge"]:
         return self
+
+    def key(self) -> str:
+        return self.data()[Edge.RawAttrs.KEY.value]
 
 
 class JSCallEdge(FrameIdAttributedEdge):

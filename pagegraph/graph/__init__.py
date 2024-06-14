@@ -6,7 +6,8 @@ import networkx as NWX  # type: ignore
 from packaging.version import Version
 
 from pagegraph.graph.edge import Edge, NodeInsertEdge, JSCallEdge
-from pagegraph.graph.edge import RequestStartEdge
+from pagegraph.graph.edge import RequestStartEdge, StorageDeleteEdge
+from pagegraph.graph.edge import StorageSetEdge, StorageClearEdge
 from pagegraph.graph.edge import for_type as edge_for_type
 from pagegraph.graph.node import for_type as node_for_type
 from pagegraph.graph.node import DOMRootNode, Node, HTMLNode, ScriptNode
@@ -131,6 +132,18 @@ class PageGraph:
     def request_start_edges(self) -> list[RequestStartEdge]:
         edges = self.edges_of_type(Edge.Types.REQUEST_START)
         return cast(list[RequestStartEdge], edges)
+
+    def storage_set_edges(self) -> list[StorageSetEdge]:
+        edges = self.edges_of_type(Edge.Types.STORAGE_SET)
+        return cast(list[StorageSetEdge], edges)
+
+    def storage_delete_edges(self) -> list[StorageDeleteEdge]:
+        edges = self.edges_of_type(Edge.Types.STORAGE_DELETE)
+        return cast(list[StorageDeleteEdge], edges)
+
+    def storage_clear_edges(self) -> list[StorageClearEdge]:
+        edges = self.edges_of_type(Edge.Types.STORAGE_CLEAR)
+        return cast(list[StorageClearEdge], edges)
 
     def node_for_blink_id(self, blink_id: BlinkId) -> DOMNode:
         if self.debug:
