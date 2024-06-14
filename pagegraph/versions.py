@@ -14,21 +14,26 @@ from packaging.version import parse, Version
 from pagegraph import VERSION
 
 
-class PageGraphFeature(Enum):
-    EXECUTE_EDGES_HAVE_FRAME_ID = auto()
+MIN_GRAPH_VERSION = Version("0.7.0")
+GRAPH_VERSION_0_7_0 = Version("0.7.0")
 
 
-PG_0_6_3_FEATURES = (PageGraphFeature.EXECUTE_EDGES_HAVE_FRAME_ID,)
-PG_FEATURE_VERSION_MAPPING: dict[tuple[PageGraphFeature], Version] = {
-    PG_0_6_3_FEATURES: Version("0.6.3")
+class Feature(Enum):
+    CROSS_DOM_EDGES_POINT_TO_DOM_ROOTS = auto()
+    DOCUMENT_EDGES = auto()
+
+
+PG_FEATURE_VERSION_MAPPING: dict[Feature, Version] = {
+    Feature.CROSS_DOM_EDGES_POINT_TO_DOM_ROOTS: GRAPH_VERSION_0_7_0,
+    Feature.DOCUMENT_EDGES: GRAPH_VERSION_0_7_0,
 }
 
 
-def min_version_for_feature(feature: PageGraphFeature) -> Version:
-    for version_set, graph_version in PG_FEATURE_VERSION_MAPPING.items():
-        if feature in version_set:
-            return graph_version
-    raise ValueError(f'PageGraphFeature "{feature}" not tied to any version')
+def min_version_for_feature(feature: Feature) -> Version:
+    try:
+        return PG_FEATURE_VERSION_MAPPING[feature]
+    except KeyError:
+        raise ValueError(f'Feature "{feature}" not tied to any version')
 
 
 def extract_pagegraph_version(input_path: str) -> Version:
@@ -51,9 +56,11 @@ def extract_pagegraph_version(input_path: str) -> Version:
 def check_pagegraph_version(input_path: str) -> Union[Version, None]:
     graph_version = extract_pagegraph_version(input_path)
     graph_major, graph_minor, _ = graph_version.release
-    if graph_major != VERSION.major or graph_minor != VERSION.minor:
-        print(f"Major and minor versions of this library ({VERSION}) and " +
-              f"PageGraph files ({graph_version}) do not match. " +
-              "Results may be incorrect.", file=sys.stderr)
+    min_major, min_minor, _ = MIN_GRAPH_VERSION.release
+    if (graph_major < graph_major or
+            graph_major == graph_major and graph_minor < min_minor):
+        print("This pagegraph file version is not supported. "
+              f"Detected {graph_version}, min supported version is "
+              f"{MIN_GRAPH_VERSION}", file=sys.stderr)
         return None
     return graph_version

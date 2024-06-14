@@ -1,0 +1,9 @@
+<body>
+  <iframe src="about:blank" id="frame1"></iframe>
+  <script>
+    const iframeElm = document.getElementById("frame1")
+    setTimeout(_ => {
+      iframeElm.src = "/assets/blank-frame.html"
+    }, 1000)
+  </script>
+</body>

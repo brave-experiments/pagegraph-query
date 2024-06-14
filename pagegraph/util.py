@@ -3,8 +3,14 @@ from urllib.parse import urlparse
 from pagegraph.types import Url
 
 
+LOCAL_FRAME_URLS = (
+     "about:blank",
+     "about:srcdoc",
+)
+
+
 def is_url_local(url: Url, context_url: Url) -> bool:
-    if url == "about:blank":
+    if url in LOCAL_FRAME_URLS:
         return True
     url_parts = urlparse(url)
     context_url_parts = urlparse(context_url)

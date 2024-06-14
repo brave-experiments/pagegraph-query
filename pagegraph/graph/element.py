@@ -1,3 +1,5 @@
+from abc import ABC
+from enum import StrEnum
 import sys
 from typing import Any, TYPE_CHECKING, Union
 
@@ -7,7 +9,13 @@ if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
 
 
-class PageGraphElement:
+class PageGraphElement(ABC):
+
+    class RawAttrs(StrEnum):
+        TIMESTAMP = "timestamp"
+        # Child classes should implement this enum with the PageGraph
+        # attributes that correspond to node and edge attributes.
+        pass
 
     # Class properties
     summary_methods: Union[dict[str, str], None] = None
@@ -20,10 +28,10 @@ class PageGraphElement:
         self.pg = graph
         self._id = pg_id
 
-    def int_id(self) -> int:
+    def id(self) -> int:
         return int(self._id[1:])
 
-    def id(self) -> PageGraphId:
+    def pg_id(self) -> PageGraphId:
         return self._id
 
     def summary_fields(self) -> Union[None, dict[str, str]]:
@@ -42,7 +50,7 @@ class PageGraphElement:
         raise NotImplementedError("Child class must implement 'data'")
 
     def timestamp(self) -> int:
-        raise NotImplementedError("Child class must implement 'timestamp'")
+        return int(self.data()[self.__class__.RawAttrs.TIMESTAMP])
 
     def describe(self) -> str:
         raise NotImplementedError("Child class must implement 'describe'")

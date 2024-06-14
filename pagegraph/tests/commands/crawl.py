@@ -4,7 +4,7 @@ import subprocess
 
 
 def run(pg_crawl_path: pathlib.Path, test_url: str, output_path: pathlib.Path,
-        other_args: list[str] = []) -> None:
+        verbose: bool = False, other_args: list[str] = []) -> None:
     pg_crawl_cmd = [
         "npm", "run", "crawl", "--",
         "-u", test_url,
@@ -15,7 +15,10 @@ def run(pg_crawl_path: pathlib.Path, test_url: str, output_path: pathlib.Path,
     if "-t" not in other_args:
         pg_crawl_cmd += ["-t", "3"]
 
-    subprocess.run(pg_crawl_cmd, stdout=subprocess.PIPE,
+    pg_crawl_cmd += other_args
+
+    stdout_option = None if verbose else subprocess.DEVNULL
+    subprocess.run(pg_crawl_cmd, stdout=stdout_option,
                    stderr=subprocess.PIPE, check=True,
                    cwd=pg_crawl_path)
 

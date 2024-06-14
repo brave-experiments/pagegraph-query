@@ -9,22 +9,14 @@ import pagegraph.serialize
 from pagegraph import VERSION
 
 
-def subframes_cmd(args):
-    return pagegraph.commands.subframes(args.input, args.local, args.debug)
-
-
-def request_cmd(args):
-    return pagegraph.commands.requests(args.input, args.frame, args.debug)
-
-
-def js_calls_cmd(args):
-    return pagegraph.commands.js_calls(args.input, args.frame, args.cross,
-                                       args.method, args.id, args.debug)
-
-
 def scripts_cmd(args):
     return pagegraph.commands.scripts(args.input, args.frame, args.id,
                                       args.source, args.omit_executors,
+                                      args.debug)
+
+
+def effects_cmd(args):
+    return pagegraph.commands.effects(args.input, args.id, args.loose,
                                       args.debug)
 
 
@@ -33,9 +25,21 @@ def element_query_cmd(args):
                                             args.debug)
 
 
-def effects_cmd(args):
-    return pagegraph.commands.effects(args.input, args.id, args.loose,
-                                      args.debug)
+def js_calls_cmd(args):
+    return pagegraph.commands.js_calls(args.input, args.frame, args.cross,
+                                       args.method, args.id, args.debug)
+
+
+def request_cmd(args):
+    return pagegraph.commands.requests(args.input, args.frame, args.debug)
+
+
+def subframes_cmd(args):
+    return pagegraph.commands.subframes(args.input, args.local, args.debug)
+
+
+def validate_cmd(args):
+    return pagegraph.commands.validate(args.input)
 
 
 PARSER = argparse.ArgumentParser(
@@ -63,6 +67,14 @@ SUBFRAMES_PARSER.add_argument(
     help="Only print information about about frames that are local to"
          " the top level frame at serialization time.")
 SUBFRAMES_PARSER.set_defaults(func=subframes_cmd)
+
+VALIDATE_PARSER = SUBPARSERS.add_parser(
+    "validate",
+    help="Just runs all validation and structure checks against a graph.")
+VALIDATE_PARSER.add_argument(
+    "input",
+    help="Path to PageGraph recording.")
+VALIDATE_PARSER.set_defaults(func=validate_cmd)
 
 REQUEST_PARSER = SUBPARSERS.add_parser(
     "requests",

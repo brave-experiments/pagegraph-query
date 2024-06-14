@@ -1,6 +1,6 @@
 from functools import lru_cache
 from itertools import chain
-from typing import Any, cast, Union
+from typing import Any, cast, Union, Optional, NoReturn
 
 import networkx as NWX  # type: ignore
 from packaging.version import Version
@@ -14,9 +14,9 @@ from pagegraph.graph.node import ParserNode, FrameOwnerNode, ResourceNode
 from pagegraph.graph.node import TextNode, JSStructureNode
 from pagegraph.graph.requests import RequestChain, request_chain_for_edge
 from pagegraph.types import BlinkId, NodeIterator, PageGraphId, DOMNode
-from pagegraph.types import ChildNode, ParentNode, EdgeIterator, FrameId
+from pagegraph.types import ChildDOMNode, ParentDOMNode, EdgeIterator, FrameId
 from pagegraph.types import RequestId
-from pagegraph.versions import PageGraphFeature, check_pagegraph_version
+from pagegraph.versions import Feature, check_pagegraph_version
 from pagegraph.versions import min_version_for_feature
 
 
@@ -38,7 +38,7 @@ class PageGraph:
     __edge_cache: list[Edge] = []
     __edge_id_cache: dict[PageGraphId, tuple[Any, Any]] = {}
 
-    __inserted_below_map: dict[ParentNode, list[ChildNode]] = {}
+    __inserted_below_map: dict[ParentDOMNode, list[ChildDOMNode]] = {}
     # Mapping from a frame id to the most recent DOM node seen for the frame
     __frame_id_map: dict[FrameId, DOMRootNode] = {}
 
@@ -77,8 +77,7 @@ class PageGraph:
             edge.build_caches()
 
         for node in self.dom_nodes():
-            if node.is_domroot():
-                domroot_node = cast(DOMRootNode, node)
+            if domroot_node := node.as_domroot_node():
                 blink_id = domroot_node.blink_id()
                 if blink_id not in self.__frame_id_map:
                     self.__frame_id_map[blink_id] = domroot_node
@@ -92,7 +91,7 @@ class PageGraph:
             self.__request_chain_map[request_id] = request_chain_for_edge(
                 request_start_edge)
 
-    def feature_check(self, feature: PageGraphFeature) -> bool:
+    def feature_check(self, feature: Feature) -> bool:
         if self.graph_version is None:
             return False
         min_graph_version = min_version_for_feature(feature)
@@ -133,18 +132,15 @@ class PageGraph:
         edges = self.edges_of_type(Edge.Types.REQUEST_START)
         return cast(list[RequestStartEdge], edges)
 
-    def node_for_blink_id(self, blink_id: BlinkId) -> Node:
+    def node_for_blink_id(self, blink_id: BlinkId) -> DOMNode:
         if self.debug:
             if blink_id not in self.__blink_id_map:
                 raise Exception(f"blink_id not in blink_id cache: {blink_id}")
 
         node = self.__blink_id_map[blink_id]
-        if node.is_domroot():
-            return cast(DOMRootNode, node)
-
-        if not node.is_dom_node_type():
-            node.throw("Unexpected blink id in mapping table")
-        return cast(HTMLNode, node)
+        dom_node = node.as_dom_node()
+        assert dom_node is not None
+        return dom_node
 
     def dom_nodes(self) -> list[DOMNode]:
         node_types = [
@@ -190,7 +186,7 @@ class PageGraph:
         node_iterator = self.nodes_of_type(Node.Types.FRAME_OWNER)
         return cast(list[FrameOwnerNode], node_iterator)
 
-    def domroots(self) -> list[DOMRootNode]:
+    def domroot_nodes(self) -> list[DOMRootNode]:
         node_iterator = self.nodes_of_type(Node.Types.DOM_ROOT)
         return cast(list[DOMRootNode], node_iterator)
 
@@ -204,8 +200,8 @@ class PageGraph:
         edge_iterator = self.edges_of_type(Edge.Types.JS_CALL)
         return cast(list[JSCallEdge], edge_iterator)
 
-    def child_dom_nodes(self,
-                        parent_node: ParentNode) -> list[ChildNode] | None:
+    def child_dom_nodes(
+            self, parent_node: ParentDOMNode) -> Optional[list[ChildDOMNode]]:
         """Returns all nodes that were ever a child of the parent node,
         at any point during the page's lifetime."""
         if parent_node not in self.__inserted_below_map:
@@ -220,8 +216,7 @@ class PageGraph:
         node_type_str = self.graph.nodes[node_id][Node.RawAttrs.TYPE.value]
         node_type = Node.Types(node_type_str)
         node = node_for_type(node_type, self, node_id)
-        if node.is_dom_node_type():
-            dom_node = cast(DOMNode, node)
+        if dom_node := node.as_dom_node():
             self.__blink_id_map[dom_node.blink_id()] = dom_node
         return node
 
@@ -238,8 +233,7 @@ class PageGraph:
         init_args = [self, edge_id, parent_id, child_id]
         edge = edge_for_type(edge_type, *init_args)
 
-        if edge.is_insert_edge():
-            insert_edge = cast(NodeInsertEdge, edge)
+        if insert_edge := edge.as_insert_edge():
             inserted_node = insert_edge.inserted_node()
             parent_node = insert_edge.inserted_below_node()
 
@@ -256,17 +250,11 @@ class PageGraph:
         return nodes
 
     def toplevel_domroot_nodes(self) -> list[DOMRootNode]:
-        nodes = []
-        for node in self.parser_nodes():
-            if not node.is_toplevel_parser():
-                continue
-            for domroot_node in node.domroots():
-                try:
-                    if domroot_node.url() and domroot_node.frame_id():
-                        nodes.append(domroot_node)
-                except KeyError:
-                    pass
-        return nodes
+        domroot_nodes = []
+        for domroot_node in self.domroot_nodes():
+            if domroot_node.is_top_level_domroot():
+                domroot_nodes.append(domroot_node)
+        return domroot_nodes
 
 
 def from_path(input_path: str, debug: bool = False) -> PageGraph:

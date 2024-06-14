@@ -1,10 +1,11 @@
+from abc import ABC
 import unittest
 
 import pagegraph.graph
 import pagegraph.tests.util.paths as PG_PATHS
 
 
-class PageGraphBaseTestClass(unittest.TestCase):
+class PageGraphBaseTestClass(unittest.TestCase, ABC):
     NAME = ""
 
     def setUp(self) -> None:

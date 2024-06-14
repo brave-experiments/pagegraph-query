@@ -7,7 +7,7 @@ from pagegraph.serialize import FrameReport, RequestReport, ScriptReport
 from pagegraph.serialize import DOMElementReport, JSStructureReport
 from pagegraph.serialize import JSInvokeReport, Report, RequestChainReport
 from pagegraph.serialize import NodeReport, EdgeReport
-from pagegraph.versions import PageGraphFeature
+from pagegraph.versions import Feature
 
 
 @dataclass
@@ -23,24 +23,20 @@ def subframes(input_path: str, local_only: bool,
     report: list[SubFramesCommandReport] = []
 
     for iframe_node in pg.iframe_nodes():
-        parent_frame = iframe_node.domroot_for_creation()
-        if parent_frame is None:
-            iframe_node.throw("Couldn't find owner of iframe")
+        domroot_for_iframe = iframe_node.domroot_node()
+        if local_only and not domroot_for_iframe.is_top_level_domroot():
             continue
 
-        if local_only and not parent_frame.is_top_level_frame():
-            continue
-
-        parent_frame_report = parent_frame.to_report()
+        parent_frame_report = domroot_for_iframe.to_report()
         iframe_elm_report = iframe_node.to_report()
         child_frame_reports: list[FrameReport] = []
 
         is_all_local_frames = True
-        for child_domroot in iframe_node.domroots():
-            if local_only and not child_domroot.is_local_frame():
+        for child_domroot_node in iframe_node.domroot_nodes():
+            if local_only and not child_domroot_node.is_local_domroot():
                 is_all_local_frames = False
                 break
-            child_frame_reports.append(child_domroot.to_report())
+            child_frame_reports.append(child_domroot_node.to_report())
 
         if len(child_frame_reports) == 0:
             continue
@@ -67,7 +63,8 @@ def requests(input_path: str, frame_nid: str | None,
 
     for request_start_edge in pg.request_start_edges():
         request_frame_id = request_start_edge.frame_id()
-        if frame_nid and request_frame_id != frame_nid:
+        req_frame_nid = f"n{request_frame_id}"
+        if frame_nid and req_frame_nid != frame_nid:
             continue
         request_id = request_start_edge.request_id()
         request_chain = pg.request_chain_for_id(request_id)
@@ -96,13 +93,13 @@ def js_calls(input_path: str, frame: str | None, cross_frame: bool,
 
     js_structure_nodes = pg.js_structure_nodes()
     for js_node in js_structure_nodes:
-        if pg_id and js_node.id() != pg_id:
+        if pg_id and js_node.pg_id() != pg_id:
             continue
         if method and method not in js_node.name():
             continue
 
         for call_result in js_node.call_results():
-            if frame and call_result.call_context().id() != frame:
+            if frame and call_result.call_context().pg_id() != frame:
                 continue
             if cross_frame and not call_result.is_cross_frame_call():
                 continue
@@ -129,16 +126,15 @@ def scripts(input_path: str, frame: str | None, pg_id: PageGraphId | None,
     pg = pagegraph.graph.from_path(input_path, debug)
     reports: list[ScriptsCommandReport] = []
     for script_node in pg.script_nodes():
-        if pg_id and script_node.id() != pg_id:
+        if pg_id and script_node.pg_id() != pg_id:
             continue
 
         script_report = script_node.to_report(include_source)
         report = ScriptsCommandReport(script_report)
 
-        if pg.feature_check(PageGraphFeature.EXECUTE_EDGES_HAVE_FRAME_ID):
-            frame_id = script_node.execute_edge().frame_id()
-            frame_report = pg.domroot_for_frame_id(frame_id).to_report()
-            report.frame = frame_report
+        frame_id = script_node.execute_edge().frame_id()
+        frame_report = pg.domroot_for_frame_id(frame_id).to_report()
+        report.frame = frame_report
 
         if omit_executors:
             report.script.executor = None
@@ -172,3 +168,13 @@ def effects(input_path: str, pg_id: PageGraphId, loose: bool,
             debug: bool) -> list[EffectsCommandReport]:
     reports: list[EffectsCommandReport] = []
     return reports
+
+
+@dataclass
+class ValidationReport(Report):
+    success: bool
+
+
+def validate(input_path: str) -> ValidationReport:
+    pagegraph.graph.from_path(input_path, True)
+    return ValidationReport(True)

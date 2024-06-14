@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import ABC
 from base64 import b64encode
 from dataclasses import dataclass
 from enum import StrEnum
@@ -7,23 +8,23 @@ from functools import lru_cache
 import hashlib
 from itertools import chain
 import sys
-from typing import Any, cast, Type, TYPE_CHECKING, Union
+from typing import Any, cast, Optional, Type, TYPE_CHECKING, Union
 
 from pagegraph.graph.element import PageGraphElement, sort_elements
 from pagegraph.graph.edge import Edge
 from pagegraph.graph.js import JSCallResult
 from pagegraph.graph.requests import RequestResponse, RequestChain
-from pagegraph.graph.requests import ResourceType
-from pagegraph.types import BlinkId, EdgeIterator, ChildNode
+from pagegraph.types import BlinkId, EdgeIterator, ChildDOMNode, AttrDOMNode
 from pagegraph.types import PageGraphId, PageGraphNodeId, PageGraphEdgeId
-from pagegraph.types import PageGraphEdgeKey, NodeIterator, Url
-from pagegraph.types import FrameSummary, ParentNode, FrameId
-from pagegraph.types import RequesterNode, RequestId
+from pagegraph.types import PageGraphEdgeKey, NodeIterator, Url, ActorNode
+from pagegraph.types import FrameSummary, ParentDOMNode, FrameId, LeafDOMNode
+from pagegraph.types import RequesterNode, RequestId, ResourceType, DOMNode
 from pagegraph.serialize import Reportable, FrameReport, DOMElementReport
 from pagegraph.serialize import JSStructureReport, ScriptReport
 from pagegraph.serialize import EdgeReport, BriefEdgeReport
 from pagegraph.serialize import NodeReport, BriefNodeReport
 from pagegraph.util import is_url_local, brief_version
+from pagegraph.versions import Feature
 
 
 if TYPE_CHECKING:
@@ -36,7 +37,7 @@ if TYPE_CHECKING:
     from pagegraph.graph.edge import RequestResponseEdge
 
 
-class Node(PageGraphElement):
+class Node(PageGraphElement, ABC):
 
     # Used as class properties
     incoming_node_types: Union[list["Node.Types"], None] = None
@@ -113,14 +114,14 @@ class Node(PageGraphElement):
             incoming_edges = []
             for edge in self.incoming_edges():
                 if edge in seen:
-                    incoming_edges.append(f"(recursion {edge.id()})")
+                    incoming_edges.append(f"(recursion {edge.pg_id()})")
                 else:
                     incoming_edges.append(edge.to_edge_report(depth - 1, seen))
 
             outgoing_edges = []
             for edge in self.outgoing_edges():
                 if edge in seen:
-                    outgoing_edges.append(f"(recursion {edge.id()})")
+                    outgoing_edges.append(f"(recursion {edge.pg_id()})")
                 else:
                     outgoing_edges.append(edge.to_edge_report(depth - 1, seen))
         else:
@@ -130,188 +131,175 @@ class Node(PageGraphElement):
                               in self.outgoing_edges()]
 
         return NodeReport(
-            self.id(), self.node_type(), self.summary_fields(),
+            self.pg_id(), self.node_type(), self.summary_fields(),
             incoming_edges, outgoing_edges)
 
     def to_brief_report(self) -> BriefNodeReport:
-        return BriefNodeReport(self.id(), self.node_type(),
+        return BriefNodeReport(self.pg_id(), self.node_type(),
                                self.summary_fields())
 
     def is_type(self, node_type: Types) -> bool:
         return self.data()[self.RawAttrs.TYPE.value] == node_type.value
 
-    def is_dom_node_type(self) -> bool:
+    def as_dom_node(self) -> Optional[DOMNode]:
         return (
-            self.is_html_elm() or
-            self.is_text_elm() or
-            self.is_domroot() or
-            self.is_frame_owner()
+            self.as_html_node() or
+            self.as_text_node() or
+            self.as_domroot_node() or
+            self.as_frame_owner_node()
         )
 
-    def is_child_dom_node_type(self) -> bool:
+    def as_child_dom_node(self) -> Optional[ChildDOMNode]:
         """Returns true if this node is valid to ever be a child node for
         any other DOM node type."""
-        is_child_dom_node = (
-            self.is_frame_owner() or
-            self.is_text_elm() or
-            self.is_html_elm()
+        return (
+            self.as_frame_owner_node() or
+            self.as_text_node() or
+            self.as_html_node()
         )
-        return is_child_dom_node
 
-    def is_requester_node_type(self) -> bool:
-        is_requester_node = (
-            self.is_parser() or
-            self.is_html_elm() or
-            self.is_script() or
-            self.is_domroot()
+    def as_requester_node(self) -> Optional[RequesterNode]:
+        return (
+            self.as_parser_node() or
+            self.as_html_node() or
+            self.as_script_node() or
+            self.as_domroot_node()
         )
-        return is_requester_node
 
-    def is_leaf_dom_node_type(self) -> bool:
+    def as_leaf_dom_node(self) -> Optional[LeafDOMNode]:
         """Returns true if this is a node type that can appear in the DOM,
         and cannot have any child nodes within this frame."""
-        return self.is_text_elm() or self.is_frame_owner()
+        return (
+            self.as_text_node() or
+            self.as_frame_owner_node()
+        )
 
-    def is_parent_dom_node_type(self) -> bool:
+    def as_parent_dom_node(self) -> Optional[ParentDOMNode]:
         """Returns true if this node is valid to ever be the parent of
         another DOM node in w/in a frame (i.e., iframes/frame owners
         cannot be parents of other DOM nodes w/in the same frame)."""
-        is_parent_dom_node_type = (
-            self.is_html_elm() or
-            self.is_domroot() or
+        return (
+            self.as_html_node() or
+            self.as_domroot_node() or
             # below is surprising, but frameowner (i.e., iframe) nodes
             # can contain text elements, because if a page includes
             # an iframe like this <iframe>SOME TEXT</iframe>, blink will
             # initialize the "SOME TEXT" node as a child of the iframe,
             # even though those nodes will then be immediately replaced
             # with the child document.
-            self.is_frame_owner()
+            self.as_frame_owner_node()
         )
-        return is_parent_dom_node_type
 
-    def is_text_elm(self) -> bool:
-        return False
+    def as_attributable_dom_node(self) -> Optional[AttrDOMNode]:
+        return (
+            self.as_html_node() or
+            self.as_domroot_node() or
+            self.as_frame_owner_node()
+        )
 
-    def is_frame_owner(self) -> bool:
-        return False
+    def as_actor_node(self) -> Optional[ActorNode]:
+        return (
+            self.as_script_node() or
+            self.as_parser_node()
+        )
 
-    def is_script(self) -> bool:
-        return False
+    def as_text_node(self) -> Optional["TextNode"]:
+        return None
 
-    def is_domroot(self) -> bool:
-        return False
+    def as_frame_owner_node(self) -> Optional["FrameOwnerNode"]:
+        return None
 
-    def is_parser(self) -> bool:
-        return False
+    def as_script_node(self) -> Optional["ScriptNode"]:
+        return None
 
-    def is_html_elm(self) -> bool:
-        return False
+    def as_domroot_node(self) -> Optional["DOMRootNode"]:
+        return None
 
-    def is_js_structure(self) -> bool:
-        return False
+    def as_parser_node(self) -> Optional["ParserNode"]:
+        return None
 
-    def is_resource_node(self) -> bool:
-        return False
+    def as_html_node(self) -> Optional["HTMLNode"]:
+        return None
+
+    def as_js_structure_node(self) -> Optional["JSStructureNode"]:
+        return None
+
+    def as_resource_node(self) -> Optional["ResourceNode"]:
+        return None
 
     def is_toplevel_parser(self) -> bool:
         for incoming_edge in self.incoming_edges():
-            if incoming_edge.is_cross_dom_edge():
+            if incoming_edge.as_cross_dom_edge() is not None:
                 return False
         return True
 
-    def frame_owner_nodes(self) -> list[FrameOwnerNode]:
+    def frame_owner_nodes(self) -> list["FrameOwnerNode"]:
         frame_owner_nodes = []
         for node in self.pg.nodes():
-            if node.is_frame_owner():
-                frame_owner_nodes.append(cast(FrameOwnerNode, node))
+            if frame_owner_node := node.as_frame_owner_node():
+                frame_owner_nodes.append(frame_owner_node)
         return frame_owner_nodes
 
     def data(self) -> dict[str, str]:
         return cast(dict[str, str], self.pg.graph.nodes[self._id])
 
-    def timestamp(self) -> int:
-        return int(self.data()[self.RawAttrs.TIMESTAMP])
-
-    def creation_edge(self) -> "NodeCreateEdge" | None:
+    def creation_edge(self) -> Optional["NodeCreateEdge"]:
         for edge in self.incoming_edges():
-            if edge.is_create_edge():
-                return cast("NodeCreateEdge", edge)
+            if create_edge := edge.as_create_edge():
+                return create_edge
         return None
-
-    def creator_node(self) -> "ScriptNode" | "ParserNode":
-        creator_node: Union[None, "ScriptNode", "ParserNode"] = None
-        creation_edge = self.creation_edge()
-        if not creation_edge:
-            self.throw("Could not find a creator for this node")
-
-        assert creation_edge
-        node = creation_edge.incoming_node()
-
-        if self.pg.debug:
-            if not node.is_script() and not node.is_parser():
-                self.throw("Unexpected parent creator node")
-
-        if node.is_script():
-            return cast("ScriptNode", node)
-        else:
-            return cast("ParserNode", node)
 
     def created_nodes(self) -> list[Node]:
         created_nodes = []
         for edge in self.outgoing_edges():
-            if edge.is_create_edge():
+            if edge.as_create_edge() is not None:
                 created_nodes.append(edge.outgoing_node())
         return created_nodes
-
-    def domroot_for_creation(self) -> DOMRootNode | None:
-        creation_edge = self.creation_edge()
-        if self.pg.debug:
-            if not creation_edge:
-                self.throw("No incoming creation edge")
-        assert creation_edge
-        return creation_edge.domroot_for_frame_id()
 
     def executed_scripts(self) -> list[ScriptNode]:
         if self.pg.debug:
             is_executing_script = (
-                self.is_text_elm() or
-                self.is_html_elm() or
-                self.is_script() or
-                self.is_frame_owner() or
-                self.is_domroot()
+                self.as_text_node() or
+                self.as_html_node() or
+                self.as_script_node() or
+                self.as_frame_owner_node() or
+                self.as_domroot_node()
             )
             if not is_executing_script:
                 self.throw("Unexpected node executing a script")
         executed_scripts = []
         for edge in self.outgoing_edges():
-            if not edge.is_execute_edge():
-                continue
-            execute_edge = cast(ExecuteEdge, edge)
-            executed_scripts.append(execute_edge.outgoing_node())
+            if execute_edge := edge.as_execute_edge():
+                executed_scripts.append(execute_edge.outgoing_node())
         return executed_scripts
 
     def describe(self) -> str:
-        output = f"node nid={self.id()}\n"
+        output = f"node nid={self.pg_id()}\n"
         for attr_name, attr_value in self.data().items():
             output += f"- {attr_name}={brief_version(str(attr_value))}\n"
 
         output += "incoming edges:\n"
         for edge in self.incoming_edges():
-            output += f"- {edge.id()} - {edge.edge_type().value}\n"
+            output += f"- {edge.pg_id()} - {edge.edge_type().value}\n"
 
         output += "outgoing edges:\n"
         for edge in self.outgoing_edges():
-            output += f"- {edge.id()} - {edge.edge_type().value}\n"
+            output += f"- {edge.pg_id()} - {edge.edge_type().value}\n"
 
         return output
 
     def validate(self) -> bool:
         if self.__class__.incoming_node_types is not None:
             valid_incoming_node_types = self.__class__.incoming_node_types
-            for parent_node in self.parent_nodes():
+            for edge in self.incoming_edges():
+                parent_node = edge.incoming_node()
                 node_type = parent_node.node_type()
                 if node_type not in valid_incoming_node_types:
-                    self.throw(f"Unexpected incoming node type: {node_type}")
+                    self.throw(
+                        f"Unexpected incoming node: {node_type}\n"
+                        f"{parent_node.node_type()}:{parent_node.pg_id()} -> "
+                        f"{edge.edge_type()}:{edge.pg_id()} -> "
+                        f"{self.node_type()}:{self.pg_id()}")
                     return False
 
         if self.__class__.outgoing_node_types is not None:
@@ -339,10 +327,10 @@ class Node(PageGraphElement):
                     return False
         return True
 
-    def creator_edge(self) -> NodeCreateEdge | None:
+    def creator_edge(self) -> Optional["NodeCreateEdge"]:
         for edge in self.incoming_edges():
-            if edge.is_create_edge():
-                return cast("NodeCreateEdge", edge)
+            if create_edge := edge.as_create_edge():
+                return create_edge
         self.throw("Could not find a creation edge for this node")
         return None
 
@@ -397,14 +385,13 @@ class ScriptNode(Node, Reportable):
         MODULE = "module"
         UNKNOWN = "unknown"
 
-    def is_script(self) -> bool:
-        return True
+    def as_script_node(self) -> Optional["ScriptNode"]:
+        return self
 
     def created_nodes(self) -> list[Node]:
         created_nodes = []
         for edge in self.outgoing_edges():
-            if edge.is_create_edge():
-                create_edge = cast("NodeCreateEdge", edge)
+            if create_edge := edge.as_create_edge():
                 created_nodes.append(create_edge.outgoing_node())
         return created_nodes
 
@@ -418,8 +405,7 @@ class ScriptNode(Node, Reportable):
     def execute_edge(self) -> "ExecuteEdge":
         execute_edge = None
         for edge in self.incoming_edges():
-            if edge.is_execute_edge():
-                execute_edge = cast("ExecuteEdge", edge)
+            if execute_edge := edge.as_execute_edge():
                 break
         if self.pg.debug:
             if not execute_edge:
@@ -427,32 +413,33 @@ class ScriptNode(Node, Reportable):
         assert execute_edge
         return execute_edge
 
-    def creator_node(self) -> Union["ScriptNode", "ParserNode"]:
-        executing_node = self.execute_edge().incoming_node()
-        if executing_node.is_parser():
-            return cast("ParserNode", executing_node)
-        return executing_node.creator_node()
+    def creator_node(self) -> Union["ActorNode", "ParentDOMNode"]:
+        node = self.execute_edge().incoming_node()
+        creator_node = (
+            node.as_actor_node() or
+            node.as_parent_dom_node()
+        )
+        assert creator_node
+        return creator_node
 
     def to_report(self, include_source: bool = False) -> ScriptReport:
         executor_report: Union[ScriptReport, DOMElementReport, None] = None
         executor_node = self.creator_node()
-        if executor_node.is_parser():
+        if executor_node.as_parser_node() is not None:
             executor_report = None
-        elif executor_node.is_script():
-            executor_report = cast("ScriptNode", executor_node).to_report(
-                include_source)
-        elif executor_node.is_html_elm():
-            executor_report = cast("HTMLNode", executor_node).to_report(
-                include_source)
-        else:
-            executor_report = cast("FrameOwnerNode", executor_node).to_report(
-                include_source)
+
+        elif script_node := executor_node.as_script_node():
+            executor_report = script_node.to_report(include_source)
+        elif html_elm_node := executor_node.as_html_node():
+            executor_report = html_elm_node.to_report(include_source)
+        elif frame_owner_node := executor_node.as_frame_owner_node():
+            executor_report = frame_owner_node.to_report(include_source)
 
         url = None
         if self.script_type() == ScriptNode.ScriptType.EXTERNAL:
             url = self.url()
 
-        report = ScriptReport(self.id(), self.script_type(), self.hash())
+        report = ScriptReport(self.pg_id(), self.script_type(), self.hash())
         report.url = url
         report.executor = executor_report
         if include_source:
@@ -489,20 +476,20 @@ class ScriptNode(Node, Reportable):
         incoming_node = self.execute_edge().incoming_node()
         if self.pg.debug:
             # Test for requirement 2 above
-            if not incoming_node.is_html_elm():
+            if incoming_node.as_html_node() is None:
                 incoming_node.throw("Unexpected execute edge")
 
         executing_node = cast("HTMLNode", incoming_node)
         # Test for requirement 3 above
-        num_found_execution_edges = 0
+        execution_edges = []
         for outgoing_edge in executing_node.outgoing_edges():
-            if outgoing_edge.is_execute_edge():
-                num_found_execution_edges += 1
+            if execution_edge := outgoing_edge.as_execute_edge():
+                execution_edges.append(execution_edge)
 
         # A little odd to use a `while` statement here, since we'll
         # never loop, but just done so we can easily jump out of the
         # series of checks with a `break`
-        while num_found_execution_edges == 1:
+        while len(execution_edges) == 1:
             # Test for requirement 4 above
             requests_from_node = executing_node.requests()
             if len(requests_from_node) != 1:
@@ -556,10 +543,10 @@ class ScriptNode(Node, Reportable):
         return matching_request_chain.request.url()
 
 
-class DOMElementNode(Node):
+class DOMElementNode(Node, ABC):
 
     def blink_id(self) -> BlinkId:
-        return self.data()[Node.RawAttrs.BLINK_ID.value]
+        return int(self.data()[Node.RawAttrs.BLINK_ID.value])
 
     def tag_name(self) -> str:
         raise NotImplementedError()
@@ -567,10 +554,11 @@ class DOMElementNode(Node):
     def insertion_edges(self) -> list["NodeInsertEdge"]:
         insertion_edges: list["NodeInsertEdge"] = []
         for edge in self.incoming_edges():
-            insertion_edges.append(cast("NodeInsertEdge", edge))
-        return cast(list["NodeInsertEdge"], sort_elements(insertion_edges))
+            if insert_edge := edge.as_insert_edge():
+                insertion_edges.append(insert_edge)
+        return sort_elements(insertion_edges)
 
-    def insert_edge(self) -> "NodeInsertEdge" | None:
+    def insert_edge(self) -> Optional["NodeInsertEdge"]:
         """Return the most recent edge describing when this element
         was appended to a document."""
         insertion_edges = self.insertion_edges()
@@ -579,15 +567,54 @@ class DOMElementNode(Node):
         except IndexError:
             return None
 
-    def parent_at_serialization(self) -> None | ParentNode:
-        for incoming_edge in self.incoming_edges():
-            if incoming_edge.is_structure_edge():
-                structure_edge = cast("StructureEdge", incoming_edge)
-                return structure_edge.incoming_node()
+    def parent_at_serialization(self) -> Optional[ParentDOMNode]:
+        incoming_edges = self.incoming_edges()
+        if self.pg.feature_check(Feature.DOCUMENT_EDGES):
+            for edge in self.incoming_edges():
+                if document_edge := edge.as_document_edge():
+                    return document_edge.incoming_node()
+        else:
+            for edge in self.incoming_edges():
+                structure_edge = edge.as_structure_edge()
+                if not structure_edge:
+                    continue
+                incoming_node = structure_edge.incoming_node()
+                parent_node = incoming_node.as_parent_dom_node()
+                assert parent_node
+                return parent_node
         return None
 
-    def domroot_of_document(self) -> DOMRootNode | None:
-        """Returns the DOMRoot for the most last document the element
+    def creation_edge(self) -> "NodeCreateEdge":
+        creation_edge = None
+        for edge in self.incoming_edges():
+            if creation_edge := edge.as_create_edge():
+                break
+        assert creation_edge
+        return creation_edge
+
+    def creator_node(self) -> ActorNode:
+        return self.creation_edge().incoming_node()
+
+    def domroot_node(self) -> DOMRootNode:
+        """Returns a best effort of what frame / DOMRootNode to associate
+        this element with. Since an DOM element can be attached to
+        multiple documents / multiple frames, this may not be what you're
+        looking for."""
+        return (
+            self.domroot_for_serialization() or
+            self.domroot_for_document() or
+            self.domroot_for_creation()
+        )
+
+    def domroot_for_creation(self) -> DOMRootNode:
+        """Returns the DOMRootNode that is the execution context
+        that this element was created in. Node that this could differ
+        from the DOMRootNode / frame that the element was inserted into."""
+        creation_frame_id = self.creation_edge().frame_id()
+        return self.pg.domroot_for_frame_id(creation_frame_id)
+
+    def domroot_for_document(self) -> Optional["DOMRootNode"]:
+        """Returns the DOMRootNode for the most last document the element
         was attached to. Note that this *does not* mean the this element
         was attached to the document at serialization (since the element
         could have been attached and then removed), *nor* does it mean
@@ -598,8 +625,8 @@ class DOMElementNode(Node):
             return None
         return insert_edge.domroot_for_frame_id()
 
-    def domroot_at_serialization(self) -> DOMRootNode | None:
-        """Get the DOMRoot node for the document this element is attached
+    def domroot_for_serialization(self) -> Optional["DOMRootNode"]:
+        """Get the DOMRootNode for the document this element is attached
         to at serialization time. Note that this could be `None` (if
         this element is not attached to a document at serialization),
         and could differ from the domroot of the context the element
@@ -607,15 +634,15 @@ class DOMElementNode(Node):
         during page execution)."""
         current_node = self.parent_at_serialization()
         while current_node:
-            if current_node.is_domroot():
-                return cast(DOMRootNode, current_node)
+            if domroot_node := current_node.as_domroot_node():
+                return domroot_node
             current_node = current_node.parent_at_serialization()
         return None
 
         parent_node_from_structure = self._domroot_from_parent_node_path()
         if parent_node_from_structure:
             return parent_node_from_structure
-        return cast(DOMRootNode, super().domroot())
+        return super().domroot()
 
 
 class HTMLNode(DOMElementNode, Reportable):
@@ -624,24 +651,23 @@ class HTMLNode(DOMElementNode, Reportable):
         "tag name": "tag_name"
     }
 
-    def is_html_elm(self) -> bool:
-        return True
+    def as_html_node(self) -> Optional["HTMLNode"]:
+        return self
 
     def to_report(self, *args: Any) -> DOMElementReport:
-        return DOMElementReport(self.id(), self.tag_name())
+        return DOMElementReport(self.pg_id(), self.tag_name())
 
     def tag_name(self) -> str:
         return self.data()[Node.RawAttrs.TAG.value]
 
-    def parent_html_nodes(self) -> list[ParentNode]:
+    def parent_html_nodes(self) -> list[ParentDOMNode]:
         """Return every node this node was ever inserted under. This can be
         zero nodes (if the node was created but never inserted in the
         document), or more than one node (if the node was moved around the
         document during execution)."""
         parent_html_nodes = []
-        for incoming_edge in self.incoming_edges():
-            if incoming_edge.is_insert_edge():
-                insert_edge = cast("NodeInsertEdge", incoming_edge)
+        for e in self.incoming_edges():
+            if insert_edge := e.as_insert_edge():
                 parent_html_nodes.append(insert_edge.inserted_below_node())
         return parent_html_nodes
 
@@ -651,45 +677,51 @@ class HTMLNode(DOMElementNode, Reportable):
         in this path though (for example, nodes trees created in script
         but not inserted in a document), in which case, we return None."""
         for parent_node in self.parent_html_nodes():
-            if parent_node.is_domroot():
-                return cast(DOMRootNode, parent_node)
-            return cast(HTMLNode, parent_node)._domroot_from_parent_node_path()
+            if domroot_node := parent_node.as_domroot_node():
+                return domroot_node
+            elif html_node := parent_node.as_html_node():
+                return html_node._domroot_from_parent_node_path()
         return None
 
     def requests(self) -> list[RequestChain]:
         chains: list[RequestChain] = []
         for outgoing_edge in self.outgoing_edges():
-            if not outgoing_edge.is_request_start_edge():
-                continue
-            request_start_edge = cast("RequestStartEdge", outgoing_edge)
-            request_id = request_start_edge.request_id()
-            request_chain = self.pg.request_chain_for_id(request_id)
-            chains.append(request_chain)
+            if request_start_edge := outgoing_edge.as_request_start_edge():
+                request_id = request_start_edge.request_id()
+                request_chain = self.pg.request_chain_for_id(request_id)
+                chains.append(request_chain)
         return chains
 
 
 class FrameOwnerNode(DOMElementNode, Reportable):
 
-    def is_frame_owner(self) -> bool:
-        return True
+    def as_frame_owner_node(self) -> Optional["FrameOwnerNode"]:
+        return self
 
     def to_report(self, *args: Any) -> DOMElementReport:
-        return DOMElementReport(self.id(), self.tag_name())
+        return DOMElementReport(self.pg_id(), self.tag_name())
 
     def child_parser_nodes(self) -> list[ParserNode]:
         child_parser_nodes = []
         for child_node in self.child_nodes():
-            if child_node.is_parser():
-                child_parser_nodes.append(cast(ParserNode, child_node))
+            if parser_node := child_node.as_parser_node():
+                child_parser_nodes.append(parser_node)
         return child_parser_nodes
 
-    def domroots(self) -> list[DOMRootNode]:
+    def domroot_nodes(self) -> list[DOMRootNode]:
         domroots = []
-        for parser_node in self.child_parser_nodes():
-            domroot_nodes = list(parser_node.domroots())
-            domroots_sorted = sorted(domroot_nodes, key=lambda x: x.int_id())
-            for domroot_node in domroots_sorted:
-                domroots.append(domroot_node)
+        if self.pg.feature_check(Feature.CROSS_DOM_EDGES_POINT_TO_DOM_ROOTS):
+            for edge in self.outgoing_edges():
+                if cross_dom_edge := edge.as_cross_dom_edge():
+                    node = cross_dom_edge.outgoing_node().as_domroot_node()
+                    assert node
+                    domroots.append(node)
+        else:
+            for parser_node in self.child_parser_nodes():
+                nodes = list(parser_node.domroots())
+                domroots_sorted = sorted(nodes, key=lambda x: x.id())
+                for domroot_node in domroots_sorted:
+                    domroots.append(domroot_node)
         return domroots
 
     def tag_name(self) -> str:
@@ -698,31 +730,51 @@ class FrameOwnerNode(DOMElementNode, Reportable):
 
 class TextNode(DOMElementNode, Reportable):
 
-    def is_text_elm(self) -> bool:
-        return True
+    def as_text_node(self) -> Optional["TextNode"]:
+        return self
 
     def to_report(self) -> DOMElementReport:
-        return DOMElementReport(self.id(), self.tag_name())
+        return DOMElementReport(self.pg_id(), self.tag_name())
 
     def tag_name(self) -> str:
-        return "<text>"
+        return "[text]"
 
 
 class DOMRootNode(DOMElementNode, Reportable):
 
-    def is_domroot(self) -> bool:
-        return True
+    def as_domroot_node(self) -> Optional["DOMRootNode"]:
+        return self
+
+    def frame_owner_node(self) -> Optional["FrameOwnerNode"]:
+        for edge in self.incoming_edges():
+            if cross_dom_edge := edge.as_cross_dom_edge():
+                return cross_dom_edge.incoming_node()
+        return None
+
+    def is_init_domroot(self) -> bool:
+        # Blink creates an initial "about:blank" frame for every
+        # <iframe> tag
+        if self.url() != "about:blank":
+            return False
+        for edge in self.incoming_edges():
+            if edge.as_structure_edge() is not None:
+                return True
+        return False
 
     def to_report(self) -> FrameReport:
-        return FrameReport(self.id(), self.url(), self.blink_id())
+        return FrameReport(self.pg_id(), self.url(), self.blink_id())
 
-    def is_top_level_frame(self) -> bool:
-        parser = self.parser()
-        assert parser
-        return parser.is_toplevel_parser()
+    def is_top_level_domroot(self) -> bool:
+        frame_url = self.url()
+        if not frame_url or frame_url == "about:blank":
+            return False
+        for edge in self.incoming_edges():
+            if edge.as_cross_dom_edge() is not None:
+                return False
+        return True
 
-    def is_local_frame(self) -> bool:
-        parent_frame = self.parent_frame()
+    def is_local_domroot(self) -> bool:
+        parent_frame = self.parent_domroot_node()
         if not parent_frame:
             self.throw("Nonsensical to ask if a top level frame is local")
             return False
@@ -736,37 +788,15 @@ class DOMRootNode(DOMElementNode, Reportable):
         assert parent_frame_url
         return is_url_local(this_frame_url, parent_frame_url)
 
-    def parent_frame(self) -> None | "DOMRootNode":
-        assert not self.is_top_level_frame()
-        parser = self.parser()
-        assert parser
-        owning_frame = parser.frame_owner_node()
-        if not owning_frame:
-            self.throw("Could not find parent frame")
-            return None
-        return owning_frame.domroot_at_serialization()
-
-    def frame_owner_nodes(self) -> list[FrameOwnerNode]:
-        frame_owner_nodes = []
-        seen_set = set()
-        frame_id = self.frame_id()
-        for frame_owner_node in self.pg.frame_owner_nodes():
-            if frame_owner_node in seen_set:
-                continue
-            creator_edge = frame_owner_node.creator_edge()
-            if creator_edge and creator_edge.frame_id() == frame_id:
-                seen_set.add(frame_owner_node)
-                frame_owner_nodes.append(frame_owner_node)
-                continue
-            insert_edge = frame_owner_node.insert_edge()
-            if insert_edge and insert_edge.frame_id() == frame_id:
-                seen_set.add(frame_owner_node)
-                frame_owner_nodes.append(frame_owner_node)
-                continue
-        return frame_owner_nodes
+    def parent_domroot_node(self) -> Optional["DOMRootNode"]:
+        assert not self.is_top_level_domroot()
+        frame_owner_node = self.frame_owner_node()
+        assert frame_owner_node
+        domroot_for_frame_owner_node = frame_owner_node.domroot_node()
+        return domroot_for_frame_owner_node
 
     def frame_id(self) -> FrameId:
-        return self.data()[self.RawAttrs.FRAME_ID.value]
+        return int(self.data()[self.RawAttrs.BLINK_ID.value])
 
     def url(self) -> Url | None:
         try:
@@ -779,82 +809,13 @@ class DOMRootNode(DOMElementNode, Reportable):
     def tag_name(self) -> str:
         return self.data()[Node.RawAttrs.TAG.value]
 
-    def parser(self) -> ParserNode | None:
+    def parser(self) -> Optional[ParserNode]:
         parser_node = None
         for node in self.parent_nodes():
-            if node.is_parser():
-                parser_node = cast(ParserNode, node)
-        if self.pg.debug:
-            if not parser_node:
-                self.throw("Unable to find parser for DOM root")
+            if parser_node := node.as_parser_node():
+                break
         assert parser_node
         return parser_node
-
-    def domroot(self) -> DOMRootNode:
-        return self
-
-    def script_nodes(self) -> set[ScriptNode]:
-        return self.summarize_frame().script_nodes
-
-    def _summarize_frame(
-            self, node: Node, frame_summary: FrameSummary,
-            ignore_nodes: set[Node]) -> FrameSummary:
-        if node in ignore_nodes:
-            return frame_summary
-
-        if node.is_parser():
-            ignore_nodes.add(node)
-
-        if node.is_parent_dom_node_type():
-            parent_node = cast(ParentNode, node)
-            child_dom_nodes = self.pg.child_dom_nodes(parent_node)
-            if child_dom_nodes is not None:
-                for a_child_node in child_dom_nodes:
-                    if frame_summary.includes_attached(a_child_node):
-                        continue
-
-                    if a_child_node.is_text_elm():
-                        c_text_node = cast(TextNode, a_child_node)
-                        frame_summary.attached_nodes.add(c_text_node)
-                    elif a_child_node.is_frame_owner():
-                        c_frame_node = cast(FrameOwnerNode, a_child_node)
-                        frame_summary.attached_nodes.add(c_frame_node)
-                    elif a_child_node.is_html_elm():
-                        c_html_node = cast(HTMLNode, a_child_node)
-                        frame_summary.attached_nodes.add(c_html_node)
-                        self._summarize_frame(
-                            c_html_node, frame_summary, ignore_nodes)
-
-        if node.is_script() or node.is_parser():
-            creating_node: ScriptNode | ParserNode
-            if node.is_script():
-                creating_node = cast(ScriptNode, node)
-            else:
-                creating_node = cast(ParserNode, node)
-
-            for a_created_node in creating_node.created_nodes():
-                if frame_summary.includes_created(a_created_node):
-                    continue
-                frame_summary.created_nodes.add(a_created_node)
-                self._summarize_frame(
-                    a_created_node, frame_summary, ignore_nodes)
-
-        for executed_node in node.executed_scripts():
-            assert executed_node.is_script()
-
-            if frame_summary.includes_executed(executed_node):
-                continue
-
-            frame_summary.script_nodes.add(executed_node)
-            self._summarize_frame(executed_node, frame_summary, ignore_nodes)
-
-        return frame_summary
-
-    @lru_cache(maxsize=None)
-    def summarize_frame(self) -> FrameSummary:
-        parser = self.parser()
-        assert parser
-        return self._summarize_frame(parser, FrameSummary(), set())
 
 
 class ParserNode(Node):
@@ -867,15 +828,15 @@ class ParserNode(Node):
         Node.Types.RESOURCE
     ]
 
-    def is_parser(self) -> bool:
-        return True
+    def as_parser_node(self) -> Optional["ParserNode"]:
+        return self
 
-    def frame_owner_node(self) -> FrameOwnerNode | None:
+    def frame_owner_node(self) -> Optional["FrameOwnerNode"]:
         parent_nodes_list = list(self.parent_nodes())
-        frame_owner_nodes: list["FrameOwnerNode"] = []
+        frame_owner_nodes = []
         for parent_node in parent_nodes_list:
-            if parent_node.is_frame_owner():
-                frame_owner_nodes.append(cast(FrameOwnerNode, parent_node))
+            if frame_owner_node := parent_node.as_frame_owner_node():
+                frame_owner_nodes.append(frame_owner_node)
         if self.pg.debug:
             if len(frame_owner_nodes) != 1:
                 self.throw("Did not find exactly 1 parent frame owner node")
@@ -884,25 +845,22 @@ class ParserNode(Node):
     def created_nodes(self) -> list[Node]:
         created_nodes = []
         for edge in self.outgoing_edges():
-            if edge.is_create_edge():
-                create_edge = cast(NodeCreateEdge, edge)
+            if create_edge := edge.as_create_edge():
                 created_nodes.append(create_edge.outgoing_node())
         return created_nodes
 
     def domroots(self) -> list[DOMRootNode]:
         domroots = []
         already_returned = set()
-        for outgoing_edge in self.outgoing_edges():
-            if (not outgoing_edge.is_create_edge() and
-                    not outgoing_edge.is_structure_edge()):
+        for e in self.outgoing_edges():
+            if (e.as_create_edge() is None and e.as_structure_edge() is None):
                 continue
-            child_node = outgoing_edge.outgoing_node()
+            child_node = e.outgoing_node()
             if child_node in already_returned:
                 continue
-            if not child_node.is_type(Node.Types.DOM_ROOT):
-                continue
-            already_returned.add(child_node)
-            domroots.append(cast(DOMRootNode, child_node))
+            if domroot_node := child_node.as_domroot_node():
+                already_returned.add(domroot_node)
+                domroots.append(domroot_node)
         return domroots
 
 
@@ -934,24 +892,24 @@ class ResourceNode(Node):
         self.requests_map = {}
         super().__init__(graph, pg_id)
 
-    def is_resource_node(self) -> bool:
-        return True
+    def as_resource_node(self) -> Optional["ResourceNode"]:
+        return self
 
     def url(self) -> Url:
         return self.data()[Node.RawAttrs.URL.value]
 
     def incoming_edges(self) -> list["RequestStartEdge"]:
-        return [cast("RequestStartEdge", e) for e in super().incoming_edges()]
+        return cast(list["RequestStartEdge"], super().incoming_edges())
 
     def outgoing_edges(self) -> list["RequestResponseEdge"]:
         outgoing_edges: list["RequestResponseEdge"] = []
         for edge in super().outgoing_edges():
-            if edge.is_request_complete_edge():
-                outgoing_edges.append(cast("RequestCompleteEdge", edge))
-            elif edge.is_request_redirect_edge():
-                outgoing_edges.append(cast("RequestRedirectEdge", edge))
-            else:
-                outgoing_edges.append(cast("RequestErrorEdge", edge))
+            if request_complete_edge := edge.as_request_complete_edge():
+                outgoing_edges.append(request_complete_edge)
+            elif request_redirect_edge := edge.as_request_redirect_edge():
+                outgoing_edges.append(request_redirect_edge)
+            elif request_error_edge := edge.as_request_error_edge():
+                outgoing_edges.append(request_error_edge)
         return outgoing_edges
 
     def requesters(self) -> list["RequesterNode"]:
@@ -990,8 +948,8 @@ class JSStructureNode(Node, Reportable):
     def to_report(self) -> JSStructureReport:
         return JSStructureReport(self.name(), self.type_name())
 
-    def is_js_structure(self) -> bool:
-        return True
+    def as_js_structure_node(self) -> Optional["JSStructureNode"]:
+        return self
 
     def name(self) -> str:
         return self.data()[self.RawAttrs.METHOD.value]
@@ -1001,7 +959,7 @@ class JSStructureNode(Node, Reportable):
         js_results = self.outgoing_edges()
         calls_and_results_unsorted = list(chain(js_calls, js_results))
         calls_and_results = sorted(
-            calls_and_results_unsorted, key=lambda x: x.int_id())
+            calls_and_results_unsorted, key=lambda x: x.id())
 
         if self.pg.debug:
             num_calls = len(list(js_calls))
@@ -1012,20 +970,18 @@ class JSStructureNode(Node, Reportable):
 
             last_edge = calls_and_results[0]
             for edge in calls_and_results[1:]:
-                if edge.is_js_result_edge():
-                    if last_edge.is_js_result_edge():
+                if edge.as_js_result_edge() is not None:
+                    if last_edge.as_js_result_edge() is not None:
                         self.throw("Found two adjacent result edges: "
-                                   f"{last_edge.id()} and {edge.id()}")
+                                   f"{last_edge.pg_id()} and {edge.pg_id()}")
                 last_edge = edge
 
         call_results: list[JSCallResult] = []
         for edge in calls_and_results:
-            if edge.is_js_result_edge():
-                js_result_edge = cast("JSResultEdge", edge)
+            if js_result_edge := edge.as_js_result_edge():
                 last_call_result = call_results[-1]
                 last_call_result.result_edge = js_result_edge
-            else:
-                js_call_edge = cast("JSCallEdge", edge)
+            elif js_call_edge := edge.as_js_call_edge():
                 a_call_result = JSCallResult(js_call_edge, None)
                 call_results.append(a_call_result)
         return call_results
@@ -1038,27 +994,91 @@ class JSStructureNode(Node, Reportable):
 
 
 class JSBuiltInNode(JSStructureNode):
-    pass
+    incoming_edge_types = [
+        Edge.Types.JS_CALL
+    ]
+
+    outgoing_edge_types = [
+        Edge.Types.JS_RESULT
+    ]
+
+    def as_js_builtin_node(self) -> Optional["JSBuiltInNode"]:
+        return self
 
 
 class WebAPINode(JSStructureNode):
-    pass
+    incoming_edge_types = [
+        Edge.Types.JS_CALL
+    ]
+
+    outgoing_edge_types = [
+        Edge.Types.JS_RESULT
+    ]
+
+    def as_web_api_node(self) -> Optional["WebAPINode"]:
+        return self
 
 
 class StorageNode(Node):
-    pass
+    incoming_edge_types = []
+
+    outgoing_edge_types = [
+        Edge.Types.STORAGE_BUCKET
+    ]
+
+    def as_storage_node(self) -> Optional["StorageNode"]:
+        return self
 
 
 class CookieJarNode(Node):
-    pass
+    incoming_edge_types = [
+        Edge.Types.STORAGE_BUCKET,
+        Edge.Types.STORAGE_CLEAR,
+        Edge.Types.STORAGE_DELETE,
+        Edge.Types.STORAGE_READ_CALL,
+        Edge.Types.STORAGE_SET,
+    ]
+
+    outgoing_edge_types = [
+        Edge.Types.STORAGE_READ_RESULT
+    ]
+
+    def as_cookie_jar_node(self) -> Optional["CookieJarNode"]:
+        return self
 
 
 class LocalStorageNode(Node):
-    pass
+    incoming_edge_types = [
+        Edge.Types.STORAGE_BUCKET,
+        Edge.Types.STORAGE_CLEAR,
+        Edge.Types.STORAGE_DELETE,
+        Edge.Types.STORAGE_READ_CALL,
+        Edge.Types.STORAGE_SET,
+    ]
+
+    outgoing_edge_types = [
+        Edge.Types.STORAGE_READ_RESULT
+    ]
+
+    def as_local_storage_node(self) -> Optional["LocalStorageNode"]:
+        return self
 
 
 class SessionStorageNode(Node):
-    pass
+    incoming_edge_types = [
+        Edge.Types.STORAGE_BUCKET,
+        Edge.Types.STORAGE_CLEAR,
+        Edge.Types.STORAGE_DELETE,
+        Edge.Types.STORAGE_READ_CALL,
+        Edge.Types.STORAGE_SET,
+    ]
+
+    outgoing_edge_types = [
+        Edge.Types.STORAGE_READ_RESULT
+    ]
+
+    def as_session_storage_node(self) -> Optional["SessionStorageNode"]:
+        return self
 
 
 class DeprecatedNode(Node):

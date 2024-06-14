@@ -12,8 +12,12 @@ def print_err(msg: str) -> None:
     print(msg, file=sys.stderr)
 
 
+def serve(port: int, verbose: bool, other_args: list[str]) -> None:
+    PG_SERVER.start_and_wait(PG_PATHS.testcases(), port, verbose)
+
+
 def setup(tool_path: str, testcase_filter: None, port: int,
-          should_clear: bool, other_args: list[str]) -> None:
+          should_clear: bool, verbose: bool, other_args: list[str]) -> None:
     if should_clear:
         PG_CASES.clear_graphs()
 
@@ -27,12 +31,17 @@ def setup(tool_path: str, testcase_filter: None, port: int,
 
     test_cases = PG_CASES.matching_cases(testcase_filter)
 
-    handle = PG_SERVER.start(PG_PATHS.testcases())
-    for test_case in test_cases:
-        print(f" - generating graph for {test_case.name}")
-        input_url = PG_SERVER.url_for_case(test_case, port)
-        output_path = PG_CASES.graph_path_for_case(test_case)
-        PG_CRAWL.run(pg_crawl_dir, input_url, output_path, other_args)
+    handle = PG_SERVER.start(PG_PATHS.testcases(), port, verbose)
+    try:
+        for test_case in test_cases:
+            print(f" - generating graph for {test_case.name}")
+            input_url = PG_SERVER.url_for_case(test_case, port)
+            output_path = PG_CASES.graph_path_for_case(test_case)
+            PG_CRAWL.run(pg_crawl_dir, input_url, output_path, verbose,
+                         other_args)
+    except subprocess.CalledProcessError as e:
+        print_err("!!! Brave crashed")
+        print_err(str(e))
     PG_SERVER.shutdown(handle)
 
 

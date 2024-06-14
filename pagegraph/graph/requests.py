@@ -1,54 +1,16 @@
-from enum import StrEnum
 from dataclasses import dataclass, field
 from typing import cast, Optional, TYPE_CHECKING, Union
 
-from pagegraph.types import RequestId, Url, PageGraphEdgeId
 from pagegraph.serialize import Reportable, RequestCompleteReport
 from pagegraph.serialize import RequestErrorReport, RequestChainReport
 from pagegraph.serialize import RequestReport
+from pagegraph.types import RequestId, Url, PageGraphEdgeId, ResourceType
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
     from pagegraph.graph.edge import RequestStartEdge, RequestRedirectEdge
     from pagegraph.graph.edge import RequestResponseEdge, RequestCompleteEdge
     from pagegraph.graph.edge import RequestErrorEdge
-
-
-# Values are defined by Blink, in `Resource::ResourceTypeToString`.
-# See third_party/blink/renderer/platform/loader/fetch/resource.h.
-# The OTHER catch all case covers the additional types
-# defined in `blink::Resource::InitiatorTypeNameToString`.
-class ResourceType(StrEnum):
-    ATTRIBUTION_RESOURCE = "Attribution resource"
-    AUDIO = "Audio"
-    CSS_RESOURCE = "CSS resource"
-    CSS_RESOURCE_UA = "User Agent CSS resource"
-    CSS_STYLESHEET = "CSS stylesheet"
-    DICTIONARY = "Dictionary"
-    DOCUMENT = "Document"
-    FETCH = "Fetch"
-    FONT = "Font"
-    ICON = "Icon"
-    IMAGE = "Image"
-    INTERNAL_RESOURCE = "Internal resource"
-    LINK_ELM_RESOURCE = "Link element resource"
-    LINK_PREFETCH = "Link prefetch resource"
-    MANIFEST = "Manifest"
-    MOCK = "Mock"
-    PROCESSING_INSTRUCTION = "Processing instruction"
-    RAW = "Raw"
-    REQUEST = "Request"
-    SCRIPT = "Script"
-    SPECULATION_RULE = "SpeculationRule"
-    SVG = "SVG document"
-    SVG_USE_ELM_RESOURCE = "SVG Use element resource"
-    TEXT_TRACK = "Text track"
-    TRACK = "Track"
-    VIDEO = "Video"
-    XML_HTTP_REQUEST = "XMLHttpRequest"
-    XML_RESOURCE = "XML resource"
-    XSL_STYLESHEET = "XSL stylesheet"
-    OTHER = "Other"  # Fallback / catchall case
 
 
 @dataclass
@@ -68,44 +30,48 @@ class RequestChain(Reportable):
         request_id = self.request_id
         resource_type = self.request.resource_type()
 
-        start_report = RequestReport(self.request.id(), self.request.url())
+        start_report = RequestReport(self.request.pg_id(), self.request.url())
         redirect_reports = []
         for redirect in self.redirects:
             redirect_reports.append(
-                RequestReport(redirect.id(), redirect.url()))
+                RequestReport(redirect.pg_id(), redirect.url()))
         result_report: Union[
             "RequestCompleteReport" | "RequestErrorReport" | None] = None
         result_edge = self.result
         if result_edge:
-            if result_edge.is_request_complete_edge():
-                result_complete_edge = cast("RequestCompleteEdge", result_edge)
+            if request_complete_edge := result_edge.as_request_complete_edge():
                 result_report = RequestCompleteReport(
-                    result_complete_edge.id(),
-                    result_complete_edge.size(),
-                    result_complete_edge.hash(),
-                    result_complete_edge.headers())
-            else:
-                result_error_edge = cast("RequestErrorEdge", result_edge)
+                    request_complete_edge.pg_id(),
+                    request_complete_edge.size(),
+                    request_complete_edge.hash(),
+                    request_complete_edge.headers())
+            elif request_error_edge := result_edge.as_request_error_edge():
                 result_report = RequestErrorReport(
-                    result_error_edge.id(),
-                    result_error_edge.headers())
+                    request_error_edge.pg_id(),
+                    request_error_edge.headers())
         return RequestChainReport(
             request_id, resource_type, start_report,  redirect_reports,
             result_report)
 
-    def hash(self) -> str | None:
-        if self.result and self.result.is_request_complete_edge():
-            return cast("RequestCompleteEdge", self.result).hash()
+    def hash(self) -> Optional[str]:
+        if not self.result:
+            return None
+        if request_complete_edge := self.result.as_request_complete_edge():
+            return request_complete_edge.hash()
         return None
 
     def success_request(self) -> Optional["RequestCompleteEdge"]:
-        if self.result and self.result.is_request_complete_edge():
-            return cast("RequestCompleteEdge", self.result)
+        if not self.result:
+            return None
+        if request_complete_edge := self.result.as_request_complete_edge():
+            return request_complete_edge
         return None
 
     def error_request(self) -> Optional["RequestErrorEdge"]:
-        if self.result and self.result.is_request_error_edge():
-            return cast("RequestErrorEdge", self.result)
+        if not self.result:
+            return None
+        if request_error_edge := self.result.as_request_error_edge():
+            return request_error_edge
         return None
 
     def resource_type(self) -> ResourceType:
@@ -127,18 +93,18 @@ def request_chain_for_edge(request_edge: "RequestStartEdge") -> RequestChain:
         if not next_edge:
             break
 
-        if next_edge.is_request_redirect_edge():
-            redirect_edge = cast("RequestRedirectEdge", next_edge)
-            chain.redirects.append(redirect_edge)
-            request = redirect_edge
-            continue
+        if request_redirect_edge := next_edge.as_request_redirect_edge():
+            chain.redirects.append(request_redirect_edge)
+            if request == request_redirect_edge:
+                break
+            else:
+                request = request_redirect_edge
+                continue
 
-        if next_edge.is_request_complete_edge():
-            complete_edge = cast("RequestCompleteEdge", next_edge)
-            chain.result = complete_edge
-        elif next_edge.is_request_error_edge():
-            error_edge = cast("RequestErrorEdge", next_edge)
-            chain.result = error_edge
+        if request_complete_edge := next_edge.as_request_complete_edge():
+            chain.result = request_complete_edge
+        elif request_error_edge := next_edge.as_request_error_edge():
+            chain.result = request_error_edge
         else:
             raise ValueError("Should not be reachable")
         break

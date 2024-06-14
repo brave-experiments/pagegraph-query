@@ -4,6 +4,8 @@
     frameElm.src = 'about:blank'
     document.body.appendChild(frameElm)
 
-    frameElm.src = '/assets/blank-frame.html'
+    const pElm = document.createElement('p')
+    pElm.innerText = 'hi'
+    frameElm.contentDocument.body.appendChild(pElm)
   </script>
 </body>
