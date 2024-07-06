@@ -1,4 +1,3 @@
-import pathlib
 import sys
 import subprocess
 from typing import Optional
@@ -13,7 +12,7 @@ def print_err(msg: str) -> None:
     print(msg, file=sys.stderr)
 
 
-def serve(port: int, verbose: bool, other_args: list[str]) -> None:
+def serve(port: int, verbose: bool) -> None:
     PG_SERVER.start_and_wait(PG_PATHS.testcases(), port, verbose)
 
 
@@ -28,6 +27,7 @@ def setup(tool_path: str, testcase_filter: None, port: int,
     except ValueError as e:
         print_err("Invalid pagegraph-crawl path provided.")
         print_err(str(e))
+        return
     assert pg_crawl_dir
 
     test_cases = PG_CASES.matching_cases(testcase_filter)
@@ -68,4 +68,4 @@ def run(testcase_filter: Optional[str], verbose: bool) -> None:
         simple_test_arg += ["-k", testcase_filter]
 
     simple_test_arg += unittest_files
-    subprocess.run(simple_test_arg)
+    subprocess.run(simple_test_arg, check=True)

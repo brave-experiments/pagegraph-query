@@ -4,14 +4,11 @@
 # there to capture that.
 
 from enum import auto, Enum
-from packaging.version import Version
 import re
 import sys
-from typing import TYPE_CHECKING, Union
+from typing import Union
 
 from packaging.version import parse, Version
-
-from pagegraph import VERSION
 
 
 MIN_GRAPH_VERSION = Version("0.7.0")
@@ -32,15 +29,16 @@ PG_FEATURE_VERSION_MAPPING: dict[Feature, Version] = {
 def min_version_for_feature(feature: Feature) -> Version:
     try:
         return PG_FEATURE_VERSION_MAPPING[feature]
-    except KeyError:
-        raise ValueError(f'Feature "{feature}" not tied to any version')
+    except KeyError as exc:
+        msg = f"Feature '{feature}' not tied to any version"
+        raise ValueError(msg) from exc
 
 
 def extract_pagegraph_version(input_path: str) -> Version:
     pattern = r"<version>(\d+\.\d+\.\d+)<\/version>"
 
     graph_version = None
-    with open(input_path) as f:
+    with open(input_path, encoding="utf8") as f:
         for line in f:
             match = re.search(pattern, line, re.ASCII)
             if match:
@@ -48,17 +46,16 @@ def extract_pagegraph_version(input_path: str) -> Version:
                 break
 
     if not graph_version:
-        raise Exception("Unable to determine version of PageGraph file")
-    else:
-        return graph_version
+        raise ValueError("Unable to determine version of PageGraph file")
+    return graph_version
 
 
 def check_pagegraph_version(input_path: str) -> Union[Version, None]:
     graph_version = extract_pagegraph_version(input_path)
     graph_major, graph_minor, _ = graph_version.release
     min_major, min_minor, _ = MIN_GRAPH_VERSION.release
-    if (graph_major < graph_major or
-            graph_major == graph_major and graph_minor < min_minor):
+    if (graph_major < min_major or
+            min_major == graph_major and graph_minor < min_minor):
         print("This pagegraph file version is not supported. "
               f"Detected {graph_version}, min supported version is "
               f"{MIN_GRAPH_VERSION}", file=sys.stderr)

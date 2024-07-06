@@ -3,10 +3,10 @@ from enum import StrEnum
 import sys
 from typing import Any, TYPE_CHECKING, Union
 
-from pagegraph.types import PageGraphId
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
+    from pagegraph.types import PageGraphId
 
 
 class PageGraphElement(ABC):
@@ -15,23 +15,25 @@ class PageGraphElement(ABC):
         TIMESTAMP = "timestamp"
         # Child classes should implement this enum with the PageGraph
         # attributes that correspond to node and edge attributes.
-        pass
 
     # Class properties
     summary_methods: Union[dict[str, str], None] = None
 
     # Instance properties
     pg: "PageGraph"
-    _id: PageGraphId
+    _id: "PageGraphId"
 
-    def __init__(self, graph: "PageGraph", pg_id: PageGraphId):
+    def __init__(self, graph: "PageGraph", pg_id: "PageGraphId"):
         self.pg = graph
         self._id = pg_id
+
+    def __hash__(self) -> int:
+        return hash(('<pagegraph>', self._id))
 
     def id(self) -> int:
         return int(self._id[1:])
 
-    def pg_id(self) -> PageGraphId:
+    def pg_id(self) -> "PageGraphId":
         return self._id
 
     def summary_fields(self) -> Union[None, dict[str, str]]:
@@ -61,9 +63,8 @@ class PageGraphElement(ABC):
     def throw(self, desc: str) -> None:
         sys.stderr.write(self.describe())
         sys.stderr.write("\n")
-        raise Exception(desc)
+        raise ValueError(desc)
 
 
-def sort_elements(elements: list[Any],
-                  *args: Any, **kwargs: Any) -> list[Any]:
+def sort_elements(elements: list[Any]) -> list[Any]:
     return sorted(elements, key=lambda x: x.id())

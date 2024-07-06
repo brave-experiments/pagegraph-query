@@ -82,7 +82,7 @@ class IFramesNavigationTestCase(PageGraphBaseTestClass):
         self.assertTrue(about_blank_domroot.id() < dest_domroot.id())
 
 
-class IFramesNavigationTestCase(PageGraphBaseTestClass):
+class IFramesSubDocumentTestCase(PageGraphBaseTestClass):
     NAME = "iframes_sub-document"
 
     def test_num_iframes(self) -> None:

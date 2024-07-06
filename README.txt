@@ -1,12 +1,14 @@
 usage: PageGraph Query [-h] [--version] [--debug]
-                       {subframes,requests,scripts,js-calls,elm} ...
+                       {subframes,validate,requests,scripts,js-calls,elm} ...
 
 Extracts information about a Web page's execution from a PageGraph recordings.
 
 positional arguments:
-  {subframes,requests,scripts,js-calls,elm}
+  {subframes,validate,requests,scripts,js-calls,elm}
     subframes           Print information about subframes created and loaded
                         by page.
+    validate            Just runs all validation and structure checks against
+                        a graph.
     requests            Print information about requests made during page
                         execution.
     scripts             Print information about JS units executed during page

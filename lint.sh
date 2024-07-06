@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-pycodestyle .
+pylint pagegraph *.py
 mypy --strict pagegraph/

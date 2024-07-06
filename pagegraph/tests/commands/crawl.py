@@ -1,10 +1,11 @@
 import json
 import pathlib
 import subprocess
+from typing import Optional
 
 
 def run(pg_crawl_path: pathlib.Path, test_url: str, output_path: pathlib.Path,
-        verbose: bool = False, other_args: list[str] = []) -> None:
+        verbose: bool = False, other_args: Optional[list[str]] = None) -> None:
     pg_crawl_cmd = [
         "npm", "run", "crawl", "--",
         "-u", test_url,
@@ -12,10 +13,11 @@ def run(pg_crawl_path: pathlib.Path, test_url: str, output_path: pathlib.Path,
     ]
 
     # Set some sane defaults too
-    if "-t" not in other_args:
+    if other_args is None or "-t" not in other_args:
         pg_crawl_cmd += ["-t", "3"]
 
-    pg_crawl_cmd += other_args
+    if other_args:
+        pg_crawl_cmd += other_args
 
     stdout_option = None if verbose else subprocess.DEVNULL
     subprocess.run(pg_crawl_cmd, stdout=stdout_option,
@@ -40,14 +42,14 @@ def validate_path(path: str) -> pathlib.Path:
     with package_path.open("r") as handle:
         try:
             package_data = json.load(handle)
-        except json.JSONDecodeError:
-            raise ValueError(
-               f"Invalid pagegraph-crawl project: {package_path} is not JSON")
+        except json.JSONDecodeError as exc:
+            msg = f"Invalid pagegraph-crawl project: {package_path} is not JSON"
+            raise ValueError(msg) from exc
         if package_data["name"] != "pagegraph-crawl":
-            raise ValueError(
-                f"Invalid pagegraph-crawl project: {package_path} is not "
+            msg = (f"Invalid pagegraph-crawl project: {package_path} is not "
                 "for the pagegraph-crawl project. "
                 "key \"name\" does not have value \"pagegraph-crawl\".")
+            raise ValueError(msg)
 
     # Next, do a basic check to see if it looks like pagegraph-crawl
     # has been built. If not, we can try the basic steps to build
@@ -57,22 +59,22 @@ def validate_path(path: str) -> pathlib.Path:
         try:
             subprocess.run(["npm", "install"], cwd=tool_path, check=True,
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError:
-            raise ValueError(
-                f"Invalid pagegraph-crawl project: project is not built, "
-                "and `npm install` failed when we tried to run it for you.")
+        except subprocess.CalledProcessError as exc:
+            msg = ("Invalid pagegraph-crawl project: project is not built, "
+                  "and `npm install` failed when we tried to run it for you.")
+            raise ValueError(msg) from exc
 
         try:
             subprocess.run(["npm", "run", "build"], cwd=tool_path, check=True,
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError:
-            raise ValueError(
-                f"Invalid pagegraph-crawl project: project is not built, "
-                "and `npm run build` failed when we tried to run it for you.")
+        except subprocess.CalledProcessError as exc:
+            msg = ("Invalid pagegraph-crawl project: project is not built, " +
+                  "and `npm run build` failed when we tried to run it for you.")
+            raise ValueError(msg) from exc
 
         if not built_run_path.is_file():
-            raise ValueError(
-                "Invalid pagegraph-crawl project: tried building the project "
-                f"for you, but didn't find expected {built_run_path} file, "
-                "so something went wrong.")
+            msg = ("Invalid pagegraph-crawl project: tried building the "
+                f"project for you, but didn't find expected {built_run_path} "
+                "file, so something went wrong.")
+            raise ValueError(msg)
     return tool_path

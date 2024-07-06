@@ -1,16 +1,18 @@
 from dataclasses import dataclass, field
-from typing import cast, Optional, TYPE_CHECKING, Union
+from typing import Optional, TYPE_CHECKING, Union
 
 from pagegraph.serialize import Reportable, RequestCompleteReport
 from pagegraph.serialize import RequestErrorReport, RequestChainReport
 from pagegraph.serialize import RequestReport
-from pagegraph.types import RequestId, Url, PageGraphEdgeId, ResourceType
+from pagegraph.types import RequestId, Url, ResourceType
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
-    from pagegraph.graph.edge import RequestStartEdge, RequestRedirectEdge
-    from pagegraph.graph.edge import RequestResponseEdge, RequestCompleteEdge
-    from pagegraph.graph.edge import RequestErrorEdge
+    from pagegraph.graph.edge.request_complete import RequestCompleteEdge
+    from pagegraph.graph.edge.request_error import RequestErrorEdge
+    from pagegraph.graph.edge.request_redirect import RequestRedirectEdge
+    from pagegraph.graph.edge.request_response import RequestResponseEdge
+    from pagegraph.graph.edge.request_start import RequestStartEdge
 
 
 @dataclass
@@ -97,9 +99,8 @@ def request_chain_for_edge(request_edge: "RequestStartEdge") -> RequestChain:
             chain.redirects.append(request_redirect_edge)
             if request == request_redirect_edge:
                 break
-            else:
-                request = request_redirect_edge
-                continue
+            request = request_redirect_edge
+            continue
 
         if request_complete_edge := next_edge.as_request_complete_edge():
             chain.result = request_complete_edge

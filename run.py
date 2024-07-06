@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import argparse
 import json
-import os
 import sys
 
 import pagegraph.commands
@@ -15,9 +14,9 @@ def scripts_cmd(args):
                                       args.debug)
 
 
-def effects_cmd(args):
-    return pagegraph.commands.effects(args.input, args.id, args.loose,
-                                      args.debug)
+# def effects_cmd(args):
+#     return pagegraph.commands.effects(args.input, args.id, args.loose,
+#                                       args.debug)
 
 
 def element_query_cmd(args):
@@ -172,26 +171,26 @@ ELEMENT_QUERY_PARSER.add_argument(
          "(only print detailed information about target element).")
 ELEMENT_QUERY_PARSER.set_defaults(func=element_query_cmd)
 
-EFFECTS_QUERY_PARSER = SUBPARSERS.add_parser(
-    "effects",
-    help="Print information about the effects the given element had on "
-         "the page. By default only includes requests.")
-EFFECTS_QUERY_PARSER.add_argument(
-    "input",
-    help="Path to PageGraph recording.")
-EFFECTS_QUERY_PARSER.add_argument(
-    "id",
-    help="Id of a frame, script, request, or parser node "
-         "(as described by PageGraph node ids, in the format 'n##').")
-EFFECTS_QUERY_PARSER.add_argument(
-    "-l", "--loose",
-    default=False,
-    action="store_true",
-    help="By default, the 'effects' query includes any action or element "
-         "where the target node was the primary cause of the action (i.e., "
-         "actions where the target node was the most immediate cause). "
-         "Passing this flag loosens that, and includes any action or element "
-         "that this node was involved with at all.")
+# EFFECTS_QUERY_PARSER = SUBPARSERS.add_parser(
+#     "effects",
+#     help="Print information about the effects the given element had on "
+#          "the page. By default only includes requests.")
+# EFFECTS_QUERY_PARSER.add_argument(
+#     "input",
+#     help="Path to PageGraph recording.")
+# EFFECTS_QUERY_PARSER.add_argument(
+#     "id",
+#     help="Id of a frame, script, request, or parser node "
+#          "(as described by PageGraph node ids, in the format 'n##').")
+# EFFECTS_QUERY_PARSER.add_argument(
+#     "-l", "--loose",
+#     default=False,
+#     action="store_true",
+#     help="By default, the 'effects' query includes any action or element "
+#          "where the target node was the primary cause of the action (i.e., "
+#          "actions where the target node was the most immediate cause). "
+#          "Passing this flag loosens that, and includes any action or element "
+#          "that this node was involved with at all.")
 # EFFECTS_QUERY_PARSER.add_argument(
 #     "--include-js-builtin-calls",
 #     default=False,
@@ -209,8 +208,7 @@ EFFECTS_QUERY_PARSER.add_argument(
 #     default=False,
 #     action="store_true",
 #     help="Do not include requests that occurred because of the target node.")
-
-EFFECTS_QUERY_PARSER.set_defaults(func=effects_cmd)
+# EFFECTS_QUERY_PARSER.set_defaults(func=effects_cmd)
 
 
 try:

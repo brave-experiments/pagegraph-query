@@ -1,5 +1,6 @@
+from abc import ABC
 from dataclasses import dataclass, fields
-from typing import Any, cast, Union
+from typing import Any, Union
 
 from pagegraph.types import BlinkId, PageGraphId, Url, RequestId
 
@@ -104,7 +105,8 @@ class EdgeReport(ElementReport):
     kind: str = "edge"
 
 
-class Reportable:
+@dataclass
+class Reportable(ABC):
     def to_report(self) -> Report:
         raise NotImplementedError()
 

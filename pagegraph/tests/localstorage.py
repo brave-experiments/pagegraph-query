@@ -1,4 +1,3 @@
-from pagegraph.graph.edge import Edge
 from pagegraph.tests import PageGraphBaseTestClass
 
 
@@ -17,8 +16,6 @@ class LocalStorageBasicTestCase(PageGraphBaseTestClass):
 
             local_storage_node = edge.outgoing_node().as_local_storage_node()
             self.assertIsNotNone(local_storage_node)
-            edge_key = edge.key()
-            edge_value = edge.value()
             if edge.key() == "test" and edge.value() == "\"value\"":
                 found_test_set = True
             elif edge.key() == "other" and edge.value() == "\"newer\"":

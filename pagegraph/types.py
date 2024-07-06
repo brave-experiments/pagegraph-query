@@ -1,20 +1,26 @@
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Iterable, Set, Tuple, Type, TYPE_CHECKING, Union
+from typing import Set, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
-    from pagegraph.graph.edge import Edge, JSCallEdge, JSResultEdge
-    from pagegraph.graph.edge import RequestCompleteEdge, RequestErrorEdge
-    from pagegraph.graph.edge import RequestRedirectEdge
-    from pagegraph.graph.node import Node, DOMRootNode, HTMLNode, ParserNode
-    from pagegraph.graph.node import TextNode, FrameOwnerNode, ScriptNode
+    from pagegraph.graph.edge import Edge
+    from pagegraph.graph.edge.js_call import JSCallEdge
+    from pagegraph.graph.edge.js_result import JSResultEdge
+    from pagegraph.graph.edge.request_complete import RequestCompleteEdge
+    from pagegraph.graph.edge.request_error import RequestErrorEdge
+    from pagegraph.graph.edge.request_redirect import RequestRedirectEdge
+    from pagegraph.graph.node import Node
+    from pagegraph.graph.node.dom_root import DOMRootNode
+    from pagegraph.graph.node.frame_owner import FrameOwnerNode
+    from pagegraph.graph.node.html import HTMLNode
+    from pagegraph.graph.node.parser import ParserNode
+    from pagegraph.graph.node.script import ScriptNode
+    from pagegraph.graph.node.text import TextNode
 
 
 BlinkId = int
 FrameId = int
 RequestId = int
-EdgeIterator = Iterable["Edge"]
-NodeIterator = Iterable["Node"]
 PageGraphId = str
 PageGraphNodeId = PageGraphId
 PageGraphEdgeId = PageGraphId
@@ -22,10 +28,10 @@ PageGraphEdgeKey = tuple[PageGraphNodeId, PageGraphNodeId, PageGraphEdgeId]
 Url = str
 
 DOMNode = Union["DOMRootNode", "HTMLNode", "TextNode", "FrameOwnerNode"]
-AttrDOMNode = Union["DOMRootNode", "HTMLNode", "FrameOwnerNode"]
-LeafDOMNode = Union["TextNode", "FrameOwnerNode"]
-ParentDOMNode = Union["DOMRootNode", "HTMLNode", "FrameOwnerNode"]
-ChildDOMNode = Union["HTMLNode", "TextNode", "FrameOwnerNode"]
+AttrDomNode = Union["DOMRootNode", "HTMLNode", "FrameOwnerNode"]
+LeafDomNode = Union["TextNode", "FrameOwnerNode"]
+ParentDomNode = Union["DOMRootNode", "HTMLNode", "FrameOwnerNode"]
+ChildDomNode = Union["HTMLNode", "TextNode", "FrameOwnerNode"]
 RequesterNode = Union["HTMLNode", "DOMRootNode", "ScriptNode", "ParserNode"]
 ActorNode = Union["ScriptNode", "ParserNode"]
 
@@ -70,7 +76,7 @@ class ResourceType(StrEnum):
 @dataclass
 class FrameSummary:
     created_nodes: Set["Node"]
-    attached_nodes: Set[ChildDOMNode]
+    attached_nodes: Set[ChildDomNode]
     script_nodes: Set["ScriptNode"]
 
     def __init__(self) -> None:
@@ -81,7 +87,7 @@ class FrameSummary:
     def includes_created(self, node: "Node") -> bool:
         return node in self.created_nodes
 
-    def includes_attached(self, node: ChildDOMNode) -> bool:
+    def includes_attached(self, node: ChildDomNode) -> bool:
         return node in self.attached_nodes
 
     def includes_executed(self, node: "ScriptNode") -> bool:

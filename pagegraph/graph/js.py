@@ -1,13 +1,13 @@
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Union
 
-from pagegraph.types import FrameId
 from pagegraph.serialize import Reportable, JSInvokeReport
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
-    from pagegraph.graph.edge import JSCallEdge, JSResultEdge
-    from pagegraph.graph.node import JSStructureNode, DOMRootNode
+    from pagegraph.graph.edge.js_call import JSCallEdge
+    from pagegraph.graph.edge.js_result import JSResultEdge
+    from pagegraph.graph.node.dom_root import DOMRootNode
+    from pagegraph.graph.node.js_structure import JSStructureNode
 
 
 class JSCallResult(Reportable):

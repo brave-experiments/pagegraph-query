@@ -1,0 +1,45 @@
+<base>
+  <textarea rows="30" cols="20"></textarea>
+  <p></p>
+  <script>
+    const textAreaElm = document.getElementsByTagName("textarea")[0]
+    window.addText = text => {
+      textAreaElm.value += text + "\n";
+    }
+    const LS = window.localStorage;
+    LS.first = 1;
+    addText("1")
+
+    setTimeout(_ => {
+      LS.second = 2;
+      addText("2")
+    }, 500)
+
+    eval("LS.third = 3")
+    addText("3")
+
+    const pro = new Promise((resolve) => {
+      setTimeout(_ => {
+        resolve();
+      }, 250)
+    })
+    pro.then(_ => {
+      LS.fourth = 4;
+      addText("4")
+    })
+
+    const iframeElm = document.createElement('iframe')
+    iframeElm.src = 'about:blank'
+    document.body.appendChild(iframeElm)
+    iframeElm.contentWindow.eval("window.localStorage.fifth = '5'; window.addText('5');");
+  </script>
+  <script src="/assets/localstorage-stress.js"></script>
+  <script>
+    const pElm = document.getElementsByTagName("p")[0];
+    setTimeout(_ => {
+      const scriptElm = document.createElement('script')
+      scriptElm.src = '/assets/localstorage-stress.js?2';
+      document.body.appendChild(scriptElm)
+    }, 500);
+  </script>
+</base>
