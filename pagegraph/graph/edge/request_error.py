@@ -1,9 +1,10 @@
 from typing import Optional, TYPE_CHECKING
 
 from pagegraph.graph.edge.request_response import RequestResponseEdge
+from pagegraph.graph.requests import parse_headers
 
 if TYPE_CHECKING:
-    from pagegraph.types import RequesterNode
+    from pagegraph.types import RequesterNode, RequestHeaders
 
 
 class RequestErrorEdge(RequestResponseEdge):
@@ -27,8 +28,13 @@ class RequestErrorEdge(RequestResponseEdge):
         assert requester_node
         return requester_node
 
-    def headers(self) -> str | None:
+    def headers_raw(self) -> Optional[str]:
         try:
             return self.data()[self.RawAttrs.HEADERS.value]
         except KeyError:
             return None
+
+    def headers(self) -> Optional["RequestHeaders"]:
+        if header_text := self.headers_raw():
+            return parse_headers(header_text)
+        return None

@@ -2,7 +2,7 @@ from abc import ABC
 from dataclasses import dataclass, fields
 from typing import Any, Union
 
-from pagegraph.types import BlinkId, PageGraphId, Url, RequestId
+from pagegraph.types import BlinkId, PageGraphId, Url, RequestId, RequestHeaders
 
 
 @dataclass
@@ -50,14 +50,14 @@ class RequestCompleteReport(Report):
     id: PageGraphId
     size: int
     hash: str
-    headers: str
+    headers: RequestHeaders
     status: str = "complete"
 
 
 @dataclass
 class RequestErrorReport(Report):
     id: PageGraphId
-    headers: str | None
+    headers: RequestHeaders | None
     status: str = "error"
 
 

@@ -35,6 +35,7 @@ ChildDomNode = Union["HTMLNode", "TextNode", "FrameOwnerNode"]
 RequesterNode = Union["HTMLNode", "DOMRootNode", "ScriptNode", "ParserNode"]
 ActorNode = Union["ScriptNode", "ParserNode"]
 
+RequestHeaders = list[tuple[str, str]]
 
 # Values are defined by Blink, in `Resource::ResourceTypeToString`.
 # See third_party/blink/renderer/platform/loader/fetch/resource.h.

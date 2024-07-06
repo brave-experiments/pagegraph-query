@@ -1,10 +1,10 @@
 from dataclasses import dataclass, field
+import re
 from typing import Optional, TYPE_CHECKING, Union
 
 from pagegraph.serialize import Reportable, RequestCompleteReport
 from pagegraph.serialize import RequestErrorReport, RequestChainReport
 from pagegraph.serialize import RequestReport
-from pagegraph.types import RequestId, Url, ResourceType
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from pagegraph.graph.edge.request_redirect import RequestRedirectEdge
     from pagegraph.graph.edge.request_response import RequestResponseEdge
     from pagegraph.graph.edge.request_start import RequestStartEdge
+    from pagegraph.types import RequestId, RequestHeaders, Url, ResourceType
 
 
 @dataclass
@@ -23,7 +24,7 @@ class RequestResponse:
 
 @dataclass
 class RequestChain(Reportable):
-    request_id: RequestId
+    request_id: "RequestId"
     request: "RequestStartEdge"
     redirects: list["RequestRedirectEdge"] = field(default_factory=list)
     result: Union["RequestCompleteEdge", "RequestErrorEdge", None] = None
@@ -76,10 +77,10 @@ class RequestChain(Reportable):
             return request_error_edge
         return None
 
-    def resource_type(self) -> ResourceType:
+    def resource_type(self) -> "ResourceType":
         return self.request.resource_type()
 
-    def final_url(self) -> Url:
+    def final_url(self) -> "Url":
         if len(self.redirects) == 0:
             return self.request.url()
         return self.redirects[-1].url()
@@ -110,3 +111,12 @@ def request_chain_for_edge(request_edge: "RequestStartEdge") -> RequestChain:
             raise ValueError("Should not be reachable")
         break
     return chain
+
+
+def parse_headers(headers_text: str) -> "RequestHeaders":
+    headers = []
+    for line in headers_text.split("\n"):
+        match = re.search(r'"(.+)" "(.*)"', line)
+        if match:
+            headers.append((match.group(1), match.group(2)))
+    return headers

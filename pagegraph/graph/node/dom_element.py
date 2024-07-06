@@ -129,7 +129,7 @@ class DOMElementNode(Node, ABC):
         document), or more than one node (if the node was moved around the
         document during execution)."""
         parent_html_nodes = []
-        for e in self.incoming_edges():
-            if insert_edge := e.as_insert_edge():
+        for edge in self.incoming_edges():
+            if insert_edge := edge.as_insert_edge():
                 parent_html_nodes.append(insert_edge.inserted_below_node())
         return parent_html_nodes
