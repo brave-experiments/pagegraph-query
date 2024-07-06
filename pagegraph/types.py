@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from pagegraph.graph.node.parser import ParserNode
     from pagegraph.graph.node.script import ScriptNode
     from pagegraph.graph.node.text import TextNode
+    from pagegraph.serialize import DOMElementReport, FrameReport
 
 
 BlinkId = int

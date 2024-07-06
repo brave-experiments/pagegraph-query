@@ -1,19 +1,22 @@
 from dataclasses import dataclass
-from typing import Union
+from typing import Union, Optional, TYPE_CHECKING
 
 import pagegraph.graph
 from pagegraph.types import PageGraphId
-from pagegraph.serialize import FrameReport, ScriptReport
-from pagegraph.serialize import DOMElementReport, JSStructureReport
-from pagegraph.serialize import JSInvokeReport, Report, RequestChainReport
-from pagegraph.serialize import NodeReport, EdgeReport
+from pagegraph.serialize import Report
+
+if TYPE_CHECKING:
+    from pagegraph.serialize import FrameReport, ScriptReport
+    from pagegraph.serialize import DOMElementReport, JSStructureReport
+    from pagegraph.serialize import JSInvokeReport, RequestChainReport
+    from pagegraph.serialize import NodeReport, EdgeReport, DOMNodeReport
 
 
 @dataclass
 class SubFramesCommandReport(Report):
-    parent_frame: FrameReport
-    iframe: DOMElementReport
-    child_frames: list[FrameReport]
+    parent_frame: "FrameReport"
+    iframe: "DOMElementReport"
+    child_frames: list["FrameReport"]
 
 
 def subframes(input_path: str, local_only: bool,
@@ -28,7 +31,7 @@ def subframes(input_path: str, local_only: bool,
 
         parent_frame_report = domroot_for_iframe.to_report()
         iframe_elm_report = iframe_node.to_report()
-        child_frame_reports: list[FrameReport] = []
+        child_frame_reports: list["FrameReport"] = []
 
         is_all_local_frames = True
         for child_domroot_node in iframe_node.domroot_nodes():
@@ -51,11 +54,11 @@ def subframes(input_path: str, local_only: bool,
 
 @dataclass
 class RequestsCommandReport(Report):
-    request: RequestChainReport
-    frame: FrameReport
+    request: "RequestChainReport"
+    frame: "FrameReport"
 
 
-def requests(input_path: str, frame_nid: str | None,
+def requests(input_path: str, frame_nid: Optional["PageGraphId"],
              debug: bool) -> list[RequestsCommandReport]:
     pg = pagegraph.graph.from_path(input_path, debug)
     reports: list[RequestsCommandReport] = []
@@ -78,14 +81,14 @@ def requests(input_path: str, frame_nid: str | None,
 
 @dataclass
 class JSCallsCommandReport(Report):
-    method: JSStructureReport
-    invocation: JSInvokeReport
-    call_context: FrameReport
-    receiver_context: FrameReport
+    method: "JSStructureReport"
+    invocation: "JSInvokeReport"
+    call_context: "FrameReport"
+    receiver_context: "FrameReport"
 
 
-def js_calls(input_path: str, frame: str | None, cross_frame: bool,
-             method: str | None, pg_id: PageGraphId | None,
+def js_calls(input_path: str, frame: Optional["PageGraphId"], cross_frame: bool,
+             method: Optional[str], pg_id: Optional["PageGraphId"],
              debug: bool) -> list[JSCallsCommandReport]:
     pg = pagegraph.graph.from_path(input_path, debug)
     reports: list[JSCallsCommandReport] = []
@@ -115,13 +118,13 @@ def js_calls(input_path: str, frame: str | None, cross_frame: bool,
 
 @dataclass
 class ScriptsCommandReport(Report):
-    script: ScriptReport
-    frame: FrameReport | None = None
+    script: "ScriptReport"
+    frame: Optional["FrameReport"] = None
 
 
-def scripts(input_path: str, frame: str | None, pg_id: PageGraphId | None,
-            include_source: bool, omit_executors: bool,
-            debug: bool) -> list[ScriptsCommandReport]:
+def scripts(input_path: str, frame: Optional["PageGraphId"],
+            pg_id: Optional["PageGraphId"], include_source: bool,
+            omit_executors: bool, debug: bool) -> list[ScriptsCommandReport]:
     pg = pagegraph.graph.from_path(input_path, debug)
     reports: list[ScriptsCommandReport] = []
     for script_node in pg.script_nodes():
@@ -144,14 +147,40 @@ def scripts(input_path: str, frame: str | None, pg_id: PageGraphId | None,
     return reports
 
 
-def element_query(input_path: str, pg_id: PageGraphId, depth: int,
-                  debug: bool) -> Union[NodeReport | EdgeReport]:
+def element_query(input_path: str, pg_id: "PageGraphId", depth: int,
+                  debug: bool) -> Union["NodeReport", "EdgeReport"]:
     pg = pagegraph.graph.from_path(input_path, debug)
     if pg_id.startswith("n"):
         return pg.node(pg_id).to_node_report(depth)
     if pg_id.startswith("e"):
         return pg.edge(pg_id).to_edge_report(depth)
     raise ValueError("Invalid element id, should be either n## or e##.")
+
+
+@dataclass
+class HtmlCommandReport(Report):
+    elements: list["DOMNodeReport"]
+
+
+def html_query_cmd(input_path: str, frame_filter: Optional["PageGraphId"],
+                   at_serialization: bool, only_body_content: bool,
+                   debug: bool) -> HtmlCommandReport:
+    pg = pagegraph.graph.from_path(input_path, debug)
+    dom_nodes = pg.dom_nodes()
+    reports = []
+    for node in dom_nodes:
+        if frame_filter:
+            domroot_for_insertion = node.domroot_for_document()
+            if not domroot_for_insertion:
+                continue
+            if frame_filter != domroot_for_insertion.pg_id():
+                continue
+        if at_serialization and not node.is_present_at_serialization():
+            continue
+        if only_body_content and not node.is_body_content():
+            continue
+        reports.append(node.to_report())
+    return HtmlCommandReport(reports)
 
 
 @dataclass

@@ -5,13 +5,14 @@ from typing import Union, Optional, TYPE_CHECKING
 
 from pagegraph.graph.edge import Edge
 from pagegraph.graph.node import Node
-from pagegraph.serialize import Reportable, ScriptReport, DOMElementReport
+from pagegraph.serialize import Reportable, ScriptReport
 from pagegraph.types import ResourceType
 
 if TYPE_CHECKING:
     from pagegraph.graph.edge.execute import ExecuteEdge
     from pagegraph.graph.requests import RequestChain
     from pagegraph.types import Url, ParentDomNode, ActorNode
+    from pagegraph.serialize import DOMElementReport
 
 
 class ScriptNode(Node, Reportable):
@@ -102,7 +103,7 @@ class ScriptNode(Node, Reportable):
         return creator_node
 
     def to_report(self, include_source: bool = False) -> ScriptReport:
-        executor_report: Union[ScriptReport, DOMElementReport, None] = None
+        executor_report: Union[ScriptReport, "DOMElementReport", None] = None
         executor_node = self.creator_node()
         if executor_node.as_parser_node() is not None:
             executor_report = None

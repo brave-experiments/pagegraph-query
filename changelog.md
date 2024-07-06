@@ -1,3 +1,9 @@
+Version 0.9.2
+---
+
+Add `html` command, for querying what HTML elements appeared in which pages.
+
+
 Version 0.9.1
 ---
 

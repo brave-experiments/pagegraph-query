@@ -24,6 +24,11 @@ def element_query_cmd(args):
                                             args.debug)
 
 
+def html_query_cmd(args):
+    return pagegraph.commands.html_query_cmd(args.input, args.frame,
+                                             args.at_serialization,
+                                             args.body_content, args.debug)
+
 def js_calls_cmd(args):
     return pagegraph.commands.js_calls(args.input, args.frame, args.cross,
                                        args.method, args.id, args.debug)
@@ -42,9 +47,10 @@ def validate_cmd(args):
 
 
 PARSER = argparse.ArgumentParser(
-        prog="PageGraph Query",
-        description="Extracts information about a Web page's execution from "
-                    " a PageGraph recordings.")
+    prog="PageGraph Query",
+    description="Extracts information about a Web page's execution from "
+                " a PageGraph recordings.",
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 PARSER.add_argument(
     "--version",
@@ -170,6 +176,35 @@ ELEMENT_QUERY_PARSER.add_argument(
     help="Depth of the recursion to summarize in the graph. Defaults to 0 "
          "(only print detailed information about target element).")
 ELEMENT_QUERY_PARSER.set_defaults(func=element_query_cmd)
+
+HTML_QUERY_PARSER = SUBPARSERS.add_parser(
+    "html",
+    help="Print information about the HTML elements in a document.")
+HTML_QUERY_PARSER.add_argument(
+    "input",
+    help="Path to PageGraph recording.")
+HTML_QUERY_PARSER.add_argument(
+    "-f", "--frame",
+    default=None,
+    help="Only include HTML elements that were inserted into the document in "
+         "a given frame (as described by PageGraph node ids, in the format "
+         "'n##').")
+HTML_QUERY_PARSER.add_argument(
+    "-s", "--at-serialization",
+    default=False,
+    action="store_true",
+    help="If passed, only include HTML elements that were presented in the "
+         "document when the document was serialized (i.e., they weren't "
+         "inserted and then later deleted.).")
+HTML_QUERY_PARSER.add_argument(
+    "-b", "--body-content",
+    default=False,
+    action="store_true",
+    help="Only return elements that appear in the body of the document, "
+         "meaning elements that are a child of the <body> element.")
+HTML_QUERY_PARSER.set_defaults(func=html_query_cmd)
+
+
 
 # EFFECTS_QUERY_PARSER = SUBPARSERS.add_parser(
 #     "effects",

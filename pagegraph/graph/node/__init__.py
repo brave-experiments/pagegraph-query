@@ -82,6 +82,7 @@ class Node(PageGraphElement, ABC):
         SCRIPT_TYPE = "script type"
         SOURCE = "source"
         TIMESTAMP = "timestamp"
+        TEXT = "text"
         TYPE = "node type"
         TAG = "tag name"
         URL = "url"

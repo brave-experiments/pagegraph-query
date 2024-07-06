@@ -84,8 +84,10 @@ class ScriptReport(Report):
 class ElementReport(Report):
     id: PageGraphId
     type: str
-    details: Union[dict[str, str], None]
+    details: Union[dict[str, JSONAble], None]
 
+
+DOMNodeReport = Union[DOMElementReport, FrameReport]
 
 BriefNodeReport = ElementReport
 BriefEdgeReport = ElementReport

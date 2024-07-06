@@ -9,15 +9,23 @@ if TYPE_CHECKING:
     from pagegraph.graph.edge.node_create import NodeCreateEdge
     from pagegraph.graph.edge.node_insert import NodeInsertEdge
     from pagegraph.graph.node.dom_root import DOMRootNode
-    from pagegraph.types import BlinkId, ParentDomNode, ActorNode
+    from pagegraph.serialize import DOMNodeReport
+    from pagegraph.types import BlinkId, ParentDomNode, ActorNode, DOMNode
 
 
 class DOMElementNode(Node, ABC):
+
+    summary_methods = {
+        "tag name": "tag_name"
+    }
 
     def blink_id(self) -> "BlinkId":
         return int(self.data()[self.RawAttrs.BLINK_ID.value])
 
     def tag_name(self) -> str:
+        raise NotImplementedError()
+
+    def to_report(self) -> "DOMNodeReport":
         raise NotImplementedError()
 
     def insertion_edges(self) -> list["NodeInsertEdge"]:
@@ -35,6 +43,26 @@ class DOMElementNode(Node, ABC):
             return insertion_edges[-1]
         except IndexError:
             return None
+
+    def is_body_content(self) -> bool:
+        # Returns True if the element was both 1. in the document
+        # at serialization time, and 2. was a child of the <body> element.
+        parent_node = self.parent_at_serialization()
+        if not parent_node:
+            return False
+        needle_node: Optional["DOMNode"] = parent_node
+        while needle_node is not None:
+            needle_html_node = needle_node.as_html_node()
+            if not needle_html_node:
+                return False
+            if needle_html_node.tag_name() == "BODY":
+                return True
+            needle_node = needle_html_node.parent_at_serialization()
+        return False
+
+    def is_present_at_serialization(self) -> bool:
+        parent_node_at_serialization = self.parent_at_serialization()
+        return parent_node_at_serialization is not None
 
     def parent_at_serialization(self) -> Optional["ParentDomNode"]:
         if self.pg.feature_check(Feature.DOCUMENT_EDGES):

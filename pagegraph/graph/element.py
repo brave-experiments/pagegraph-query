@@ -6,6 +6,7 @@ from typing import Any, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
+    from pagegraph.serialize import JSONAble
     from pagegraph.types import PageGraphId
 
 
@@ -36,13 +37,16 @@ class PageGraphElement(ABC):
     def pg_id(self) -> "PageGraphId":
         return self._id
 
-    def summary_fields(self) -> Union[None, dict[str, str]]:
-        if self.__class__.summary_methods is None:
-            return None
-        summary: dict[str, str] = {}
-        for name, method_name in self.__class__.summary_methods.items():
-            func = getattr(self, method_name)
-            summary[name] = str(func())
+    def summary_fields(self) -> Union[None, dict[str, "JSONAble"]]:
+        summary: dict[str, "JSONAble"] = {}
+        needle_class = self.__class__
+        while needle_class != object:
+            class_summary_methods = self.__class__.summary_methods
+            if class_summary_methods is not None:
+                for name, method_name in class_summary_methods.items():
+                    func = getattr(self, method_name)
+                    summary[name] = str(func())
+            needle_class = needle_class.__bases__[0]
         return summary
 
     def validate(self) -> bool:
