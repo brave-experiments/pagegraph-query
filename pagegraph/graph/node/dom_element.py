@@ -121,7 +121,7 @@ class DOMElementNode(Node, ABC):
         parent_node_from_structure = self.domroot_from_parent_node_path()
         if parent_node_from_structure:
             return parent_node_from_structure
-        return self.domroot_node()
+        return None
 
     def parent_html_nodes(self) -> list["ParentDomNode"]:
         """Return every node this node was ever inserted under. This can be
