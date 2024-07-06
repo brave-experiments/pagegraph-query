@@ -1,3 +1,13 @@
+Version 0.9.1
+---
+
+Add some tests.
+
+Moved to pylint linting, which required a lot of code restructuring.
+
+Parse headers in relevant requests.
+
+
 Version 0.6.5
 ---
 Add ability to gate some functionality behind graph versions.
