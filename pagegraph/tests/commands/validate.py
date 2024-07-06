@@ -20,14 +20,14 @@ def validate_path(path: str) -> bool:
     with package_path.open("r") as handle:
         try:
             package_data = json.load(handle)
-        except json.JSONDecodeError:
-            raise ValueError(
-               f"Invalid pagegraph-crawl project: {package_path} is not JSON")
+        except json.JSONDecodeError as exc:
+            msg = f"Invalid pagegraph-crawl project: {package_path} is not JSON"
+            raise ValueError(msg) from exc
         if package_data["name"] != "pagegraph-crawl":
-            raise ValueError(
-                f"Invalid pagegraph-crawl project: {package_path} is not "
+            msg = (f"Invalid pagegraph-crawl project: {package_path} is not "
                 "for the pagegraph-crawl project. "
                 "key \"name\" does not have value \"pagegraph-crawl\".")
+            raise ValueError(msg)
 
     # Next, do a basic check to see if it looks like pagegraph-crawl
     # has been built. If not, we can try the basic steps to build
@@ -37,18 +37,18 @@ def validate_path(path: str) -> bool:
         try:
             subprocess.run(["npm", "install"], cwd=tool_path, check=True,
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError:
-            raise ValueError(
-                f"Invalid pagegraph-crawl project: project is not built, "
+        except subprocess.CalledProcessError as exc:
+            msg = ("Invalid pagegraph-crawl project: project is not built, "
                 "and `npm install` failed when we tried to run it for you.")
+            raise ValueError(msg) from exc
 
         try:
             subprocess.run(["npm", "run", "build"], cwd=tool_path, check=True,
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError:
-            raise ValueError(
-                f"Invalid pagegraph-crawl project: project is not built, "
+        except subprocess.CalledProcessError as exc:
+            msg = ("Invalid pagegraph-crawl project: project is not built, "
                 "and `npm run build` failed when we tried to run it for you.")
+            raise ValueError(msg) from exc
 
         if not built_run_path.is_file():
             raise ValueError(

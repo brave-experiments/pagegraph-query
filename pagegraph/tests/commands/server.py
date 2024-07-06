@@ -19,8 +19,9 @@ def start_and_wait(tests_dir: pathlib.Path, port: int | None = None,
     ]
     if port is not None:
         start_server_cmd += [str(port)]
-    print("Starting test http.server", start_server_cmd)
-    run(start_server_cmd)
+    if verbose:
+        print("Starting test http.server", start_server_cmd)
+    run(start_server_cmd, check=True)
 
 
 def start(tests_dir: pathlib.Path,
@@ -37,9 +38,9 @@ def start(tests_dir: pathlib.Path,
     stdout_option = PIPE if verbose else DEVNULL
 
     print("Starting test http.server")
-    handle = Popen(start_server_cmd, stdout=stdout_option, stderr=PIPE)
-    time.sleep(2)
-    return handle
+    with Popen(start_server_cmd, stdout=stdout_option, stderr=PIPE) as handle:
+        time.sleep(2)
+        return handle
 
 
 def shutdown(handle: Popen) -> None:  # type: ignore[type-arg]

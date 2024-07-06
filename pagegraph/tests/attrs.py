@@ -1,4 +1,4 @@
-from pagegraph.graph.node import HTMLNode
+from pagegraph.graph.node.html import HTMLNode
 from pagegraph.tests import PageGraphBaseTestClass
 
 

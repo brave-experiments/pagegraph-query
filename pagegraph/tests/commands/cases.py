@@ -8,15 +8,15 @@ GRAPH_FILETYPE = ".graphml"
 
 
 def matching_cases(test_filter: None | str = None) -> list[pathlib.Path]:
-    matching_cases = []
+    cases = []
     for test_case in PG_PATHS.testcases().iterdir():
         if not test_case.is_file():
             continue
         if not test_case.name.endswith(HTML_FILETYPE):
             continue
         if not test_filter or test_filter in test_case.name:
-            matching_cases.append(test_case)
-    return matching_cases
+            cases.append(test_case)
+    return cases
 
 
 def graph_path_for_case(test_case: pathlib.Path) -> pathlib.Path:

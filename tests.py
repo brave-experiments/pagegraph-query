@@ -6,8 +6,8 @@ import pagegraph.tests.commands
 
 
 def serve_cmd(args: argparse.Namespace, other_args: list[str]) -> None:
-    pagegraph.tests.commands.serve(
-        args.port, args.verbose, other_args)
+    # pylint: disable=unused-argument
+    pagegraph.tests.commands.serve(args.port, args.verbose)
 
 
 def setup_cmd(args: argparse.Namespace, other_args: list[str]) -> None:
@@ -17,6 +17,7 @@ def setup_cmd(args: argparse.Namespace, other_args: list[str]) -> None:
 
 
 def run_cmd(args: argparse.Namespace, other_args: list[str]) -> None:
+    # pylint: disable=unused-argument
     pagegraph.tests.commands.run(args.filter, args.verbose)
 
 

@@ -1,13 +1,12 @@
 from dataclasses import dataclass
-from typing import cast, Any, TYPE_CHECKING, Union
+from typing import Union
 
 import pagegraph.graph
 from pagegraph.types import PageGraphId
-from pagegraph.serialize import FrameReport, RequestReport, ScriptReport
+from pagegraph.serialize import FrameReport, ScriptReport
 from pagegraph.serialize import DOMElementReport, JSStructureReport
 from pagegraph.serialize import JSInvokeReport, Report, RequestChainReport
 from pagegraph.serialize import NodeReport, EdgeReport
-from pagegraph.versions import Feature
 
 
 @dataclass
@@ -133,6 +132,8 @@ def scripts(input_path: str, frame: str | None, pg_id: PageGraphId | None,
         report = ScriptsCommandReport(script_report)
 
         frame_id = script_node.execute_edge().frame_id()
+        if frame and ("n" + str(frame_id)) != frame:
+            continue
         frame_report = pg.domroot_for_frame_id(frame_id).to_report()
         report.frame = frame_report
 
@@ -148,10 +149,9 @@ def element_query(input_path: str, pg_id: PageGraphId, depth: int,
     pg = pagegraph.graph.from_path(input_path, debug)
     if pg_id.startswith("n"):
         return pg.node(pg_id).to_node_report(depth)
-    elif pg_id.startswith("e"):
+    if pg_id.startswith("e"):
         return pg.edge(pg_id).to_edge_report(depth)
-    else:
-        raise ValueError("Invalid element id, should be either n## or e##.")
+    raise ValueError("Invalid element id, should be either n## or e##.")
 
 
 @dataclass
@@ -164,10 +164,10 @@ class EffectsCommandReport(Report):
 # a node is responsible for are
 
 
-def effects(input_path: str, pg_id: PageGraphId, loose: bool,
-            debug: bool) -> list[EffectsCommandReport]:
-    reports: list[EffectsCommandReport] = []
-    return reports
+# def effects(input_path: str, pg_id: PageGraphId, loose: bool,
+#             debug: bool) -> list[EffectsCommandReport]:
+#     reports: list[EffectsCommandReport] = []
+#     return reports
 
 
 @dataclass

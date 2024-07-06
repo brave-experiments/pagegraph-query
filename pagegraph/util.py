@@ -14,7 +14,7 @@ def is_url_local(url: Url, context_url: Url) -> bool:
         return True
     url_parts = urlparse(url)
     context_url_parts = urlparse(context_url)
-    if url_parts.netloc == "" or url_parts.netloc == context_url_parts.netloc:
+    if url_parts.netloc in ("", context_url_parts.netloc):
         return True
     return False
 
