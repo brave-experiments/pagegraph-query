@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from enum import StrEnum
+from enum import Enum
 from typing import cast, Iterable, Optional, TYPE_CHECKING, Union
 
 from pagegraph.graph.element import PageGraphElement
@@ -54,7 +54,7 @@ class Node(PageGraphElement, ABC):
     incoming_edge_types: Union[list["Edge.Types"], None] = None
     outgoing_edge_types: Union[list["Edge.Types"], None] = None
 
-    class Types(StrEnum):
+    class Types(Enum):
         ADS_SHIELDS = "shieldsAds shield"
         COOKIE_JAR = "cookie jar"
         DOM_ROOT = "DOM root"
@@ -75,7 +75,7 @@ class Node(PageGraphElement, ABC):
         TRACKERS_SHIELDS = "trackers shield"
         WEB_API = "web API"
 
-    class RawAttrs(StrEnum):
+    class RawAttrs(Enum):
         BLINK_ID = "node id"
         FRAME_ID = "frame id"
         METHOD = "method"
@@ -143,11 +143,11 @@ class Node(PageGraphElement, ABC):
                               in self.outgoing_edges()]
 
         return NodeReport(
-            self.pg_id(), self.node_type(), self.summary_fields(),
+            self.pg_id(), self.node_type().value, self.summary_fields(),
             incoming_edges, outgoing_edges)
 
     def to_brief_report(self) -> BriefNodeReport:
-        return BriefNodeReport(self.pg_id(), self.node_type(),
+        return BriefNodeReport(self.pg_id(), self.node_type().value,
                                self.summary_fields())
 
     def is_type(self, node_type: Types) -> bool:

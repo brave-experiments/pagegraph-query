@@ -20,4 +20,4 @@ class TextNode(DOMElementNode, Reportable):
         return "[text]"
 
     def text(self) -> str:
-        return self.data()[self.__class__.RawAttrs.TEXT]
+        return self.data()[self.__class__.RawAttrs.TEXT.value]

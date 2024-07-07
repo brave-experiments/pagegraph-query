@@ -25,7 +25,7 @@ class NodeInsertEdge(FrameIdAttributedEdge):
         return self
 
     def inserted_before_blink_id(self) -> Optional["BlinkId"]:
-        value = self.data()[Edge.RawAttrs.BEFORE_BLINK_ID]
+        value = self.data()[Edge.RawAttrs.BEFORE_BLINK_ID.value]
         if value:
             return int(value)
         return None
@@ -38,7 +38,7 @@ class NodeInsertEdge(FrameIdAttributedEdge):
         return node
 
     def inserted_below_blink_id(self) -> "BlinkId":
-        return int(self.data()[Edge.RawAttrs.PARENT_BLINK_ID])
+        return int(self.data()[Edge.RawAttrs.PARENT_BLINK_ID.value])
 
     def inserted_below_node(self) -> "ParentDomNode":
         blink_id = self.inserted_below_blink_id()

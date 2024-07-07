@@ -1,5 +1,5 @@
 from abc import ABC
-from enum import StrEnum
+from enum import Enum
 from typing import cast, Optional
 from typing import TYPE_CHECKING, Union
 
@@ -53,7 +53,7 @@ class Edge(PageGraphElement, ABC):
     # Used as class properties
     #
     # Note that these are defined as lists of type str, but what they
-    # really are is the str values for the Node.Types StrEnum. THis
+    # really are is the str values for the Node.Types Enum. This
     # is necessary to prevent the dependency loop.
     # That these are valid node type enum strs is checked at runtime
     # if in debug mode.
@@ -97,7 +97,7 @@ class Edge(PageGraphElement, ABC):
     incoming_node_id: "PageGraphNodeId"
     outgoing_node_id: "PageGraphNodeId"
 
-    class Types(StrEnum):
+    class Types(Enum):
         ATTRIBUTE_DELETE = "delete attribute"
         ATTRIBUTE_SET = "set attribute"
         CROSS_DOM = "cross DOM"
@@ -125,7 +125,7 @@ class Edge(PageGraphElement, ABC):
         JS_CALL = "js call"
         JS_RESULT = "js result"
 
-    class RawAttrs(StrEnum):
+    class RawAttrs(Enum):
         ARGS = "args"
         BEFORE_BLINK_ID = "before"
         FRAME_ID = "frame id"
@@ -173,12 +173,12 @@ class Edge(PageGraphElement, ABC):
                 outgoing_node_report = outgoing_node.to_brief_report()
 
         return EdgeReport(
-            self.pg_id(), self.edge_type(), self.summary_fields(),
+            self.pg_id(), self.edge_type().value, self.summary_fields(),
             incoming_node_report,
             outgoing_node_report)
 
     def to_brief_report(self) -> BriefEdgeReport:
-        return BriefEdgeReport(self.pg_id(), self.edge_type(),
+        return BriefEdgeReport(self.pg_id(), self.edge_type().value,
                                self.summary_fields())
 
     def incoming_node(self) -> "Node":
@@ -283,7 +283,8 @@ class Edge(PageGraphElement, ABC):
             f"- outgoing: {out_node.node_type()}, {out_node.pg_id()}\n"
         )
         for attr_name, attr_value in self.data().items():
-            output += f"- {attr_name}={str(attr_value).replace("\n", "\\n")}\n"
+            one_line_attr_value = str(attr_value).replace("\n", "\\n")
+            output += f"- {attr_name}={one_line_attr_value}\n"
         return output
 
     def validate(self) -> bool:

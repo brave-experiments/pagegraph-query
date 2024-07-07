@@ -3,6 +3,8 @@ Version 0.9.2
 
 Add `html` command, for querying what HTML elements appeared in which pages.
 
+Made some minor changes to get python 3.10 compatibility
+
 
 Version 0.9.1
 ---

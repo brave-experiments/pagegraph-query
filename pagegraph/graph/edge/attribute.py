@@ -21,7 +21,7 @@ class AttributeEdge(FrameIdAttributedEdge, ABC):
     ]
 
     def key(self) -> str:
-        return self.data()[self.RawAttrs.KEY]
+        return self.data()[self.RawAttrs.KEY.value]
 
     def incoming_node(self) -> "ActorNode":
         incoming_node = super().incoming_node()

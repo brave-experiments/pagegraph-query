@@ -1,5 +1,5 @@
 from base64 import b64encode
-from enum import StrEnum
+from enum import Enum
 import hashlib
 from typing import Union, Optional, TYPE_CHECKING
 
@@ -52,7 +52,7 @@ class ScriptNode(Node, Reportable):
 
     # As defined by the Blink `ScriptSourceLocationType` enum
     # third_party/blink/renderer/bindings/core/v8/script_source_location_type.h
-    class ScriptType(StrEnum):
+    class ScriptType(Enum):
         EVAL = "eval"
         EVAL_SCHEDULED = "eval for scheduled action"
         EXTERNAL = "external file"
@@ -119,7 +119,8 @@ class ScriptNode(Node, Reportable):
         if self.script_type() == ScriptNode.ScriptType.EXTERNAL:
             url = self.url()
 
-        report = ScriptReport(self.pg_id(), self.script_type(), self.hash())
+        report = ScriptReport(self.pg_id(), self.script_type().value,
+                              self.hash())
         report.url = url
         report.executor = executor_report
         if include_source:

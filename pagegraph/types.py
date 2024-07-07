@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum
 from typing import Set, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
@@ -42,7 +42,7 @@ RequestHeaders = list[tuple[str, str]]
 # See third_party/blink/renderer/platform/loader/fetch/resource.h.
 # The OTHER catch all case covers the additional types
 # defined in `blink::Resource::InitiatorTypeNameToString`.
-class ResourceType(StrEnum):
+class ResourceType(Enum):
     ATTRIBUTION_RESOURCE = "Attribution resource"
     AUDIO = "Audio"
     CSS_RESOURCE = "CSS resource"

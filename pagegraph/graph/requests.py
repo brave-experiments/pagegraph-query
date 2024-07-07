@@ -53,7 +53,7 @@ class RequestChain(Reportable):
                     request_error_edge.pg_id(),
                     request_error_edge.headers())
         return RequestChainReport(
-            request_id, resource_type, start_report,  redirect_reports,
+            request_id, resource_type.value, start_report,  redirect_reports,
             result_report)
 
     def hash(self) -> Optional[str]:

@@ -9,4 +9,4 @@ class AttributeSetEdge(AttributeEdge):
         return self
 
     def value(self) -> str:
-        return self.data()[self.RawAttrs.VALUE]
+        return self.data()[self.RawAttrs.VALUE.value]
