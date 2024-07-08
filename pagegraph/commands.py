@@ -67,7 +67,6 @@ def requests(input_path: str, frame_nid: Optional["PageGraphId"],
         request_frame_id = request_start_edge.frame_id()
         request_frame = pg.domroot_for_frame_id(request_frame_id)
 
-        print(f"if {frame_nid} and {request_frame.pg_id()} != {frame_nid}")
         if frame_nid and request_frame.pg_id() != frame_nid:
             continue
         request_id = request_start_edge.request_id()

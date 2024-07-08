@@ -1,3 +1,9 @@
+Version 0.9.3
+---
+
+Fix frame filter for `requests` command.
+
+
 Version 0.9.2
 ---
 
