@@ -65,12 +65,13 @@ def requests(input_path: str, frame_nid: Optional["PageGraphId"],
 
     for request_start_edge in pg.request_start_edges():
         request_frame_id = request_start_edge.frame_id()
-        req_frame_nid = f"n{request_frame_id}"
-        if frame_nid and req_frame_nid != frame_nid:
+        request_frame = pg.domroot_for_frame_id(request_frame_id)
+
+        print(f"if {frame_nid} and {request_frame.pg_id()} != {frame_nid}")
+        if frame_nid and request_frame.pg_id() != frame_nid:
             continue
         request_id = request_start_edge.request_id()
         request_chain = pg.request_chain_for_id(request_id)
-        request_frame = pg.domroot_for_frame_id(request_frame_id)
 
         request_chain_report = request_chain.to_report()
         frame_report = request_frame.to_report()
