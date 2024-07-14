@@ -38,9 +38,10 @@ def start(tests_dir: pathlib.Path,
     stdout_option = PIPE if verbose else DEVNULL
 
     print("Starting test http.server")
-    with Popen(start_server_cmd, stdout=stdout_option, stderr=PIPE) as handle:
-        time.sleep(2)
-        return handle
+    # pylint: disable-next=consider-using-with
+    handle = Popen(start_server_cmd, stdout=stdout_option, stderr=PIPE)
+    time.sleep(2)
+    return handle
 
 
 def shutdown(handle: Popen) -> None:  # type: ignore[type-arg]

@@ -24,7 +24,7 @@ class StructureEdge(Edge):
             self.__class__.incoming_node_type_names = [
                 "DOM root",  # Node.Types.DOM_ROOT
                 "frame owner",  # Node.Types.FRAME_OWNER
-                "HTML element",  # Node.Types.HTML_NODE
+                "HTML element",  # Node.Types.HTML
                 "parser",  # Node.Types.PARSER
             ]
         return super().validate()

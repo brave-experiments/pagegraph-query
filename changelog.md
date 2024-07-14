@@ -1,3 +1,11 @@
+Version 0.9.4
+---
+
+Add support for PageGraph version 0.7.2 (which adds new node types for actors).
+
+Fix `iframes` test and regenerate test graphs with recent pagegraph.
+
+
 Version 0.9.3
 ---
 

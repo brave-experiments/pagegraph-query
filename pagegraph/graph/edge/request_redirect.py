@@ -17,6 +17,11 @@ class RequestRedirectEdge(RequestResponseEdge):
         "resource",  # Node.Types.RESOURCE
     ]
 
+    summary_methods = {
+        "url": "url",
+        "request id": "request_id",
+    }
+
     def outgoing_node(self) -> "ResourceNode":
         node = super().outgoing_node()
         resource_node = node.as_resource_node()

@@ -11,7 +11,7 @@ class LocalStorageBasicTestCase(PageGraphBaseTestClass):
         found_test_set = False
         found_other_set = False
         for edge in storage_set_edges:
-            script_node = edge.incoming_node().as_script_node()
+            script_node = edge.incoming_node().as_script_local_node()
             self.assertIsNotNone(script_node)
 
             local_storage_node = edge.outgoing_node().as_local_storage_node()
@@ -30,7 +30,7 @@ class LocalStorageBasicTestCase(PageGraphBaseTestClass):
         storage_delete_edge = storage_delete_edges[0]
 
         self.assertIsNotNone(
-            storage_delete_edge.incoming_node().as_script_node())
+            storage_delete_edge.incoming_node().as_script_local_node())
         self.assertIsNotNone(
             storage_delete_edge.outgoing_node().as_local_storage_node())
         self.assertEqual(storage_delete_edge.key(), "test")
@@ -41,7 +41,7 @@ class LocalStorageBasicTestCase(PageGraphBaseTestClass):
         storage_clear_edge = storage_clear_edges[0]
 
         self.assertIsNotNone(
-            storage_clear_edge.incoming_node().as_script_node())
+            storage_clear_edge.incoming_node().as_script_local_node())
         self.assertIsNotNone(
             storage_clear_edge.outgoing_node().as_local_storage_node())
 
@@ -63,7 +63,7 @@ class LocalStorageCrossFrameTestCase(PageGraphBaseTestClass):
         parent_frame_edge = None
         child_frame_edge = None
         for edge in storage_set_edges:
-            self.assertIsNotNone(edge.incoming_node().as_script_node())
+            self.assertIsNotNone(edge.incoming_node().as_script_local_node())
             self.assertIsNotNone(edge.outgoing_node().as_local_storage_node())
             if edge.value() == "\"top\"":
                 parent_frame_edge = edge

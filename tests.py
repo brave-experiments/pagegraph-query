@@ -10,8 +10,8 @@ def serve_cmd(args: argparse.Namespace, other_args: list[str]) -> None:
     pagegraph.tests.commands.serve(args.port, args.verbose)
 
 
-def setup_cmd(args: argparse.Namespace, other_args: list[str]) -> None:
-    pagegraph.tests.commands.setup(
+def generate_cmd(args: argparse.Namespace, other_args: list[str]) -> None:
+    pagegraph.tests.commands.generate(
         args.path, args.filter, args.port, args.clear, args.verbose,
         other_args)
 
@@ -22,7 +22,7 @@ def run_cmd(args: argparse.Namespace, other_args: list[str]) -> None:
 
 
 PARSER = argparse.ArgumentParser(
-        prog="Generate PageGraph-query tests",
+        prog="Generate pageqraph-query tests",
         description="Tools for setting up and running tests against "
                     "PageGraph graphs")
 
@@ -42,34 +42,34 @@ SERVE_PARSER.add_argument(
     help="Print verbose amounts detail about the test server.")
 SERVE_PARSER.set_defaults(func=serve_cmd)
 
-SETUP_PARSER = SUBPARSERS.add_parser(
+GENERATE_PARSER = SUBPARSERS.add_parser(
     "generate",
     help="Generate test data to run tests against.")
-SETUP_PARSER.add_argument(
+GENERATE_PARSER.add_argument(
     "path",
     help="Path to the root of the pagegraph-crawl workspace, as cloned  "
          "from https://github.com/brave/pagegraph-crawl.")
-SETUP_PARSER.add_argument(
+GENERATE_PARSER.add_argument(
     "--filter",
     default=None,
     help="If provided, will only generate graphs for tests that contain this "
          "argument as a substring (i.e., just uses `str.contains` against "
          "the file names in ./graphs/")
-SETUP_PARSER.add_argument(
+GENERATE_PARSER.add_argument(
     "--port",
     default=8000,
     help="Port to use for the test server when generating graphs.")
-SETUP_PARSER.add_argument(
+GENERATE_PARSER.add_argument(
     "--clear",
     default=False,
     action="store_true",
     help="If passed, will delete all test graphs before generating new ones.")
-SETUP_PARSER.add_argument(
+GENERATE_PARSER.add_argument(
     "--verbose",
     default=False,
     action="store_true",
     help="Print verbose amounts detail of the graph generation process.")
-SETUP_PARSER.set_defaults(func=setup_cmd)
+GENERATE_PARSER.set_defaults(func=generate_cmd)
 
 RUN_PARSER = SUBPARSERS.add_parser(
     "run",

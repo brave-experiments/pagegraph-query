@@ -37,10 +37,12 @@ from pagegraph.graph.node.js_built_in import JSBuiltInNode
 from pagegraph.graph.node.local_storage import LocalStorageNode
 from pagegraph.graph.node.parser import ParserNode
 from pagegraph.graph.node.resource import ResourceNode
-from pagegraph.graph.node.script import ScriptNode
+from pagegraph.graph.node.script_local import ScriptLocalNode
+from pagegraph.graph.node.script_remote import ScriptRemoteNode
 from pagegraph.graph.node.session_storage import SessionStorageNode
 from pagegraph.graph.node.storage import StorageNode
 from pagegraph.graph.node.text import TextNode
+from pagegraph.graph.node.unknown import UnknownNode
 from pagegraph.graph.node.web_api import WebAPINode
 
 if TYPE_CHECKING:
@@ -49,19 +51,21 @@ if TYPE_CHECKING:
 
 
 NODE_TYPE_MAPPING: dict[Node.Types, Type[Node]] = dict([
-    (Node.Types.FRAME_OWNER, FrameOwnerNode),
-    (Node.Types.SCRIPT, ScriptNode),
-    (Node.Types.PARSER, ParserNode),
-    (Node.Types.HTML_NODE, HTMLNode),
-    (Node.Types.TEXT_NODE, TextNode),
-    (Node.Types.DOM_ROOT, DOMRootNode),
-    (Node.Types.STORAGE, StorageNode),
     (Node.Types.COOKIE_JAR, CookieJarNode),
-    (Node.Types.LOCAL_STORAGE, LocalStorageNode),
-    (Node.Types.SESSION_STORAGE, SessionStorageNode),
+    (Node.Types.DOM_ROOT, DOMRootNode),
     (Node.Types.EXTENSIONS, DeprecatedNode),
-    (Node.Types.RESOURCE, ResourceNode),
+    (Node.Types.FRAME_OWNER, FrameOwnerNode),
+    (Node.Types.HTML, HTMLNode),
     (Node.Types.JS_BUILTIN, JSBuiltInNode),
+    (Node.Types.LOCAL_STORAGE, LocalStorageNode),
+    (Node.Types.PARSER, ParserNode),
+    (Node.Types.RESOURCE, ResourceNode),
+    (Node.Types.SCRIPT_LOCAL, ScriptLocalNode),
+    (Node.Types.SCRIPT_REMOTE, ScriptRemoteNode),
+    (Node.Types.SESSION_STORAGE, SessionStorageNode),
+    (Node.Types.STORAGE, StorageNode),
+    (Node.Types.TEXT, TextNode),
+    (Node.Types.UNKNOWN, UnknownNode),
     (Node.Types.WEB_API, WebAPINode),
 
     (Node.Types.SHIELDS, DeprecatedNode),

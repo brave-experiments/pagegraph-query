@@ -16,8 +16,8 @@ def serve(port: int, verbose: bool) -> None:
     PG_SERVER.start_and_wait(PG_PATHS.testcases(), port, verbose)
 
 
-def setup(tool_path: str, testcase_filter: None, port: int,
-          should_clear: bool, verbose: bool, other_args: list[str]) -> None:
+def generate(tool_path: str, testcase_filter: None, port: int,
+             should_clear: bool, verbose: bool, other_args: list[str]) -> None:
     if should_clear:
         PG_CASES.clear_graphs()
 

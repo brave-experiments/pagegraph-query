@@ -1,15 +1,10 @@
-from abc import ABC
-from typing import Optional, TYPE_CHECKING
+from typing import Optional
 
 from pagegraph.graph.edge import Edge
 from pagegraph.graph.node import Node
 
-if TYPE_CHECKING:
-    from pagegraph.graph.edge.execute import ExecuteEdge
-    from pagegraph.types import ScriptId
 
-
-class ScriptNode(Node, ABC):
+class UnknownNode(Node):
 
     incoming_edge_types = [
         Edge.Types.EVENT_LISTENER,
@@ -39,19 +34,5 @@ class ScriptNode(Node, ABC):
         Edge.Types.EVENT_LISTENER_REMOVE,
     ]
 
-    def as_script_node(self) -> Optional["ScriptNode"]:
+    def as_unknown_node(self) -> Optional["UnknownNode"]:
         return self
-
-    def script_id(self) -> "ScriptId":
-        return int(self.data()[self.RawAttrs.SCRIPT_ID.value])
-
-    def execute_edge(self) -> "ExecuteEdge":
-        execute_edge = None
-        for edge in self.incoming_edges():
-            if execute_edge := edge.as_execute_edge():
-                break
-        if self.pg.debug:
-            if not execute_edge:
-                self.throw("Could not find execution edge for script")
-        assert execute_edge
-        return execute_edge

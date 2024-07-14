@@ -2,13 +2,12 @@ from typing import cast, Optional, TYPE_CHECKING
 
 from pagegraph.graph.edge import Edge
 from pagegraph.graph.node import Node
-from pagegraph.graph.requests import RequestResponse
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
-    from pagegraph.graph.edge.request_response import RequestResponseEdge
     from pagegraph.graph.edge.request_start import RequestStartEdge
     from pagegraph.types import RequesterNode, Url, PageGraphId, RequestId
+    from pagegraph.types import RequestIncoming, RequestOutgoing
 
 
 class ResourceNode(Node):
@@ -33,7 +32,7 @@ class ResourceNode(Node):
     }
 
     # Instance properties
-    requests_map: dict["RequestId", "RequestResponse"]
+    requests_map: dict["RequestId", list["RequestOutgoing"]]
 
     def __init__(self, graph: "PageGraph", pg_id: "PageGraphId"):
         self.requests_map = {}
@@ -48,8 +47,8 @@ class ResourceNode(Node):
     def incoming_edges(self) -> list["RequestStartEdge"]:
         return cast(list["RequestStartEdge"], super().incoming_edges())
 
-    def outgoing_edges(self) -> list["RequestResponseEdge"]:
-        outgoing_edges: list["RequestResponseEdge"] = []
+    def outgoing_edges(self) -> list["RequestOutgoing"]:
+        outgoing_edges: list["RequestOutgoing"] = []
         for edge in super().outgoing_edges():
             if request_complete_edge := edge.as_request_complete_edge():
                 outgoing_edges.append(request_complete_edge)
@@ -68,24 +67,30 @@ class ResourceNode(Node):
     def build_caches(self) -> None:
         for incoming_edge in self.incoming_edges():
             request_id = incoming_edge.request_id()
-            if self.pg.debug:
-                if request_id in self.requests_map:
-                    self.throw("Found duplicate request id")
-            request_response = RequestResponse(incoming_edge)
-            self.requests_map[request_id] = request_response
+            if request_id not in self.requests_map:
+                self.requests_map[request_id] = []
 
         for outgoing_edge in self.outgoing_edges():
             request_id = outgoing_edge.request_id()
             if self.pg.debug:
                 if request_id not in self.requests_map:
                     self.throw("Response without request for resource")
-                if self.requests_map[request_id].response is not None:
-                    self.throw("Second response for request for resource")
-            self.requests_map[request_id].response = outgoing_edge
+            self.requests_map[request_id].append(outgoing_edge)
+        super().build_caches()
 
-    def response_for_id(self,
-                        request_id: "RequestId") -> Optional["RequestResponseEdge"]:
+    def next_response_for_id(
+            self, request_id: "RequestId",
+            curr_response: Optional["RequestOutgoing"]) -> Optional["RequestOutgoing"]:
         if self.pg.debug:
             if request_id not in self.requests_map:
                 self.throw("Unexpected request id")
-        return self.requests_map[request_id].response
+        outgoing_responses = self.requests_map[request_id]
+        if not curr_response:
+            return outgoing_responses[0]
+        found_response = False
+        for a_response in outgoing_responses:
+            if found_response:
+                return a_response
+            if a_response == curr_response:
+                found_response = True
+        return None

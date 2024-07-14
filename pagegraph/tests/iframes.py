@@ -2,7 +2,7 @@ from pagegraph.tests import PageGraphBaseTestClass
 
 
 ABOUT_BLANK_URL = "about:blank"
-FRAME_URL = "/assets/blank-frame.html"
+FRAME_URL = "assets/frames/blank-frame.html"
 
 
 class IFramesBasicTestCase(PageGraphBaseTestClass):
@@ -53,8 +53,8 @@ class IFramesNavigationTestCase(PageGraphBaseTestClass):
         #  1. the initial about:blank frame
         #  2. the temporary about:blank one, created as part of the navigation
         #     process
-        #  3. the navigated to "assets/blank-frame.html" frame.
-        domroot_nodes = iframe_node.domroots()
+        #  3. the navigated to "/assets/frames/blank-frame.html" frame.
+        domroot_nodes = iframe_node.domroot_nodes()
         self.assertEqual(len(domroot_nodes), 3)
 
         init_domroot = None

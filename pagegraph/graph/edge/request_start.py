@@ -13,9 +13,9 @@ class RequestStartEdge(FrameIdAttributedEdge):
 
     incoming_node_type_names = [
         "DOM root",  # Node.Types.DOM_ROOT
-        "HTML element",  # Node.Types.HTML_NODE
+        "HTML element",  # Node.Types.HTML
         "parser",  # Node.Types.PARSER
-        "script",  # Node.Types.SCRIPT
+        "script",  # Node.Types.SCRIPT_LOCAL
     ]
 
     outgoing_node_type_names = [
@@ -24,7 +24,7 @@ class RequestStartEdge(FrameIdAttributedEdge):
 
     summary_methods = {
         "url": "url",
-        "resource type": "resource_type",
+        "resource type": "resource_type_name",
     }
 
     def request_id(self) -> "RequestId":
@@ -51,6 +51,9 @@ class RequestStartEdge(FrameIdAttributedEdge):
             return ResourceType(resource_type_raw)
         except ValueError:
             return ResourceType.OTHER
+
+    def resource_type_name(self) -> str:
+        return self.resource_type().value
 
     def url(self) -> "Url":
         return self.outgoing_node().url()

@@ -33,12 +33,12 @@
     document.body.appendChild(iframeElm)
     iframeElm.contentWindow.eval("window.localStorage.fifth = '5'; window.addText('5');");
   </script>
-  <script src="/assets/localstorage-stress.js"></script>
+  <script src="/assets/js/localstorage-stress.js"></script>
   <script>
     const pElm = document.getElementsByTagName("p")[0];
     setTimeout(_ => {
       const scriptElm = document.createElement('script')
-      scriptElm.src = '/assets/localstorage-stress.js?2';
+      scriptElm.src = '/assets/js/localstorage-stress.js?2';
       document.body.appendChild(scriptElm)
     }, 500);
   </script>

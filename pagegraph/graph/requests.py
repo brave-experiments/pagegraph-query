@@ -14,12 +14,7 @@ if TYPE_CHECKING:
     from pagegraph.graph.edge.request_response import RequestResponseEdge
     from pagegraph.graph.edge.request_start import RequestStartEdge
     from pagegraph.types import RequestId, RequestHeaders, Url, ResourceType
-
-
-@dataclass
-class RequestResponse:
-    request: Union["RequestStartEdge", "RequestRedirectEdge"]
-    response: Union["RequestResponseEdge", None] = None
+    from pagegraph.types import RequestIncoming, RequestOutgoing
 
 
 @dataclass
@@ -90,9 +85,11 @@ def request_chain_for_edge(request_edge: "RequestStartEdge") -> RequestChain:
     request_id = request_edge.request_id()
     chain = RequestChain(request_id, request_edge)
 
-    request: Union["RequestStartEdge", "RequestRedirectEdge"] = request_edge
+    request: "RequestIncoming" = request_edge
+    last_outgoing = None
     while resource_node := request.outgoing_node():
-        next_edge = resource_node.response_for_id(request_id)
+        next_edge = resource_node.next_response_for_id(request_id,
+                                                       last_outgoing)
         if not next_edge:
             break
 
@@ -101,6 +98,7 @@ def request_chain_for_edge(request_edge: "RequestStartEdge") -> RequestChain:
             if request == request_redirect_edge:
                 break
             request = request_redirect_edge
+            last_outgoing = request
             continue
 
         if request_complete_edge := next_edge.as_request_complete_edge():

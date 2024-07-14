@@ -9,32 +9,46 @@ if TYPE_CHECKING:
     from pagegraph.graph.edge.request_complete import RequestCompleteEdge
     from pagegraph.graph.edge.request_error import RequestErrorEdge
     from pagegraph.graph.edge.request_redirect import RequestRedirectEdge
+    from pagegraph.graph.edge.request_start import RequestStartEdge
     from pagegraph.graph.node import Node
     from pagegraph.graph.node.dom_root import DOMRootNode
     from pagegraph.graph.node.frame_owner import FrameOwnerNode
     from pagegraph.graph.node.html import HTMLNode
     from pagegraph.graph.node.parser import ParserNode
     from pagegraph.graph.node.script import ScriptNode
+    from pagegraph.graph.node.script_local import ScriptLocalNode
+    from pagegraph.graph.node.script_remote import ScriptRemoteNode
     from pagegraph.graph.node.text import TextNode
-    from pagegraph.serialize import DOMElementReport, FrameReport
+    from pagegraph.graph.node.unknown import UnknownNode
+    from pagegraph.serialize import DOMElementReport, FrameReport, JSONAble
 
 
 BlinkId = int
 FrameId = int
+ScriptId = int
 RequestId = int
 PageGraphId = str
 PageGraphNodeId = PageGraphId
 PageGraphEdgeId = PageGraphId
 PageGraphEdgeKey = tuple[PageGraphNodeId, PageGraphNodeId, PageGraphEdgeId]
 Url = str
+ElementSummary = Union[None, dict[str, "JSONAble"]]
 
 DOMNode = Union["DOMRootNode", "HTMLNode", "TextNode", "FrameOwnerNode"]
 AttrDomNode = Union["DOMRootNode", "HTMLNode", "FrameOwnerNode"]
 LeafDomNode = Union["TextNode", "FrameOwnerNode"]
 ParentDomNode = Union["DOMRootNode", "HTMLNode", "FrameOwnerNode"]
 ChildDomNode = Union["HTMLNode", "TextNode", "FrameOwnerNode"]
-RequesterNode = Union["HTMLNode", "DOMRootNode", "ScriptNode", "ParserNode"]
-ActorNode = Union["ScriptNode", "ParserNode"]
+LocalOrRemoteScriptNode = Union["ScriptLocalNode", "ScriptRemoteNode"]
+JSCallingNode = Union["ScriptLocalNode", "UnknownNode"]
+ScriptExecutorNode = Union["ParentDomNode", "ParserNode", "ScriptNode"]
+RequesterNode = Union["HTMLNode", "DOMRootNode", "LocalOrRemoteScriptNode",
+                      "ParserNode"]
+ActorNode = Union["ScriptLocalNode", "ParserNode", "UnknownNode"]
+
+RequestIncoming = Union["RequestStartEdge", "RequestRedirectEdge"]
+RequestOutgoing = Union["RequestRedirectEdge", "RequestCompleteEdge",
+                        "RequestErrorEdge"]
 
 RequestHeaders = list[tuple[str, str]]
 
@@ -79,7 +93,7 @@ class ResourceType(Enum):
 class FrameSummary:
     created_nodes: Set["Node"]
     attached_nodes: Set[ChildDomNode]
-    script_nodes: Set["ScriptNode"]
+    script_nodes: Set["ScriptLocalNode"]
 
     def __init__(self) -> None:
         self.created_nodes = set()
@@ -92,5 +106,5 @@ class FrameSummary:
     def includes_attached(self, node: ChildDomNode) -> bool:
         return node in self.attached_nodes
 
-    def includes_executed(self, node: "ScriptNode") -> bool:
+    def includes_executed(self, node: "ScriptLocalNode") -> bool:
         return node in self.script_nodes

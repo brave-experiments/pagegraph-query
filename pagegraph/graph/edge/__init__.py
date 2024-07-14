@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from pagegraph.graph.edge.event_listener_add import EventListenerAddEdge
     from pagegraph.graph.edge.event_listener_remove import EventListenerRemoveEdge
     from pagegraph.graph.edge.execute import ExecuteEdge
+    from pagegraph.graph.edge.execute_from_attribute import ExecuteFromAttributeEdge
     from pagegraph.graph.edge.js_call import JSCallEdge
     from pagegraph.graph.edge.js_result import JSResultEdge
     from pagegraph.graph.edge.node_create import NodeCreateEdge
@@ -146,6 +147,9 @@ class Edge(PageGraphElement, ABC):
         self.outgoing_node_id = child_id
         super().__init__(graph, pagegraph_id)
 
+    def __str__(self) -> str:
+        return f"edge<{self.type_name()}>#{self.pg_id()}"
+
     def to_edge_report(
             self, depth: int = 0,
             seen: None | set[Union["Node", "Edge"]] = None) -> EdgeReport:
@@ -187,9 +191,11 @@ class Edge(PageGraphElement, ABC):
     def outgoing_node(self) -> "Node":
         return self.pg.node(self.outgoing_node_id)
 
+    def type_name(self) -> str:
+        return self.data()[self.RawAttrs.TYPE.value]
+
     def edge_type(self) -> "Edge.Types":
-        type_name = self.data()[self.RawAttrs.TYPE.value]
-        return self.Types(type_name)
+        return self.Types(self.type_name())
 
     def is_type(self, edge_type: Types) -> bool:
         return self.data()[self.RawAttrs.TYPE.value] == edge_type.value
@@ -204,6 +210,10 @@ class Edge(PageGraphElement, ABC):
         return None
 
     def as_execute_edge(self) -> Optional["ExecuteEdge"]:
+        return None
+
+    def as_execute_from_attribute_edge(self) -> Optional[
+            "ExecuteFromAttributeEdge"]:
         return None
 
     def as_cross_dom_edge(self) -> Optional["CrossDOMEdge"]:

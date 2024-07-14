@@ -14,9 +14,9 @@ class RequestErrorEdge(RequestResponseEdge):
     ]
 
     outgoing_node_type_names = [
-        "HTML element",  # Node.Types.HTML_NODE
+        "HTML element",  # Node.Types.HTML
         "parser",  # Node.Types.PARSER
-        "script",  # Node.Types.SCRIPT
+        "script",  # Node.Types.SCRIPT_LOCAL
     ]
 
     def as_request_error_edge(self) -> Optional["RequestErrorEdge"]:

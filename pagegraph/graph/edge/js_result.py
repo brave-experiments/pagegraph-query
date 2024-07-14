@@ -6,7 +6,7 @@ from pagegraph.graph.edge.frame_id_attributed import FrameIdAttributedEdge
 
 if TYPE_CHECKING:
     from pagegraph.graph.node.js_structure import JSStructureNode
-    from pagegraph.graph.node.script import ScriptNode
+    from pagegraph.types import JSCallingNode
 
 
 class JSResultEdge(FrameIdAttributedEdge):
@@ -21,11 +21,11 @@ class JSResultEdge(FrameIdAttributedEdge):
     def as_js_result_edge(self) -> Optional["JSResultEdge"]:
         return self
 
-    def outgoing_node(self) -> "ScriptNode":
+    def outgoing_node(self) -> "JSCallingNode":
         outgoing_node = super().outgoing_node()
-        script_node = outgoing_node.as_script_node()
-        assert script_node
-        return script_node
+        executor_node = outgoing_node.as_executor_node()
+        assert executor_node
+        return executor_node
 
     def incoming_node(self) -> "JSStructureNode":
         incoming_node = super().incoming_node()

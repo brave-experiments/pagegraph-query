@@ -1,0 +1,9 @@
+<body onload="document.getElementsByTagName('textarea')[0].value += 'load::' + performance.now() + '\n';">
+  <textarea></textarea>
+  <script>
+    document.getElementsByTagName('textarea')[0].value += 'inline::' + performance.now() + '\n';
+  </script>
+  <script src="/assets/js/script_js-calls_standard.js"></script>
+  <script src="/assets/js/script_js-calls_async.js" async></script>
+  <iframe src="/assets/frames/script_js-calls_child_frame.html"></iframe>
+</body>

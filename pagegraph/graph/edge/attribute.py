@@ -10,14 +10,15 @@ if TYPE_CHECKING:
 class AttributeEdge(FrameIdAttributedEdge, ABC):
 
     incoming_node_type_names = [
-        "script",  # Node.Types.SCRIPT
+        "script",  # Node.Types.SCRIPT_LOCAL
+        "unknown actor",  # Node.Types.UNKNOWN
         "parser",  # TEMP
     ]
 
     outgoing_node_type_names = [
         "DOM root",  # Node.Types.DOM_ROOT
         "frame owner",  # Node.Types.FRAME_OWNER
-        "HTML element",  # Node.Types.HTML_NODE
+        "HTML element",  # Node.Types.HTML
     ]
 
     def key(self) -> str:

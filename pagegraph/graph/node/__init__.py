@@ -6,14 +6,9 @@ from typing import cast, Iterable, Optional, TYPE_CHECKING, Union
 
 from pagegraph.graph.element import PageGraphElement
 from pagegraph.graph.edge import Edge
-from pagegraph.types import ChildDomNode, AttrDomNode
-from pagegraph.types import ActorNode, ParentDomNode
-from pagegraph.types import RequesterNode, DOMNode
-from pagegraph.types import LeafDomNode
 from pagegraph.serialize import EdgeReport, BriefEdgeReport
 from pagegraph.serialize import NodeReport, BriefNodeReport
 from pagegraph.util import brief_version
-
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
@@ -39,11 +34,17 @@ if TYPE_CHECKING:
     from pagegraph.graph.node.parser import ParserNode
     from pagegraph.graph.node.resource import ResourceNode
     from pagegraph.graph.node.script import ScriptNode
+    from pagegraph.graph.node.script_local import ScriptLocalNode
+    from pagegraph.graph.node.script_remote import ScriptRemoteNode
     from pagegraph.graph.node.session_storage import SessionStorageNode
     from pagegraph.graph.node.storage import StorageNode
     from pagegraph.graph.node.storage_area import StorageAreaNode
     from pagegraph.graph.node.text import TextNode
+    from pagegraph.graph.node.unknown import UnknownNode
     from pagegraph.graph.node.web_api import WebAPINode
+    from pagegraph.types import ChildDomNode, AttrDomNode
+    from pagegraph.types import RequesterNode, DOMNode, LeafDomNode
+    from pagegraph.types import ActorNode, ParentDomNode, JSCallingNode
 
 
 class Node(PageGraphElement, ABC):
@@ -61,24 +62,27 @@ class Node(PageGraphElement, ABC):
         EXTENSIONS = "extensions"
         FP_SHIELDS = "fingerprintingV2 shield"
         FRAME_OWNER = "frame owner"
-        HTML_NODE = "HTML element"
+        HTML = "HTML element"
         JS_BUILTIN = "JS builtin"
         JS_SHIELDS = "javascript shield"
         LOCAL_STORAGE = "local storage"
         PARSER = "parser"
         RESOURCE = "resource"
-        SCRIPT = "script"
+        SCRIPT_LOCAL = "script"
+        SCRIPT_REMOTE = "remote script"
         SESSION_STORAGE = "session storage"
         SHIELDS = "Brave Shields"
         STORAGE = "storage"
-        TEXT_NODE = "text node"
+        TEXT = "text node"
         TRACKERS_SHIELDS = "trackers shield"
+        UNKNOWN = "unknown actor"
         WEB_API = "web API"
 
     class RawAttrs(Enum):
         BLINK_ID = "node id"
         FRAME_ID = "frame id"
         METHOD = "method"
+        SCRIPT_ID = "script id"
         SCRIPT_TYPE = "script type"
         SOURCE = "source"
         TIMESTAMP = "timestamp"
@@ -87,12 +91,14 @@ class Node(PageGraphElement, ABC):
         TAG = "tag name"
         URL = "url"
 
+    def __str__(self) -> str:
+        return f"node<{self.type_name()}>#{self.pg_id()}"
+
     def type_name(self) -> str:
         return self.data()[self.RawAttrs.TYPE.value]
 
     def node_type(self) -> "Node.Types":
-        type_name = self.data()[self.RawAttrs.TYPE.value]
-        return self.Types(type_name)
+        return self.Types(self.type_name())
 
     def child_nodes(self) -> list["Node"]:
         return cast(list["Node"], list(self.pg.graph.adj[self._id].items()))
@@ -153,7 +159,7 @@ class Node(PageGraphElement, ABC):
     def is_type(self, node_type: Types) -> bool:
         return self.data()[self.RawAttrs.TYPE.value] == node_type.value
 
-    def as_dom_node(self) -> Optional[DOMNode]:
+    def as_dom_node(self) -> Optional["DOMNode"]:
         return (
             self.as_html_node() or
             self.as_text_node() or
@@ -161,7 +167,7 @@ class Node(PageGraphElement, ABC):
             self.as_frame_owner_node()
         )
 
-    def as_child_dom_node(self) -> Optional[ChildDomNode]:
+    def as_child_dom_node(self) -> Optional["ChildDomNode"]:
         """Returns true if this node is valid to ever be a child node for
         any other DOM node type."""
         return (
@@ -170,15 +176,15 @@ class Node(PageGraphElement, ABC):
             self.as_html_node()
         )
 
-    def as_requester_node(self) -> Optional[RequesterNode]:
+    def as_requester_node(self) -> Optional["RequesterNode"]:
         return (
             self.as_parser_node() or
             self.as_html_node() or
-            self.as_script_node() or
+            self.as_script_local_node() or
             self.as_domroot_node()
         )
 
-    def as_leaf_dom_node(self) -> Optional[LeafDomNode]:
+    def as_leaf_dom_node(self) -> Optional["LeafDomNode"]:
         """Returns true if this is a node type that can appear in the DOM,
         and cannot have any child nodes within this frame."""
         return (
@@ -186,7 +192,7 @@ class Node(PageGraphElement, ABC):
             self.as_frame_owner_node()
         )
 
-    def as_parent_dom_node(self) -> Optional[ParentDomNode]:
+    def as_parent_dom_node(self) -> Optional["ParentDomNode"]:
         """Returns true if this node is valid to ever be the parent of
         another DOM node in w/in a frame (i.e., iframes/frame owners
         cannot be parents of other DOM nodes w/in the same frame)."""
@@ -202,16 +208,16 @@ class Node(PageGraphElement, ABC):
             self.as_frame_owner_node()
         )
 
-    def as_attributable_dom_node(self) -> Optional[AttrDomNode]:
+    def as_attributable_dom_node(self) -> Optional["AttrDomNode"]:
         return (
             self.as_html_node() or
             self.as_domroot_node() or
             self.as_frame_owner_node()
         )
 
-    def as_actor_node(self) -> Optional[ActorNode]:
+    def as_actor_node(self) -> Optional["ActorNode"]:
         return (
-            self.as_script_node() or
+            self.as_script_local_node() or
             self.as_parser_node()
         )
 
@@ -225,6 +231,12 @@ class Node(PageGraphElement, ABC):
         return None
 
     def as_script_node(self) -> Optional["ScriptNode"]:
+        return None
+
+    def as_script_local_node(self) -> Optional["ScriptLocalNode"]:
+        return None
+
+    def as_script_remote_node(self) -> Optional["ScriptRemoteNode"]:
         return None
 
     def as_domroot_node(self) -> Optional["DOMRootNode"]:
@@ -250,6 +262,12 @@ class Node(PageGraphElement, ABC):
 
     def as_session_storage_node(self) -> Optional["SessionStorageNode"]:
         return None
+
+    def as_unknown_node(self) -> Optional["UnknownNode"]:
+        return None
+
+    def as_executor_node(self) -> Optional["JSCallingNode"]:
+        return self.as_script_local_node() or self.as_unknown_node()
 
     def is_toplevel_parser(self) -> bool:
         for incoming_edge in self.incoming_edges():
@@ -279,23 +297,6 @@ class Node(PageGraphElement, ABC):
             if edge.as_create_edge() is not None:
                 created_nodes.append(edge.outgoing_node())
         return created_nodes
-
-    def executed_scripts(self) -> list[ScriptNode]:
-        if self.pg.debug:
-            is_executing_script = (
-                self.as_text_node() or
-                self.as_html_node() or
-                self.as_script_node() or
-                self.as_frame_owner_node() or
-                self.as_domroot_node()
-            )
-            if not is_executing_script:
-                self.throw("Unexpected node executing a script")
-        executed_scripts = []
-        for edge in self.outgoing_edges():
-            if execute_edge := edge.as_execute_edge():
-                executed_scripts.append(execute_edge.outgoing_node())
-        return executed_scripts
 
     def describe(self) -> str:
         output = f"node nid={self.pg_id()}\n"

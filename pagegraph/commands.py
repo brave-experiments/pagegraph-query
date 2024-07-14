@@ -127,7 +127,7 @@ def scripts(input_path: str, frame: Optional["PageGraphId"],
             omit_executors: bool, debug: bool) -> list[ScriptsCommandReport]:
     pg = pagegraph.graph.from_path(input_path, debug)
     reports: list[ScriptsCommandReport] = []
-    for script_node in pg.script_nodes():
+    for script_node in pg.script_local_nodes():
         if pg_id and script_node.pg_id() != pg_id:
             continue
 

@@ -11,13 +11,14 @@ class NodeInsertEdge(FrameIdAttributedEdge):
 
     incoming_node_type_names = [
         "parser",  # Node.Types.PARSER
-        "script",  # Node.Types.SCRIPT
+        "script",  # Node.Types.SCRIPT_LOCAL
+        "unknown actor",  # Node.Types.UNKNOWN
     ]
 
     outgoing_node_type_names = [
         "DOM root",  # Node.Types.DOM_ROOT
         "frame owner",  # Node.Types.FRAME_OWNER
-        "HTML element",  # Node.Types.HTML_NODE
+        "HTML element",  # Node.Types.HTML
         "text node",  # Node.Types.TEXT_NODE
     ]
 

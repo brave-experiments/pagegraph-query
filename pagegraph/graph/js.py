@@ -11,29 +11,35 @@ if TYPE_CHECKING:
 
 
 class JSCallResult(Reportable):
-    call_edge: "JSCallEdge"
-    js_structure: "JSStructureNode"
-    result_edge: Union["JSResultEdge", None]
+    call: "JSCallEdge"
+    structure: "JSStructureNode"
+    result: Union["JSResultEdge", None]
     pg: "PageGraph"
 
     def __init__(self, call_edge: "JSCallEdge",
                  result_edge: Union["JSResultEdge", None]):
-        self.call_edge = call_edge
-        self.js_structure = call_edge.outgoing_node()
-        self.result_edge = result_edge
-        self.pg = self.js_structure.pg
+        self.call = call_edge
+        self.structure = call_edge.outgoing_node()
+        self.result = result_edge
+        self.pg = self.structure.pg
+
+    def pretty_print(self) -> str:
+        msg = self.structure.name() + f"({str(self.call.args())})"
+        if self.result:
+            msg += " -> " + str(self.result.value())
+        return msg
 
     def to_report(self) -> JSInvokeReport:
-        report = JSInvokeReport(self.call_edge.args(), None)
-        if self.result_edge:
-            report.result = self.result_edge.value()
+        report = JSInvokeReport(self.call.args(), None)
+        if self.result:
+            report.result = self.result.value()
         return report
 
     def call_context(self) -> "DOMRootNode":
-        return self.call_edge.domroot_for_frame_id()
+        return self.call.domroot_for_frame_id()
 
     def receiver_context(self) -> "DOMRootNode":
-        receiver_context_frame_id = self.call_edge.frame_id()
+        receiver_context_frame_id = self.call.frame_id()
         return self.pg.domroot_for_frame_id(receiver_context_frame_id)
 
     def is_cross_frame_call(self) -> bool:

@@ -5,14 +5,15 @@ from pagegraph.graph.edge.frame_id_attributed import FrameIdAttributedEdge
 
 class NodeRemoveEdge(FrameIdAttributedEdge):
     incoming_node_type_names = [
-        "script",  # Node.Types.SCRIPT
         "parser",  # TEMP
+        "script",  # Node.Types.SCRIPT_LOCAL
+        "unknown actor",  # Node.Types.UNKNOWN
     ]
 
     outgoing_node_type_names = [
         "DOM root",  # Node.Types.DOM_ROOT
         "frame owner",  # Node.Types.FRAME_OWNER
-        "HTML element",  # Node.Types.HTML_NODE
+        "HTML element",  # Node.Types.HTML
         "text node",  # Node.Types.TEXT_NODE
     ]
 

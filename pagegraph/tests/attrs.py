@@ -38,7 +38,7 @@ class AttributesBasicTestCase(PageGraphBaseTestClass):
                     incoming_node.as_parser_node() is not None):
                 non_std_parser_set_attr_set_edge = edge
             elif (edge.key() == "hi" and
-                    incoming_node.as_script_node() is not None):
+                    incoming_node.as_script_local_node() is not None):
                 if edge.value() == "there":
                     method_set_attr_edge = edge
                 elif edge.value() == "again":
@@ -62,5 +62,6 @@ class AttributesBasicTestCase(PageGraphBaseTestClass):
         self.assertEqual(len(attribute_delete_edges), 1)
 
         attr_delete_edge = attribute_delete_edges[0]
-        self.assertIsNotNone(attr_delete_edge.incoming_node().as_script_node())
+        acting_script = attr_delete_edge.incoming_node().as_script_local_node()
+        self.assertIsNotNone(acting_script)
         self.assertEqual(attr_delete_edge.key(), "id")

@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from pagegraph.graph.node.js_structure import JSStructureNode
     from pagegraph.graph.node.parser import ParserNode
     from pagegraph.graph.node.resource import ResourceNode
-    from pagegraph.graph.node.script import ScriptNode
+    from pagegraph.graph.node.script_local import ScriptLocalNode
     from pagegraph.graph.requests import RequestChain
     from pagegraph.types import BlinkId, PageGraphId, DOMNode, ChildDomNode
     from pagegraph.types import ParentDomNode, FrameId, RequestId
@@ -86,9 +86,9 @@ class PageGraph:
                 edge.validate()
             edge.build_caches()
 
-        self.__build_caches()
+        self.build_caches()
 
-    def __build_caches(self) -> None:
+    def build_caches(self) -> None:
         for node in self.dom_nodes():
             if domroot_node := node.as_domroot_node():
                 blink_id = domroot_node.blink_id()
@@ -170,8 +170,8 @@ class PageGraph:
     def dom_nodes(self) -> list["DOMNode"]:
         node_types = [
             Node.Types.DOM_ROOT,
-            Node.Types.HTML_NODE,
-            Node.Types.TEXT_NODE,
+            Node.Types.HTML,
+            Node.Types.TEXT,
             Node.Types.FRAME_OWNER,
         ]
         nodes = []
@@ -195,12 +195,12 @@ class PageGraph:
         node_iterator = self.nodes_of_type(Node.Types.RESOURCE)
         return cast(list["ResourceNode"], node_iterator)
 
-    def script_nodes(self) -> list["ScriptNode"]:
-        node_iterator = self.nodes_of_type(Node.Types.SCRIPT)
-        return cast(list["ScriptNode"], node_iterator)
+    def script_local_nodes(self) -> list["ScriptLocalNode"]:
+        node_iterator = self.nodes_of_type(Node.Types.SCRIPT_LOCAL)
+        return cast(list["ScriptLocalNode"], node_iterator)
 
     def html_nodes(self) -> list["HTMLNode"]:
-        node_iterator = self.nodes_of_type(Node.Types.HTML_NODE)
+        node_iterator = self.nodes_of_type(Node.Types.HTML)
         return cast(list["HTMLNode"], node_iterator)
 
     def parser_nodes(self) -> list["ParserNode"]:

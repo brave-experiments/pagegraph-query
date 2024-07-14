@@ -5,6 +5,7 @@ from pagegraph.graph.node.js_structure import JSStructureNode
 
 
 class JSBuiltInNode(JSStructureNode):
+
     incoming_edge_types = [
         Edge.Types.JS_CALL
     ]

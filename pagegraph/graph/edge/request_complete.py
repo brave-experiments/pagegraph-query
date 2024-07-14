@@ -14,9 +14,9 @@ class RequestCompleteEdge(RequestResponseEdge):
     ]
 
     outgoing_node_type_names = [
-        "HTML element",  # Node.Types.HTML_NODE
+        "HTML element",  # Node.Types.HTML
         "parser",  # Node.Types.PARSER
-        "script",  # Node.Types.SCRIPT
+        "script",  # Node.Types.SCRIPT_LOCAL
     ]
 
     summary_methods = {

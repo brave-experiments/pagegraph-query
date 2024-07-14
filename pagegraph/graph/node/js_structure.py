@@ -11,6 +11,8 @@ if TYPE_CHECKING:
     from pagegraph.graph.edge.js_result import JSResultEdge
 
 class JSStructureNode(Node, Reportable):
+    __cached_call_map: dict["JSCallEdge", "JSCallResult"] = {}
+
     def to_report(self) -> "JSStructureReport":
         return JSStructureReport(self.name(), self.type_name())
 
@@ -20,7 +22,7 @@ class JSStructureNode(Node, Reportable):
     def name(self) -> str:
         return self.data()[self.RawAttrs.METHOD.value]
 
-    def call_results(self) -> list["JSCallResult"]:
+    def build_caches(self) -> None:
         js_calls = self.incoming_edges()
         js_results = self.outgoing_edges()
         calls_and_results_unsorted = list(chain(js_calls, js_results))
@@ -32,25 +34,37 @@ class JSStructureNode(Node, Reportable):
             num_results = len(list(js_results))
             if num_results > num_calls:
                 self.throw("Found more results than calls to this builtin, "
-                           f"calls={num_calls}, results={num_results}")
+                            f"calls={num_calls}, results={num_results}")
 
-            last_edge = calls_and_results[0]
-            for edge in calls_and_results[1:]:
-                if edge.as_js_result_edge() is not None:
-                    if last_edge.as_js_result_edge() is not None:
-                        self.throw("Found two adjacent result edges: "
-                                   f"{last_edge.pg_id()} and {edge.pg_id()}")
-                last_edge = edge
+        last_edge = calls_and_results[0]
+        for edge in calls_and_results[1:]:
+            if edge.as_js_result_edge() is not None:
+                if last_edge.as_js_result_edge() is not None:
+                    self.throw("Found two adjacent result edges: "
+                                f"{last_edge.pg_id()} and {edge.pg_id()}")
+            last_edge = edge
 
-        call_results: list["JSCallResult"] = []
+        last_call_result = None
         for edge in calls_and_results:
-            if js_result_edge := edge.as_js_result_edge():
-                last_call_result = call_results[-1]
-                last_call_result.result_edge = js_result_edge
-            elif js_call_edge := edge.as_js_call_edge():
+            if js_call_edge := edge.as_js_call_edge():
                 a_call_result = JSCallResult(js_call_edge, None)
-                call_results.append(a_call_result)
-        return call_results
+                last_call_result = a_call_result
+                self.__cached_call_map[js_call_edge] = a_call_result
+            elif js_result_edge := edge.as_js_result_edge():
+                assert last_call_result
+                last_call_result.result = js_result_edge
+                last_call_result = None
+        super().build_caches()
+
+    def call_results(self) -> list["JSCallResult"]:
+        return list(self.__cached_call_map.values())
+
+    def call_result(self, edge: "JSCallEdge") -> "JSCallResult":
+        try:
+            return self.__cached_call_map[edge]
+        except KeyError as exc:
+            msg = f"Unable to find call {edge}"
+            raise ValueError(msg) from exc
 
     def incoming_edges(self) -> list["JSCallEdge"]:
         return cast(list["JSCallEdge"], super().incoming_edges())
