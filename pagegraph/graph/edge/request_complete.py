@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from typing import Optional, TYPE_CHECKING
 
-from pagegraph.graph.edge.request_response import RequestResponseEdge
+from pagegraph.graph.edge.abc.request_response import RequestResponseEdge
 from pagegraph.graph.requests import parse_headers
 
 if TYPE_CHECKING:
@@ -24,10 +26,10 @@ class RequestCompleteEdge(RequestResponseEdge):
         "hash": "hash",
     }
 
-    def as_request_complete_edge(self) -> Optional["RequestCompleteEdge"]:
+    def as_request_complete_edge(self) -> Optional[RequestCompleteEdge]:
         return self
 
-    def outgoing_node(self) -> "RequesterNode":
+    def outgoing_node(self) -> RequesterNode:
         node = super().outgoing_node()
         requester_node = node.as_requester_node()
         assert requester_node
@@ -36,7 +38,7 @@ class RequestCompleteEdge(RequestResponseEdge):
     def headers_raw(self) -> str:
         return self.data()[self.RawAttrs.HEADERS.value]
 
-    def headers(self) -> "RequestHeaders":
+    def headers(self) -> RequestHeaders:
         parsed_headers = []
         if header_text := self.headers_raw():
             parsed_headers = parse_headers(header_text)

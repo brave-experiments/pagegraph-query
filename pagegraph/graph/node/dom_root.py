@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Callable, Optional, TYPE_CHECKING, TypeVar
 
-from pagegraph.graph.node.dom_element import DOMElementNode
+from pagegraph.graph.node.abc.dom_element import DOMElementNode
 from pagegraph.serialize import Reportable, FrameReport
 from pagegraph.util import is_url_local
 
@@ -27,6 +27,12 @@ OptionalDOMNodeFilter = Optional[DOMNodeFilterFunc[T]]
 
 
 class DOMRootNode(DOMElementNode, Reportable):
+
+    summary_methods = {
+        "frame id": "frame_id",
+        "url": "url",
+        "tag name": "tag_name",
+    }
 
     def as_domroot_node(self) -> Optional["DOMRootNode"]:
         return self

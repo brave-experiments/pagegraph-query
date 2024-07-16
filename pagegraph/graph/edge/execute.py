@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 from typing import Optional, TYPE_CHECKING
 
-from pagegraph.graph.edge.frame_id_attributed import FrameIdAttributedEdge
+from pagegraph.graph.edge.abc.frame_id_attributed import FrameIdAttributedEdge
 
 if TYPE_CHECKING:
+    from pagegraph.graph.node.abc.script import ScriptNode
     from pagegraph.graph.node.parser import ParserNode
-    from pagegraph.graph.node.script import ScriptNode
     from pagegraph.types import JSCallingNode, ScriptExecutorNode
 
 
@@ -25,12 +27,12 @@ class ExecuteEdge(FrameIdAttributedEdge):
         "unknown actor",  # Node.Types.UNKNOWN
     ]
 
-    def as_execute_edge(self) -> Optional["ExecuteEdge"]:
+    def as_execute_edge(self) -> Optional[ExecuteEdge]:
         return self
 
-    def incoming_node(self) -> "ScriptExecutorNode":
+    def incoming_node(self) -> ScriptExecutorNode:
         node = super().incoming_node()
-        in_node: Optional["ScriptExecutorNode"] = None
+        in_node: Optional[ScriptExecutorNode] = None
         if parent_dom_node := node.as_parent_dom_node():
             in_node = parent_dom_node
         elif script_node := node.as_script_node():
@@ -40,7 +42,7 @@ class ExecuteEdge(FrameIdAttributedEdge):
         assert in_node
         return in_node
 
-    def outgoing_node(self) -> "JSCallingNode":
+    def outgoing_node(self) -> JSCallingNode:
         outgoing_node = super().outgoing_node()
         executor_node = outgoing_node.as_executor_node()
         assert executor_node

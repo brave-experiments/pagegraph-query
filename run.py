@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import pathlib
 import sys
 
 import pagegraph.commands
@@ -42,6 +43,10 @@ def subframes_cmd(args):
     return pagegraph.commands.subframes(args.input, args.local, args.debug)
 
 
+def unknown_query_cmd(args):
+    return pagegraph.commands.unknown(args.input)
+
+
 def validate_cmd(args):
     return pagegraph.commands.validate(args.input)
 
@@ -65,6 +70,7 @@ SUBFRAMES_PARSER = SUBPARSERS.add_parser(
     help="Print information about subframes created and loaded by page.")
 SUBFRAMES_PARSER.add_argument(
     "input",
+    type=pathlib.Path,
     help="Path to PageGraph recording.")
 SUBFRAMES_PARSER.add_argument(
     "-l", "--local",
@@ -78,6 +84,7 @@ VALIDATE_PARSER = SUBPARSERS.add_parser(
     help="Just runs all validation and structure checks against a graph.")
 VALIDATE_PARSER.add_argument(
     "input",
+    type=pathlib.Path,
     help="Path to PageGraph recording.")
 VALIDATE_PARSER.set_defaults(func=validate_cmd)
 
@@ -86,6 +93,7 @@ REQUEST_PARSER = SUBPARSERS.add_parser(
     help="Print information about requests made during page execution.")
 REQUEST_PARSER.add_argument(
     "input",
+    type=pathlib.Path,
     help="Path to PageGraph recording.")
 REQUEST_PARSER.add_argument(
     "-f", "--frame",
@@ -99,6 +107,7 @@ SCRIPTS_PARSER = SUBPARSERS.add_parser(
     help="Print information about JS units executed during page execution.")
 SCRIPTS_PARSER.add_argument(
     "input",
+    type=pathlib.Path,
     help="Path to PageGraph recording.")
 SCRIPTS_PARSER.add_argument(
     "-i", "--id",
@@ -131,6 +140,7 @@ JS_CALLS_PARSER = SUBPARSERS.add_parser(
     help="Print information about JS calls made during page execution.")
 JS_CALLS_PARSER.add_argument(
     "input",
+    type=pathlib.Path,
     help="Path to PageGraph recording.")
 JS_CALLS_PARSER.add_argument(
     "-f", "--frame",
@@ -155,7 +165,7 @@ JS_CALLS_PARSER.add_argument(
     "-i", "--id",
     default=None,
     help="If provided, only print information about JS calls made by the "
-         "JS code with the give ID "
+         "Script node with the given ID "
          "(as described by PageGraph node ids, in the format 'n##').")
 JS_CALLS_PARSER.set_defaults(func=js_calls_cmd)
 
@@ -164,6 +174,7 @@ ELEMENT_QUERY_PARSER = SUBPARSERS.add_parser(
     help="Print information about a node or edge in the graph.")
 ELEMENT_QUERY_PARSER.add_argument(
     "input",
+    type=pathlib.Path,
     help="Path to PageGraph recording.")
 ELEMENT_QUERY_PARSER.add_argument(
     "id",
@@ -182,6 +193,7 @@ HTML_QUERY_PARSER = SUBPARSERS.add_parser(
     help="Print information about the HTML elements in a document.")
 HTML_QUERY_PARSER.add_argument(
     "input",
+    type=pathlib.Path,
     help="Path to PageGraph recording.")
 HTML_QUERY_PARSER.add_argument(
     "-f", "--frame",
@@ -204,7 +216,17 @@ HTML_QUERY_PARSER.add_argument(
          "meaning elements that are a child of the <body> element.")
 HTML_QUERY_PARSER.set_defaults(func=html_query_cmd)
 
-
+UNKNOWN_QUERY_PARSER = SUBPARSERS.add_parser(
+    "unknown",
+    help="Print information about any events that occurred where we "
+         "could not attribute the script event to a running script. (note "
+         "this is different from the 'validate' command, which only checks "
+         "if the structure of the graph is as expected).")
+UNKNOWN_QUERY_PARSER.add_argument(
+    "input",
+    type=pathlib.Path,
+    help="Path to PageGraph recording.")
+UNKNOWN_QUERY_PARSER.set_defaults(func=unknown_query_cmd)
 
 # EFFECTS_QUERY_PARSER = SUBPARSERS.add_parser(
 #     "effects",

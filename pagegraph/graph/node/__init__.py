@@ -12,6 +12,7 @@ from pagegraph.util import brief_version
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
+    from pagegraph.graph.edge.abc.request_response import RequestResponseEdge
     from pagegraph.graph.edge.execute import ExecuteEdge
     from pagegraph.graph.edge.js_call import JSCallEdge
     from pagegraph.graph.edge.js_result import JSResultEdge
@@ -20,9 +21,9 @@ if TYPE_CHECKING:
     from pagegraph.graph.edge.request_complete import RequestCompleteEdge
     from pagegraph.graph.edge.request_error import RequestErrorEdge
     from pagegraph.graph.edge.request_redirect import RequestRedirectEdge
-    from pagegraph.graph.edge.request_response import RequestResponseEdge
     from pagegraph.graph.edge.request_start import RequestStartEdge
     from pagegraph.graph.edge.structure import StructureEdge
+    from pagegraph.graph.node.abc.script import ScriptNode
     from pagegraph.graph.node.cookie_jar import CookieJarNode
     from pagegraph.graph.node.deprecated import DeprecatedNode
     from pagegraph.graph.node.dom_root import DOMRootNode
@@ -33,7 +34,6 @@ if TYPE_CHECKING:
     from pagegraph.graph.node.local_storage import LocalStorageNode
     from pagegraph.graph.node.parser import ParserNode
     from pagegraph.graph.node.resource import ResourceNode
-    from pagegraph.graph.node.script import ScriptNode
     from pagegraph.graph.node.script_local import ScriptLocalNode
     from pagegraph.graph.node.script_remote import ScriptRemoteNode
     from pagegraph.graph.node.session_storage import SessionStorageNode

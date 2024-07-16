@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional, TYPE_CHECKING
 
 from pagegraph.graph.edge.execute import ExecuteEdge
@@ -20,16 +22,16 @@ class ExecuteFromAttributeEdge(ExecuteEdge):
     ]
 
     def as_execute_from_attribute_edge(self) -> Optional[
-            "ExecuteFromAttributeEdge"]:
+            ExecuteFromAttributeEdge]:
         return self
 
-    def incoming_node(self) -> "ParentDomNode":
+    def incoming_node(self) -> ParentDomNode:
         node = super().incoming_node()
         parent_dom_node = node.as_parent_dom_node()
         assert parent_dom_node
         return parent_dom_node
 
-    def outgoing_node(self) -> "ScriptLocalNode":
+    def outgoing_node(self) -> ScriptLocalNode:
         outgoing_node = super().outgoing_node()
         executor_node = outgoing_node.as_script_local_node()
         assert executor_node

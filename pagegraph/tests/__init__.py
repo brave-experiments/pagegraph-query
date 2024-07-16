@@ -26,4 +26,4 @@ class PageGraphBaseTestClass(unittest.TestCase, ABC):
         if self.NAME == "":
             raise ValueError("Inheritors must define NAME")
         graph_path = PG_PATHS.graphs() / (self.NAME + ".graphml")
-        self.graph = pagegraph.graph.from_path(str(graph_path))
+        self.graph = pagegraph.graph.from_path(graph_path)

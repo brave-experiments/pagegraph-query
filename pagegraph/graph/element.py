@@ -40,8 +40,8 @@ class PageGraphElement(ABC):
     def summary_fields(self) -> "ElementSummary":
         summary: dict[str, "JSONAble"] = {}
         needle_class = self.__class__
-        while needle_class != object:
-            class_summary_methods = self.__class__.summary_methods
+        while needle_class != object and needle_class is not ABC:
+            class_summary_methods = needle_class.summary_methods
             if class_summary_methods is not None:
                 for name, method_name in class_summary_methods.items():
                     func = getattr(self, method_name)

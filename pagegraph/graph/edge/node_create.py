@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from typing import Optional, TYPE_CHECKING
 
-from pagegraph.graph.edge.frame_id_attributed import FrameIdAttributedEdge
+from pagegraph.graph.edge.abc.frame_id_attributed import FrameIdAttributedEdge
 
 if TYPE_CHECKING:
     from pagegraph.types import ActorNode
@@ -21,13 +23,13 @@ class NodeCreateEdge(FrameIdAttributedEdge):
         "text node",  # Node.Types.TEXT_NODE
     ]
 
-    def incoming_node(self) -> "ActorNode":
+    def incoming_node(self) -> ActorNode:
         incoming_node = super().incoming_node()
         actor_node = incoming_node.as_actor_node()
         assert actor_node
         return actor_node
 
-    def as_create_edge(self) -> Optional["NodeCreateEdge"]:
+    def as_create_edge(self) -> Optional[NodeCreateEdge]:
         return self
 
     def validate(self) -> bool:

@@ -1,6 +1,6 @@
 from typing import Optional, TYPE_CHECKING
 
-from pagegraph.graph.node.dom_element import DOMElementNode
+from pagegraph.graph.node.abc.dom_element import DOMElementNode
 from pagegraph.serialize import Reportable, DOMElementReport
 from pagegraph.versions import Feature
 

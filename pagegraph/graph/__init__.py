@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 from functools import lru_cache
 from itertools import chain
-from typing import Any, cast, Union, Optional, TYPE_CHECKING
+from pathlib import Path
+import re
+from typing import Any, cast, Optional, TYPE_CHECKING
 
 import networkx as NWX  # type: ignore
 from packaging.version import Version
 
+import pagegraph
 from pagegraph.graph.edge import Edge
 from pagegraph.graph.node import Node
 from pagegraph.graph.requests import request_chain_for_edge
@@ -26,9 +31,10 @@ if TYPE_CHECKING:
     from pagegraph.graph.node.parser import ParserNode
     from pagegraph.graph.node.resource import ResourceNode
     from pagegraph.graph.node.script_local import ScriptLocalNode
+    from pagegraph.graph.node.unknown import UnknownNode
     from pagegraph.graph.requests import RequestChain
     from pagegraph.types import BlinkId, PageGraphId, DOMNode, ChildDomNode
-    from pagegraph.types import ParentDomNode, FrameId, RequestId
+    from pagegraph.types import ParentDomNode, FrameId, RequestId, Url
 
 class PageGraph:
 
@@ -36,8 +42,10 @@ class PageGraph:
     debug: bool
     # Tracks the version of the graph (distinct from the version of this
     # library).
-    graph_version: Union[Version, None]
+    graph_version: Version
+    tool_version: Version = pagegraph.VERSION
     graph: NWX.MultiDiGraph
+    url: Url
     r_graph: NWX.MultiDiGraph
 
     __blink_id_map: dict["BlinkId", "DOMNode"] = {}
@@ -52,12 +60,13 @@ class PageGraph:
     # Mapping from a frame id to the most recent DOM node seen for the frame
     __frame_id_map: dict["FrameId", "DOMRootNode"] = {}
 
-    def __init__(self, graph: NWX.MultiDiGraph,
-                 version: Union[Version, None] = None, debug: bool = False):
-        self.graph = graph
+    def __init__(self, path: Path, debug: bool = False):
+        self.path = path
         self.debug = debug
-        self.graph_version = version
-        self.r_graph = NWX.reverse_view(graph)
+        self.graph_version = check_pagegraph_version(self.path)
+        self.graph = NWX.read_graphml(self.path)
+        self.r_graph = NWX.reverse_view(self.graph)
+        self.url = url_from_path(path)
 
         # do the below to populate the blink_id mapping dicts
         # and the frame_id to frame node mapping (we keep the most
@@ -110,7 +119,7 @@ class PageGraph:
         min_graph_version = min_version_for_feature(feature)
         return self.graph_version >= min_graph_version
 
-    def unattributed_requests(self) -> list["RequestChain"]:
+    def unattributed_requests(self) -> list[RequestChain]:
         prefetched_requests = []
         for request_start_edge in self.request_start_edges():
             request_id = request_start_edge.request_id()
@@ -118,7 +127,7 @@ class PageGraph:
             prefetched_requests.append(request_chain)
         return prefetched_requests
 
-    def request_chain_for_id(self, request_id: "RequestId") -> "RequestChain":
+    def request_chain_for_id(self, request_id: RequestId) -> RequestChain:
         if self.debug:
             if request_id not in self.__request_chain_map:
                 raise ValueError(f"Unrecognized request id: {request_id}")
@@ -191,42 +200,46 @@ class PageGraph:
                 raise ValueError(f"frame_id not in __frame_id_map:{frame_id}")
         return self.__frame_id_map[frame_id]
 
-    def resource_nodes(self) -> list["ResourceNode"]:
+    def resource_nodes(self) -> list[ResourceNode]:
         node_iterator = self.nodes_of_type(Node.Types.RESOURCE)
         return cast(list["ResourceNode"], node_iterator)
 
-    def script_local_nodes(self) -> list["ScriptLocalNode"]:
+    def script_local_nodes(self) -> list[ScriptLocalNode]:
         node_iterator = self.nodes_of_type(Node.Types.SCRIPT_LOCAL)
         return cast(list["ScriptLocalNode"], node_iterator)
 
-    def html_nodes(self) -> list["HTMLNode"]:
+    def html_nodes(self) -> list[HTMLNode]:
         node_iterator = self.nodes_of_type(Node.Types.HTML)
         return cast(list["HTMLNode"], node_iterator)
 
-    def parser_nodes(self) -> list["ParserNode"]:
+    def parser_nodes(self) -> list[ParserNode]:
         node_iterator = self.nodes_of_type(Node.Types.PARSER)
         return cast(list["ParserNode"], node_iterator)
 
-    def frame_owner_nodes(self) -> list["FrameOwnerNode"]:
+    def frame_owner_nodes(self) -> list[FrameOwnerNode]:
         node_iterator = self.nodes_of_type(Node.Types.FRAME_OWNER)
         return cast(list["FrameOwnerNode"], node_iterator)
 
-    def domroot_nodes(self) -> list["DOMRootNode"]:
+    def domroot_nodes(self) -> list[DOMRootNode]:
         node_iterator = self.nodes_of_type(Node.Types.DOM_ROOT)
         return cast(list["DOMRootNode"], node_iterator)
 
-    def js_structure_nodes(self) -> list["JSStructureNode"]:
+    def js_structure_nodes(self) -> list[JSStructureNode]:
         js_builtin_iterator = self.nodes_of_type(Node.Types.JS_BUILTIN)
         webapi_iterator = self.nodes_of_type(Node.Types.WEB_API)
         js_structures = chain(js_builtin_iterator, webapi_iterator)
         return cast(list["JSStructureNode"], js_structures)
 
-    def js_call_edges(self) -> list["JSCallEdge"]:
+    def unknown_node(self) -> Optional[UnknownNode]:
+        nodes = self.nodes_of_type(Node.Types.UNKNOWN)
+        return None if len(nodes) == 0 else cast("UnknownNode", nodes[0])
+
+    def js_call_edges(self) -> list[JSCallEdge]:
         edge_iterator = self.edges_of_type(Edge.Types.JS_CALL)
         return cast(list["JSCallEdge"], edge_iterator)
 
     def child_dom_nodes(
-            self, parent_node: "ParentDomNode") -> Optional[list["ChildDomNode"]]:
+            self, parent_node: ParentDomNode) -> Optional[list[ChildDomNode]]:
         """Returns all nodes that were ever a child of the parent node,
         at any point during the page's lifetime."""
         if parent_node not in self.__inserted_below_map:
@@ -234,7 +247,7 @@ class PageGraph:
         return self.__inserted_below_map[parent_node]
 
     @lru_cache(maxsize=None)
-    def node(self, node_id: "PageGraphId") -> Node:
+    def node(self, node_id: PageGraphId) -> Node:
         """Loading any node object should come through this method, since
         this method is the one that knows what Node or Node subtype
         should be used."""
@@ -282,6 +295,15 @@ class PageGraph:
         return domroot_nodes
 
 
-def from_path(input_path: str, debug: bool = False) -> PageGraph:
-    graph_version = check_pagegraph_version(input_path)
-    return PageGraph(NWX.read_graphml(input_path), graph_version, debug)
+def url_from_path(input_path: Path) -> Url:
+    pattern = r'<desc>.*?<url>(.*?)</url>.*?</desc>'
+    prog = re.compile(pattern, flags=re.U)
+    with input_path.open() as f:
+        for line in f:
+            if match := prog.search(line):
+                return match.group(1)
+    raise ValueError(f"Could not find <url>...</url> in {input_path}")
+
+
+def from_path(input_path: Path, debug: bool = False) -> PageGraph:
+    return PageGraph(input_path, debug)

@@ -1,26 +1,30 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Union, Optional, TYPE_CHECKING
 
 import pagegraph.graph
 from pagegraph.types import PageGraphId
-from pagegraph.serialize import Report
+from pagegraph.serialize import Report, to_command_report
 
 if TYPE_CHECKING:
-    from pagegraph.serialize import FrameReport, ScriptReport
+    from pagegraph.serialize import FrameReport, ScriptReport, BasicReport
     from pagegraph.serialize import DOMElementReport, JSStructureReport
-    from pagegraph.serialize import JSInvokeReport, RequestChainReport
+    from pagegraph.serialize import JSCallResultReport, RequestChainReport
     from pagegraph.serialize import NodeReport, EdgeReport, DOMNodeReport
+    from pagegraph.serialize import CommandReport
+    from pathlib import Path
 
 
 @dataclass
 class SubFramesCommandReport(Report):
-    parent_frame: "FrameReport"
-    iframe: "DOMElementReport"
-    child_frames: list["FrameReport"]
+    parent_frame: FrameReport
+    iframe: DOMElementReport
+    child_frames: list[FrameReport]
 
 
-def subframes(input_path: str, local_only: bool,
-              debug: bool) -> list[SubFramesCommandReport]:
+def subframes(input_path: Path, local_only: bool,
+              debug: bool) -> CommandReport:
     pg = pagegraph.graph.from_path(input_path, debug)
     report: list[SubFramesCommandReport] = []
 
@@ -49,17 +53,17 @@ def subframes(input_path: str, local_only: bool,
         subframe_report = SubFramesCommandReport(
             parent_frame_report, iframe_elm_report, child_frame_reports)
         report.append(subframe_report)
-    return report
+    return to_command_report(pg, report)
 
 
 @dataclass
 class RequestsCommandReport(Report):
-    request: "RequestChainReport"
-    frame: "FrameReport"
+    request: RequestChainReport
+    frame: FrameReport
 
 
-def requests(input_path: str, frame_nid: Optional["PageGraphId"],
-             debug: bool) -> list[RequestsCommandReport]:
+def requests(input_path: Path, frame_nid: Optional[PageGraphId],
+             debug: bool) -> CommandReport:
     pg = pagegraph.graph.from_path(input_path, debug)
     reports: list[RequestsCommandReport] = []
 
@@ -76,27 +80,23 @@ def requests(input_path: str, frame_nid: Optional["PageGraphId"],
         frame_report = request_frame.to_report()
         report = RequestsCommandReport(request_chain_report, frame_report)
         reports.append(report)
-    return reports
+    return to_command_report(pg, reports)
 
 
 @dataclass
 class JSCallsCommandReport(Report):
-    method: "JSStructureReport"
-    invocation: "JSInvokeReport"
-    call_context: "FrameReport"
-    receiver_context: "FrameReport"
+    caller: Union[ScriptReport, BasicReport]
+    call: JSCallResultReport
 
 
-def js_calls(input_path: str, frame: Optional["PageGraphId"], cross_frame: bool,
-             method: Optional[str], pg_id: Optional["PageGraphId"],
-             debug: bool) -> list[JSCallsCommandReport]:
+def js_calls(input_path: Path, frame: Optional[PageGraphId],
+             cross_frame: bool, method: Optional[str],
+             pg_id: Optional[PageGraphId], debug: bool) -> CommandReport:
     pg = pagegraph.graph.from_path(input_path, debug)
     reports: list[JSCallsCommandReport] = []
 
     js_structure_nodes = pg.js_structure_nodes()
     for js_node in js_structure_nodes:
-        if pg_id and js_node.pg_id() != pg_id:
-            continue
         if method and method not in js_node.name():
             continue
 
@@ -105,26 +105,24 @@ def js_calls(input_path: str, frame: Optional["PageGraphId"], cross_frame: bool,
                 continue
             if cross_frame and not call_result.is_cross_frame_call():
                 continue
-
-            call_context = call_result.call_context()
-            receiver_context = call_result.receiver_context()
-
-            js_call_report = JSCallsCommandReport(
-                js_node.to_report(), call_result.to_report(),
-                call_context.to_report(), receiver_context.to_report())
-            reports.append(js_call_report)
-    return reports
+            script_node =call_result.call.incoming_node()
+            if pg_id and script_node.pg_id() != pg_id:
+                continue
+            call_report = call_result.to_report()
+            script_report = script_node.to_report()
+            reports.append(JSCallsCommandReport(script_report, call_report))
+    return to_command_report(pg, reports)
 
 
 @dataclass
 class ScriptsCommandReport(Report):
-    script: "ScriptReport"
-    frame: Optional["FrameReport"] = None
+    script: ScriptReport
+    frame: Optional[FrameReport] = None
 
 
-def scripts(input_path: str, frame: Optional["PageGraphId"],
-            pg_id: Optional["PageGraphId"], include_source: bool,
-            omit_executors: bool, debug: bool) -> list[ScriptsCommandReport]:
+def scripts(input_path: Path, frame: Optional[PageGraphId],
+            pg_id: Optional[PageGraphId], include_source: bool,
+            omit_executors: bool, debug: bool) -> CommandReport:
     pg = pagegraph.graph.from_path(input_path, debug)
     reports: list[ScriptsCommandReport] = []
     for script_node in pg.script_local_nodes():
@@ -144,27 +142,29 @@ def scripts(input_path: str, frame: Optional["PageGraphId"],
             report.script.executor = None
 
         reports.append(report)
-    return reports
+    return to_command_report(pg, reports)
 
 
-def element_query(input_path: str, pg_id: "PageGraphId", depth: int,
-                  debug: bool) -> Union["NodeReport", "EdgeReport"]:
+def element_query(input_path: Path, pg_id: PageGraphId, depth: int,
+                  debug: bool) -> CommandReport:
     pg = pagegraph.graph.from_path(input_path, debug)
     if pg_id.startswith("n"):
-        return pg.node(pg_id).to_node_report(depth)
+        node_report = pg.node(pg_id).to_node_report(depth)
+        return to_command_report(pg, node_report)
     if pg_id.startswith("e"):
-        return pg.edge(pg_id).to_edge_report(depth)
+        edge_report = pg.edge(pg_id).to_edge_report(depth)
+        return to_command_report(pg, edge_report)
     raise ValueError("Invalid element id, should be either n## or e##.")
 
 
 @dataclass
 class HtmlCommandReport(Report):
-    elements: list["DOMNodeReport"]
+    elements: list[DOMNodeReport]
 
 
-def html_query_cmd(input_path: str, frame_filter: Optional["PageGraphId"],
+def html_query_cmd(input_path: Path, frame_filter: Optional[PageGraphId],
                    at_serialization: bool, only_body_content: bool,
-                   debug: bool) -> HtmlCommandReport:
+                   debug: bool) -> CommandReport:
     pg = pagegraph.graph.from_path(input_path, debug)
     dom_nodes = pg.dom_nodes()
     reports = []
@@ -180,7 +180,7 @@ def html_query_cmd(input_path: str, frame_filter: Optional["PageGraphId"],
         if only_body_content and not node.is_body_content():
             continue
         reports.append(node.to_report())
-    return HtmlCommandReport(reports)
+    return to_command_report(pg, HtmlCommandReport(reports))
 
 
 @dataclass
@@ -193,17 +193,31 @@ class EffectsCommandReport(Report):
 # a node is responsible for are
 
 
-# def effects(input_path: str, pg_id: PageGraphId, loose: bool,
+# def effects(input_path: Path, pg_id: PageGraphId, loose: bool,
 #             debug: bool) -> list[EffectsCommandReport]:
 #     reports: list[EffectsCommandReport] = []
 #     return reports
 
 
 @dataclass
-class ValidationReport(Report):
+class UnknownCommandReport(Report):
+    count: int
+
+
+def unknown(input_path: Path) -> CommandReport:
+    pg = pagegraph.graph.from_path(input_path, True)
+    count = 0
+    unknown_node = pg.unknown_node()
+    if unknown_node:
+        count = len(list(unknown_node.outgoing_edges()))
+    return to_command_report(pg, UnknownCommandReport(count))
+
+
+@dataclass
+class ValidationCommandReport(Report):
     success: bool
 
 
-def validate(input_path: str) -> ValidationReport:
-    pagegraph.graph.from_path(input_path, True)
-    return ValidationReport(True)
+def validate(input_path: Path) -> CommandReport:
+    pg = pagegraph.graph.from_path(input_path, True)
+    return to_command_report(pg, ValidationCommandReport(True))

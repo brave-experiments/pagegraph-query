@@ -11,11 +11,11 @@ if TYPE_CHECKING:
     from pagegraph.graph.edge.request_redirect import RequestRedirectEdge
     from pagegraph.graph.edge.request_start import RequestStartEdge
     from pagegraph.graph.node import Node
+    from pagegraph.graph.node.abc.script import ScriptNode
     from pagegraph.graph.node.dom_root import DOMRootNode
     from pagegraph.graph.node.frame_owner import FrameOwnerNode
     from pagegraph.graph.node.html import HTMLNode
     from pagegraph.graph.node.parser import ParserNode
-    from pagegraph.graph.node.script import ScriptNode
     from pagegraph.graph.node.script_local import ScriptLocalNode
     from pagegraph.graph.node.script_remote import ScriptRemoteNode
     from pagegraph.graph.node.text import TextNode

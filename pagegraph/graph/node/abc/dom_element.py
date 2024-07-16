@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from pagegraph.graph.edge.node_create import NodeCreateEdge
     from pagegraph.graph.edge.node_insert import NodeInsertEdge
     from pagegraph.graph.node.dom_root import DOMRootNode
+    from pagegraph.graph.requests import RequestChain
     from pagegraph.serialize import DOMNodeReport
     from pagegraph.types import BlinkId, ParentDomNode, ActorNode, DOMNode
 
@@ -161,3 +162,12 @@ class DOMElementNode(Node, ABC):
             if insert_edge := edge.as_insert_edge():
                 parent_html_nodes.append(insert_edge.inserted_below_node())
         return parent_html_nodes
+
+    def requests(self) -> list["RequestChain"]:
+        chains: list["RequestChain"] = []
+        for outgoing_edge in self.outgoing_edges():
+            if request_start_edge := outgoing_edge.as_request_start_edge():
+                request_id = request_start_edge.request_id()
+                request_chain = self.pg.request_chain_for_id(request_id)
+                chains.append(request_chain)
+        return chains

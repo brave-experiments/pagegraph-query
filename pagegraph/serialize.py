@@ -1,8 +1,15 @@
+from __future__ import annotations
+
 from abc import ABC
 from dataclasses import dataclass, fields
-from typing import Any, Union
+from typing import Any, Optional, TYPE_CHECKING, Union, Sequence
 
-from pagegraph.types import BlinkId, PageGraphId, Url, RequestId, RequestHeaders
+from pagegraph.types import BlinkId, PageGraphId, RequestHeaders
+
+if TYPE_CHECKING:
+    from pagegraph.graph import PageGraph
+    from pagegraph.types import Url, RequestId
+    from packaging.version import Version
 
 
 @dataclass
@@ -10,7 +17,12 @@ class Report:
     pass
 
 
-JSONAble = Report | list[Report] | dict[str, Report] | str | int | float | bool
+@dataclass
+class BasicReport(Report):
+    name: str
+
+
+JSONAble = Report | list[Report] | dict[str, Report] | str | int | float | bool | None
 
 
 @dataclass
@@ -34,9 +46,12 @@ class JSStructureReport(Report):
 
 
 @dataclass
-class JSInvokeReport(Report):
+class JSCallResultReport(Report):
+    method: str
     args: Any
     result: Any
+    call_context: FrameReport
+    execution_context: Optional[FrameReport] = None
 
 
 @dataclass
@@ -111,6 +126,28 @@ class EdgeReport(ElementReport):
 class Reportable(ABC):
     def to_report(self) -> Report:
         raise NotImplementedError()
+
+
+@dataclass
+class CommandReport(Report):
+    @dataclass
+    class Metadata(Report):
+        @dataclass
+        class Versions(Report):
+            tool: str
+            graph: str
+        versions: Versions
+        url: Url
+    meta: Metadata
+    report: Union[Report, Sequence[Report]]
+
+
+def to_command_report(pg: PageGraph,
+                      report: Union[Report, Sequence[Report]]) -> CommandReport:
+    versions_data = CommandReport.Metadata.Versions(
+        str(pg.tool_version), str(pg.graph_version))
+    metadata = CommandReport.Metadata(versions_data, pg.url)
+    return CommandReport(metadata, report)
 
 
 def report_field_name(field_name: str) -> str:

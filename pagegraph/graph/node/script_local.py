@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 from base64 import b64encode
 from enum import Enum
 import hashlib
 from typing import Union, Optional, TYPE_CHECKING
 
 from pagegraph.graph.node import Node
-from pagegraph.graph.node.script import ScriptNode
+from pagegraph.graph.node.abc.script import ScriptNode
 from pagegraph.serialize import Reportable, ScriptReport
 from pagegraph.types import ResourceType
 
@@ -40,17 +42,17 @@ class ScriptLocalNode(ScriptNode, Reportable):
         MODULE = "module"
         UNKNOWN = "unknown"
 
-    def as_script_local_node(self) -> Optional["ScriptLocalNode"]:
+    def as_script_local_node(self) -> Optional[ScriptLocalNode]:
         return self
 
-    def created_nodes(self) -> list["Node"]:
+    def created_nodes(self) -> list[Node]:
         created_nodes = []
         for edge in self.outgoing_edges():
             if create_edge := edge.as_create_edge():
                 created_nodes.append(create_edge.outgoing_node())
         return created_nodes
 
-    def calls(self, method_name: Optional[str] = None) -> list["JSCallResult"]:
+    def calls(self, method_name: Optional[str] = None) -> list[JSCallResult]:
         js_call_results = []
         for edge in self.outgoing_edges():
             if js_call_edge := edge.as_js_call_edge():

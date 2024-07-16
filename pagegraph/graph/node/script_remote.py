@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pagegraph.graph.node.script import ScriptNode
+from pagegraph.graph.node.abc.script import ScriptNode
 
 
 class ScriptRemoteNode(ScriptNode):

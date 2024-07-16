@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 from typing import Optional
 
 from pagegraph.graph.edge import Edge
 from pagegraph.graph.node import Node
+from pagegraph.serialize import Reportable, BasicReport
 
 
-class UnknownNode(Node):
+class UnknownNode(Node, Reportable):
 
     incoming_edge_types = [
         Edge.Types.EVENT_LISTENER,
@@ -34,5 +37,8 @@ class UnknownNode(Node):
         Edge.Types.EVENT_LISTENER_REMOVE,
     ]
 
-    def as_unknown_node(self) -> Optional["UnknownNode"]:
+    def as_unknown_node(self) -> Optional[UnknownNode]:
         return self
+
+    def to_report(self) -> BasicReport:
+        return BasicReport("Unknown")

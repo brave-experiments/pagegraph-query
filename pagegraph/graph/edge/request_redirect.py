@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from typing import Optional, TYPE_CHECKING
 
-from pagegraph.graph.edge.request_response import RequestResponseEdge
+from pagegraph.graph.edge.abc.request_response import RequestResponseEdge
 from pagegraph.types import Url
 
 if TYPE_CHECKING:
@@ -19,16 +21,15 @@ class RequestRedirectEdge(RequestResponseEdge):
 
     summary_methods = {
         "url": "url",
-        "request id": "request_id",
     }
 
-    def outgoing_node(self) -> "ResourceNode":
+    def outgoing_node(self) -> ResourceNode:
         node = super().outgoing_node()
         resource_node = node.as_resource_node()
         assert resource_node
         return resource_node
 
-    def as_request_redirect_edge(self) -> Optional["RequestRedirectEdge"]:
+    def as_request_redirect_edge(self) -> Optional[RequestRedirectEdge]:
         return self
 
     def url(self) -> Url:

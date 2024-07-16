@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Union
 
-from pagegraph.serialize import Reportable, JSInvokeReport
+from pagegraph.serialize import Reportable, JSCallResultReport
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
@@ -8,6 +10,7 @@ if TYPE_CHECKING:
     from pagegraph.graph.edge.js_result import JSResultEdge
     from pagegraph.graph.node.dom_root import DOMRootNode
     from pagegraph.graph.node.js_structure import JSStructureNode
+    from pagegraph.serialize import JSONAble
 
 
 class JSCallResult(Reportable):
@@ -29,10 +32,24 @@ class JSCallResult(Reportable):
             msg += " -> " + str(self.result.value())
         return msg
 
-    def to_report(self) -> JSInvokeReport:
-        report = JSInvokeReport(self.call.args(), None)
-        if self.result:
-            report.result = self.result.value()
+    def args(self) -> JSONAble:
+        return self.call.args()
+
+    def return_value(self) -> JSONAble:
+        if not self.result:
+            return None
+        return self.result.value()
+
+    def to_report(self) -> JSCallResultReport:
+        call_context = self.call_context()
+        receiver_context = self.receiver_context()
+
+        execution_context_report = None
+        if call_context != receiver_context:
+            execution_context_report = receiver_context.to_report()
+
+        report = JSCallResultReport(self.structure.name(), self.args(),
+            self.return_value(), call_context.to_report(), execution_context_report)
         return report
 
     def call_context(self) -> "DOMRootNode":

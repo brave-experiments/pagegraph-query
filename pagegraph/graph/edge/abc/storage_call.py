@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from abc import ABC
 from typing import TYPE_CHECKING
 
-from pagegraph.graph.edge.frame_id_attributed import FrameIdAttributedEdge
+from pagegraph.graph.edge.abc.frame_id_attributed import FrameIdAttributedEdge
 
 if TYPE_CHECKING:
     from pagegraph.graph.node.storage_area import StorageAreaNode
@@ -21,12 +23,12 @@ class StorageCallEdge(FrameIdAttributedEdge, ABC):
         "cookie jar",  # Node.Types.COOKIE_JAR
     ]
 
-    def incoming_node(self) -> "JSCallingNode":
+    def incoming_node(self) -> JSCallingNode:
         node = super().incoming_node().as_executor_node()
         assert node
         return node
 
-    def outgoing_node(self) -> "StorageAreaNode":
+    def outgoing_node(self) -> StorageAreaNode:
         outgoing_node = super().outgoing_node().as_storage_area_node()
         assert outgoing_node
         return outgoing_node

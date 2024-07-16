@@ -5,6 +5,20 @@ Add support for PageGraph version 0.7.2 (which adds new node types for actors).
 
 Fix `iframes` test and regenerate test graphs with recent pagegraph.
 
+Add additional tests for keeping track of js calls across frames.
+
+Add additional command for logging if any unattributable events occurred
+in the graph (i.e., cases where there must have been a script occurring, but
+we couldn't determine which script.).
+
+Fix issue with deeply recursive request loops (specifically, when the
+same URL could redirect to itself a large but finite number of times, before
+redirecting to an eventual end URL).
+
+Move all abstract node and edge classes into `pagegraph.graph.{node,edge}.abc`
+so that the directory structure more closely matches the PageGraph type
+taxonomy.
+
 
 Version 0.9.3
 ---

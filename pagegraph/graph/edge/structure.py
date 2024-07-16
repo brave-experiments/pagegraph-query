@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional
 
 from pagegraph.graph.edge import Edge
@@ -29,5 +31,5 @@ class StructureEdge(Edge):
             ]
         return super().validate()
 
-    def as_structure_edge(self) -> Optional["StructureEdge"]:
+    def as_structure_edge(self) -> Optional[StructureEdge]:
         return self

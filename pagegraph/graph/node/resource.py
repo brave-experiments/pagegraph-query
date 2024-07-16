@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import cast, Optional, TYPE_CHECKING
 
 from pagegraph.graph.edge import Edge
@@ -5,6 +7,7 @@ from pagegraph.graph.node import Node
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
+    from pagegraph.graph.edge.abc.request import RequestEdge
     from pagegraph.graph.edge.request_start import RequestStartEdge
     from pagegraph.types import RequesterNode, Url, PageGraphId, RequestId
     from pagegraph.types import RequestIncoming, RequestOutgoing
@@ -79,18 +82,13 @@ class ResourceNode(Node):
         super().build_caches()
 
     def next_response_for_id(
-            self, request_id: "RequestId",
-            curr_response: Optional["RequestOutgoing"]) -> Optional["RequestOutgoing"]:
+            self, request_id: RequestId,
+            prev_requests: set[RequestEdge]) -> Optional[RequestOutgoing]:
         if self.pg.debug:
             if request_id not in self.requests_map:
                 self.throw("Unexpected request id")
         outgoing_responses = self.requests_map[request_id]
-        if not curr_response:
-            return outgoing_responses[0]
-        found_response = False
         for a_response in outgoing_responses:
-            if found_response:
+            if a_response not in prev_requests:
                 return a_response
-            if a_response == curr_response:
-                found_response = True
         return None

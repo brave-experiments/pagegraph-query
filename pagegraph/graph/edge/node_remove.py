@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from typing import Optional
 
-from pagegraph.graph.edge.frame_id_attributed import FrameIdAttributedEdge
+from pagegraph.graph.edge.abc.frame_id_attributed import FrameIdAttributedEdge
 
 
 class NodeRemoveEdge(FrameIdAttributedEdge):
@@ -17,5 +19,5 @@ class NodeRemoveEdge(FrameIdAttributedEdge):
         "text node",  # Node.Types.TEXT_NODE
     ]
 
-    def as_node_remove_edge(self) -> Optional["NodeRemoveEdge"]:
+    def as_node_remove_edge(self) -> Optional[NodeRemoveEdge]:
         return self
