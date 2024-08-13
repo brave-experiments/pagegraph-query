@@ -1,3 +1,6 @@
+
+from __future__ import annotations
+
 from abc import ABC
 from enum import Enum
 from typing import cast, Optional
@@ -9,6 +12,7 @@ from pagegraph.serialize import NodeReport, BriefNodeReport
 
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
+    from pagegraph.graph.edge.abc.effect import EffectEdge
     from pagegraph.graph.edge.attribute_delete import AttributeDeleteEdge
     from pagegraph.graph.edge.attribute_set import AttributeSetEdge
     from pagegraph.graph.edge.cross_dom import CrossDOMEdge
@@ -63,11 +67,11 @@ class Edge(PageGraphElement, ABC):
 
     # The below are automatically generated from the above,
     # but at runtime to again prevent the dependency loop.
-    incoming_node_types: Union[list["Node.Types"], None] = None
-    outgoing_node_types: Union[list["Node.Types"], None] = None
+    incoming_node_types: Union[list[Node.Types], None] = None
+    outgoing_node_types: Union[list[Node.Types], None] = None
 
     @classmethod
-    def make_incoming_node_types(cls) -> Union[list["Node.Types"], None]:
+    def make_incoming_node_types(cls) -> Union[list[Node.Types], None]:
         if cls.incoming_node_type_names is None:
             return None
 
@@ -81,7 +85,7 @@ class Edge(PageGraphElement, ABC):
         return cls.incoming_node_types
 
     @classmethod
-    def make_outgoing_node_types(cls) -> Union[list["Node.Types"], None]:
+    def make_outgoing_node_types(cls) -> Union[list[Node.Types], None]:
         if cls.outgoing_node_type_names is None:
             return None
 
@@ -95,8 +99,8 @@ class Edge(PageGraphElement, ABC):
         return cls.outgoing_node_types
 
     # Used as instance properties
-    incoming_node_id: "PageGraphNodeId"
-    outgoing_node_id: "PageGraphNodeId"
+    incoming_node_id: PageGraphNodeId
+    outgoing_node_id: PageGraphNodeId
 
     class Types(Enum):
         ATTRIBUTE_DELETE = "delete attribute"
@@ -141,8 +145,8 @@ class Edge(PageGraphElement, ABC):
         TYPE = "edge type"
         VALUE = "value"
 
-    def __init__(self, graph: "PageGraph", pagegraph_id: "PageGraphEdgeId",
-                 parent_id: "PageGraphNodeId", child_id: "PageGraphNodeId"):
+    def __init__(self, graph: PageGraph, pagegraph_id: PageGraphEdgeId,
+                 parent_id: PageGraphNodeId, child_id: PageGraphNodeId):
         self.incoming_node_id = parent_id
         self.outgoing_node_id = child_id
         super().__init__(graph, pagegraph_id)
@@ -152,7 +156,7 @@ class Edge(PageGraphElement, ABC):
 
     def to_edge_report(
             self, depth: int = 0,
-            seen: None | set[Union["Node", "Edge"]] = None) -> EdgeReport:
+            seen: None | set[Union[Node, Edge]] = None) -> EdgeReport:
         if seen is None:
             seen = set([self])
 
@@ -185,102 +189,105 @@ class Edge(PageGraphElement, ABC):
         return BriefEdgeReport(self.pg_id(), self.edge_type().value,
                                self.summary_fields())
 
-    def incoming_node(self) -> "Node":
+    def incoming_node(self) -> Node:
         return self.pg.node(self.incoming_node_id)
 
-    def outgoing_node(self) -> "Node":
+    def outgoing_node(self) -> Node:
         return self.pg.node(self.outgoing_node_id)
 
     def type_name(self) -> str:
         return self.data()[self.RawAttrs.TYPE.value]
 
-    def edge_type(self) -> "Edge.Types":
+    def edge_type(self) -> Edge.Types:
         return self.Types(self.type_name())
 
     def is_type(self, edge_type: Types) -> bool:
         return self.data()[self.RawAttrs.TYPE.value] == edge_type.value
 
-    def as_insert_edge(self) -> Optional["NodeInsertEdge"]:
+    def as_insert_edge(self) -> Optional[NodeInsertEdge]:
         return None
 
-    def as_structure_edge(self) -> Optional["StructureEdge"]:
+    def as_structure_edge(self) -> Optional[StructureEdge]:
         return None
 
-    def as_create_edge(self) -> Optional["NodeCreateEdge"]:
+    def as_create_edge(self) -> Optional[NodeCreateEdge]:
         return None
 
-    def as_execute_edge(self) -> Optional["ExecuteEdge"]:
+    def as_execute_edge(self) -> Optional[ExecuteEdge]:
         return None
 
     def as_execute_from_attribute_edge(self) -> Optional[
-            "ExecuteFromAttributeEdge"]:
+            ExecuteFromAttributeEdge]:
         return None
 
-    def as_cross_dom_edge(self) -> Optional["CrossDOMEdge"]:
+    def as_cross_dom_edge(self) -> Optional[CrossDOMEdge]:
         return None
 
-    def as_request_start_edge(self) -> Optional["RequestStartEdge"]:
+    def as_request_start_edge(self) -> Optional[RequestStartEdge]:
         return None
 
-    def as_request_complete_edge(self) -> Optional["RequestCompleteEdge"]:
+    def as_request_complete_edge(self) -> Optional[RequestCompleteEdge]:
         return None
 
-    def as_request_error_edge(self) -> Optional["RequestErrorEdge"]:
+    def as_request_error_edge(self) -> Optional[RequestErrorEdge]:
         return None
 
-    def as_request_redirect_edge(self) -> Optional["RequestRedirectEdge"]:
+    def as_request_redirect_edge(self) -> Optional[RequestRedirectEdge]:
         return None
 
-    def as_attribute_set_edge(self) -> Optional["AttributeSetEdge"]:
+    def as_attribute_set_edge(self) -> Optional[AttributeSetEdge]:
         return None
 
-    def as_attribute_delete_edge(self) -> Optional["AttributeDeleteEdge"]:
+    def as_attribute_delete_edge(self) -> Optional[AttributeDeleteEdge]:
         return None
 
-    def as_document_edge(self) -> Optional["DocumentEdge"]:
+    def as_document_edge(self) -> Optional[DocumentEdge]:
         return None
 
-    def as_node_remove_edge(self) -> Optional["NodeRemoveEdge"]:
+    def as_node_remove_edge(self) -> Optional[NodeRemoveEdge]:
         return None
 
-    def as_event_listener_edge(self) -> Optional["EventListenerEdge"]:
+    def as_event_listener_edge(self) -> Optional[EventListenerEdge]:
         return None
 
-    def as_event_listener_add_edge(self) -> Optional["EventListenerAddEdge"]:
+    def as_event_listener_add_edge(self) -> Optional[EventListenerAddEdge]:
         return None
 
     def as_event_listener_remove_edge(self) -> Optional[
-            "EventListenerRemoveEdge"]:
+            EventListenerRemoveEdge]:
         return None
 
-    def as_storage_bucket_edge(self) -> Optional["StorageBucketEdge"]:
+    def as_storage_bucket_edge(self) -> Optional[StorageBucketEdge]:
         return None
 
-    def as_storage_read_call_edge(self) -> Optional["StorageReadCallEdge"]:
+    def as_storage_read_call_edge(self) -> Optional[StorageReadCallEdge]:
         return None
 
-    def as_storage_read_result_edge(self) -> Optional["StorageReadResultEdge"]:
+    def as_storage_read_result_edge(self) -> Optional[StorageReadResultEdge]:
         return None
 
-    def as_storage_set_edge(self) -> Optional["StorageSetEdge"]:
+    def as_storage_set_edge(self) -> Optional[StorageSetEdge]:
         return None
 
-    def as_storage_clear_edge(self) -> Optional["StorageClearEdge"]:
+    def as_storage_clear_edge(self) -> Optional[StorageClearEdge]:
         return None
 
-    def as_storage_delete_edge(self) -> Optional["StorageDeleteEdge"]:
+    def as_storage_delete_edge(self) -> Optional[StorageDeleteEdge]:
         return None
 
-    def as_js_call_edge(self) -> Optional["JSCallEdge"]:
+    def as_js_call_edge(self) -> Optional[JSCallEdge]:
         return None
 
-    def as_js_result_edge(self) -> Optional["JSResultEdge"]:
+    def as_js_result_edge(self) -> Optional[JSResultEdge]:
+        return None
+
+    def as_effect_edge(self) -> Optional[EffectEdge]:
         return None
 
     def data(self) -> dict[str, str]:
         return cast(dict[str, str], self.pg.graph.edges[self.edge_key()])
 
-    def edge_key(self) -> "PageGraphEdgeKey":
+    def edge_key(self) -> PageGraphEdgeKey:
         return self.incoming_node_id, self.outgoing_node_id, self._id
 
     def describe(self) -> str:

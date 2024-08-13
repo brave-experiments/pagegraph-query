@@ -105,8 +105,7 @@ def request_chain_for_edge(request_edge: RequestStartEdge) -> RequestChain:
                                                        chain.all_requests())
 
         if not next_edge:
-            raise ValueError("Could not find outgoing request edge from "
-                             f"resource {resource_node}")
+            return chain
 
         if request_redirect_edge := next_edge.as_request_redirect_edge():
             chain.add_redirect(request_redirect_edge)

@@ -19,6 +19,10 @@ Move all abstract node and edge classes into `pagegraph.graph.{node,edge}.abc`
 so that the directory structure more closely matches the PageGraph type
 taxonomy.
 
+Remove assumption in `RequestChain` class that all requests will have a result
+(either a completion edge or an error edge). There will be no result if the
+graph was serialized while the request was still in the air.
+
 
 Version 0.9.3
 ---

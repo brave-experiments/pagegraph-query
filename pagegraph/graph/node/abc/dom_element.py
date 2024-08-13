@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC
 from typing import Optional, TYPE_CHECKING
 
@@ -20,23 +22,23 @@ class DOMElementNode(Node, ABC):
         "tag name": "tag_name"
     }
 
-    def blink_id(self) -> "BlinkId":
+    def blink_id(self) -> BlinkId:
         return int(self.data()[self.RawAttrs.BLINK_ID.value])
 
     def tag_name(self) -> str:
         raise NotImplementedError()
 
-    def to_report(self) -> "DOMNodeReport":
+    def to_report(self) -> DOMNodeReport:
         raise NotImplementedError()
 
-    def insertion_edges(self) -> list["NodeInsertEdge"]:
-        insertion_edges: list["NodeInsertEdge"] = []
+    def insertion_edges(self) -> list[NodeInsertEdge]:
+        insertion_edges: list[NodeInsertEdge] = []
         for edge in self.incoming_edges():
             if insert_edge := edge.as_insert_edge():
                 insertion_edges.append(insert_edge)
         return sort_elements(insertion_edges)
 
-    def insert_edge(self) -> Optional["NodeInsertEdge"]:
+    def insert_edge(self) -> Optional[NodeInsertEdge]:
         """Return the most recent edge describing when this element
         was appended to a document."""
         insertion_edges = self.insertion_edges()
@@ -51,7 +53,7 @@ class DOMElementNode(Node, ABC):
         parent_node = self.parent_at_serialization()
         if not parent_node:
             return False
-        needle_node: Optional["DOMNode"] = parent_node
+        needle_node: Optional[DOMNode] = parent_node
         while needle_node is not None:
             needle_html_node = needle_node.as_html_node()
             if not needle_html_node:
@@ -65,7 +67,7 @@ class DOMElementNode(Node, ABC):
         parent_node_at_serialization = self.parent_at_serialization()
         return parent_node_at_serialization is not None
 
-    def parent_at_serialization(self) -> Optional["ParentDomNode"]:
+    def parent_at_serialization(self) -> Optional[ParentDomNode]:
         if self.pg.feature_check(Feature.DOCUMENT_EDGES):
             for edge in self.incoming_edges():
                 if document_edge := edge.as_document_edge():
@@ -81,7 +83,7 @@ class DOMElementNode(Node, ABC):
                 return parent_node
         return None
 
-    def creation_edge(self) -> "NodeCreateEdge":
+    def creation_edge(self) -> NodeCreateEdge:
         creation_edge = None
         for edge in self.incoming_edges():
             if creation_edge := edge.as_create_edge():
@@ -89,10 +91,10 @@ class DOMElementNode(Node, ABC):
         assert creation_edge
         return creation_edge
 
-    def creator_node(self) -> "ActorNode":
+    def creator_node(self) -> ActorNode:
         return self.creation_edge().incoming_node()
 
-    def domroot_node(self) -> "DOMRootNode":
+    def domroot_node(self) -> DOMRootNode:
         """Returns a best effort of what frame / DOMRootNode to associate
         this element with. Since an DOM element can be attached to
         multiple documents / multiple frames, this may not be what you're
@@ -103,14 +105,14 @@ class DOMElementNode(Node, ABC):
             self.domroot_for_creation()
         )
 
-    def domroot_for_creation(self) -> "DOMRootNode":
+    def domroot_for_creation(self) -> DOMRootNode:
         """Returns the DOMRootNode that is the execution context
         that this element was created in. Node that this could differ
         from the DOMRootNode / frame that the element was inserted into."""
         creation_frame_id = self.creation_edge().frame_id()
         return self.pg.domroot_for_frame_id(creation_frame_id)
 
-    def domroot_for_document(self) -> Optional["DOMRootNode"]:
+    def domroot_for_document(self) -> Optional[DOMRootNode]:
         """Returns the DOMRootNode for the most last document the element
         was attached to. Note that this *does not* mean the this element
         was attached to the document at serialization (since the element
@@ -122,7 +124,7 @@ class DOMElementNode(Node, ABC):
             return None
         return insert_edge.domroot_for_frame_id()
 
-    def domroot_from_parent_node_path(self) -> Optional["DOMRootNode"]:
+    def domroot_from_parent_node_path(self) -> Optional[DOMRootNode]:
         """Tries to follow all chains of nodes that this node was inserted
         as a child of. Its possible that we cannot get to a docroot node
         in this path though (for example, nodes trees created in script
@@ -134,7 +136,7 @@ class DOMElementNode(Node, ABC):
                 return html_node.domroot_from_parent_node_path()
         return None
 
-    def domroot_for_serialization(self) -> Optional["DOMRootNode"]:
+    def domroot_for_serialization(self) -> Optional[DOMRootNode]:
         """Get the DOMRootNode for the document this element is attached
         to at serialization time. Note that this could be `None` (if
         this element is not attached to a document at serialization),
@@ -152,7 +154,7 @@ class DOMElementNode(Node, ABC):
             return parent_node_from_structure
         return None
 
-    def parent_html_nodes(self) -> list["ParentDomNode"]:
+    def parent_html_nodes(self) -> list[ParentDomNode]:
         """Return every node this node was ever inserted under. This can be
         zero nodes (if the node was created but never inserted in the
         document), or more than one node (if the node was moved around the
@@ -163,8 +165,8 @@ class DOMElementNode(Node, ABC):
                 parent_html_nodes.append(insert_edge.inserted_below_node())
         return parent_html_nodes
 
-    def requests(self) -> list["RequestChain"]:
-        chains: list["RequestChain"] = []
+    def requests(self) -> list[RequestChain]:
+        chains: list[RequestChain] = []
         for outgoing_edge in self.outgoing_edges():
             if request_start_edge := outgoing_edge.as_request_start_edge():
                 request_id = request_start_edge.request_id()

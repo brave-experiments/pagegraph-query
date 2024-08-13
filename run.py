@@ -234,6 +234,7 @@ UNKNOWN_QUERY_PARSER.set_defaults(func=unknown_query_cmd)
 #          "the page. By default only includes requests.")
 # EFFECTS_QUERY_PARSER.add_argument(
 #     "input",
+#     type=pathlib.Path,
 #     help="Path to PageGraph recording.")
 # EFFECTS_QUERY_PARSER.add_argument(
 #     "id",

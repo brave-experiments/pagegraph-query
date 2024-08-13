@@ -13,6 +13,7 @@ from pagegraph.util import brief_version
 if TYPE_CHECKING:
     from pagegraph.graph import PageGraph
     from pagegraph.graph.edge.abc.request_response import RequestResponseEdge
+    from pagegraph.graph.node.abc.effector import EffectorNode
     from pagegraph.graph.edge.execute import ExecuteEdge
     from pagegraph.graph.edge.js_call import JSCallEdge
     from pagegraph.graph.edge.js_result import JSResultEdge
@@ -50,10 +51,10 @@ if TYPE_CHECKING:
 class Node(PageGraphElement, ABC):
 
     # Used as class properties
-    incoming_node_types: Union[list["Node.Types"], None] = None
-    outgoing_node_types: Union[list["Node.Types"], None] = None
-    incoming_edge_types: Union[list["Edge.Types"], None] = None
-    outgoing_edge_types: Union[list["Edge.Types"], None] = None
+    incoming_node_types: Union[list[Node.Types], None] = None
+    outgoing_node_types: Union[list[Node.Types], None] = None
+    incoming_edge_types: Union[list[Edge.Types], None] = None
+    outgoing_edge_types: Union[list[Edge.Types], None] = None
 
     class Types(Enum):
         ADS_SHIELDS = "shieldsAds shield"
@@ -97,24 +98,24 @@ class Node(PageGraphElement, ABC):
     def type_name(self) -> str:
         return self.data()[self.RawAttrs.TYPE.value]
 
-    def node_type(self) -> "Node.Types":
+    def node_type(self) -> Node.Types:
         return self.Types(self.type_name())
 
-    def child_nodes(self) -> list["Node"]:
+    def child_nodes(self) -> list[Node]:
         return cast(list["Node"], list(self.pg.graph.adj[self._id].items()))
 
-    def parent_nodes(self) -> list["Node"]:
+    def parent_nodes(self) -> list[Node]:
         return cast(list["Node"], list(self.pg.r_graph.adj[self._id].items()))
 
-    def outgoing_edges(self) -> Iterable["Edge"]:
+    def outgoing_edges(self) -> Iterable[Edge]:
         edges = []
         for _, edge_info in self.pg.graph.adj[self._id].items():
             for edge_id, _ in edge_info.items():
                 edges.append(self.pg.edge(edge_id))
         return edges
 
-    def incoming_edges(self) -> Iterable["Edge"]:
-        edges: list["Edge"] = []
+    def incoming_edges(self) -> Iterable[Edge]:
+        edges: list[Edge] = []
         for _, edge_info in self.pg.r_graph.adj[self._id].items():
             for edge_id, _ in edge_info.items():
                 edges.append(self.pg.edge(edge_id))
@@ -122,7 +123,7 @@ class Node(PageGraphElement, ABC):
 
     def to_node_report(
             self, depth: int = 0,
-            seen: None | set[Union["Node", "Edge"]] = None) -> NodeReport:
+            seen: None | set[Union[Node, Edge]] = None) -> NodeReport:
         if seen is None:
             seen = set([self])
 
@@ -159,7 +160,7 @@ class Node(PageGraphElement, ABC):
     def is_type(self, node_type: Types) -> bool:
         return self.data()[self.RawAttrs.TYPE.value] == node_type.value
 
-    def as_dom_node(self) -> Optional["DOMNode"]:
+    def as_dom_node(self) -> Optional[DOMNode]:
         return (
             self.as_html_node() or
             self.as_text_node() or
@@ -167,7 +168,7 @@ class Node(PageGraphElement, ABC):
             self.as_frame_owner_node()
         )
 
-    def as_child_dom_node(self) -> Optional["ChildDomNode"]:
+    def as_child_dom_node(self) -> Optional[ChildDomNode]:
         """Returns true if this node is valid to ever be a child node for
         any other DOM node type."""
         return (
@@ -176,7 +177,7 @@ class Node(PageGraphElement, ABC):
             self.as_html_node()
         )
 
-    def as_requester_node(self) -> Optional["RequesterNode"]:
+    def as_requester_node(self) -> Optional[RequesterNode]:
         return (
             self.as_parser_node() or
             self.as_html_node() or
@@ -184,7 +185,7 @@ class Node(PageGraphElement, ABC):
             self.as_domroot_node()
         )
 
-    def as_leaf_dom_node(self) -> Optional["LeafDomNode"]:
+    def as_leaf_dom_node(self) -> Optional[LeafDomNode]:
         """Returns true if this is a node type that can appear in the DOM,
         and cannot have any child nodes within this frame."""
         return (
@@ -192,7 +193,7 @@ class Node(PageGraphElement, ABC):
             self.as_frame_owner_node()
         )
 
-    def as_parent_dom_node(self) -> Optional["ParentDomNode"]:
+    def as_parent_dom_node(self) -> Optional[ParentDomNode]:
         """Returns true if this node is valid to ever be the parent of
         another DOM node in w/in a frame (i.e., iframes/frame owners
         cannot be parents of other DOM nodes w/in the same frame)."""
@@ -208,66 +209,69 @@ class Node(PageGraphElement, ABC):
             self.as_frame_owner_node()
         )
 
-    def as_attributable_dom_node(self) -> Optional["AttrDomNode"]:
+    def as_attributable_dom_node(self) -> Optional[AttrDomNode]:
         return (
             self.as_html_node() or
             self.as_domroot_node() or
             self.as_frame_owner_node()
         )
 
-    def as_actor_node(self) -> Optional["ActorNode"]:
+    def as_actor_node(self) -> Optional[ActorNode]:
         return (
             self.as_script_local_node() or
             self.as_parser_node()
         )
 
-    def as_storage_area_node(self) -> Optional["StorageAreaNode"]:
+    def as_storage_area_node(self) -> Optional[StorageAreaNode]:
         return None
 
-    def as_text_node(self) -> Optional["TextNode"]:
+    def as_text_node(self) -> Optional[TextNode]:
         return None
 
-    def as_frame_owner_node(self) -> Optional["FrameOwnerNode"]:
+    def as_frame_owner_node(self) -> Optional[FrameOwnerNode]:
         return None
 
-    def as_script_node(self) -> Optional["ScriptNode"]:
+    def as_script_node(self) -> Optional[ScriptNode]:
         return None
 
-    def as_script_local_node(self) -> Optional["ScriptLocalNode"]:
+    def as_script_local_node(self) -> Optional[ScriptLocalNode]:
         return None
 
-    def as_script_remote_node(self) -> Optional["ScriptRemoteNode"]:
+    def as_script_remote_node(self) -> Optional[ScriptRemoteNode]:
         return None
 
-    def as_domroot_node(self) -> Optional["DOMRootNode"]:
+    def as_domroot_node(self) -> Optional[DOMRootNode]:
         return None
 
-    def as_parser_node(self) -> Optional["ParserNode"]:
+    def as_parser_node(self) -> Optional[ParserNode]:
         return None
 
-    def as_html_node(self) -> Optional["HTMLNode"]:
+    def as_html_node(self) -> Optional[HTMLNode]:
         return None
 
-    def as_js_structure_node(self) -> Optional["JSStructureNode"]:
+    def as_js_structure_node(self) -> Optional[JSStructureNode]:
         return None
 
-    def as_resource_node(self) -> Optional["ResourceNode"]:
+    def as_resource_node(self) -> Optional[ResourceNode]:
         return None
 
-    def as_cookie_jar_node(self) -> Optional["CookieJarNode"]:
+    def as_cookie_jar_node(self) -> Optional[CookieJarNode]:
         return None
 
-    def as_local_storage_node(self) -> Optional["LocalStorageNode"]:
+    def as_local_storage_node(self) -> Optional[LocalStorageNode]:
         return None
 
-    def as_session_storage_node(self) -> Optional["SessionStorageNode"]:
+    def as_session_storage_node(self) -> Optional[SessionStorageNode]:
         return None
 
-    def as_unknown_node(self) -> Optional["UnknownNode"]:
+    def as_unknown_node(self) -> Optional[UnknownNode]:
         return None
 
-    def as_executor_node(self) -> Optional["JSCallingNode"]:
+    def as_executor_node(self) -> Optional[JSCallingNode]:
         return self.as_script_local_node() or self.as_unknown_node()
+
+    def as_effector_node(self) -> Optional[EffectorNode]:
+        return None
 
     def is_toplevel_parser(self) -> bool:
         for incoming_edge in self.incoming_edges():
@@ -275,7 +279,7 @@ class Node(PageGraphElement, ABC):
                 return False
         return True
 
-    def frame_owner_nodes(self) -> list["FrameOwnerNode"]:
+    def frame_owner_nodes(self) -> list[FrameOwnerNode]:
         frame_owner_nodes = []
         for node in self.pg.nodes():
             if frame_owner_node := node.as_frame_owner_node():
@@ -285,7 +289,7 @@ class Node(PageGraphElement, ABC):
     def data(self) -> dict[str, str]:
         return cast(dict[str, str], self.pg.graph.nodes[self._id])
 
-    def creation_edge(self) -> Optional["NodeCreateEdge"]:
+    def creation_edge(self) -> Optional[NodeCreateEdge]:
         for edge in self.incoming_edges():
             if create_edge := edge.as_create_edge():
                 return create_edge
@@ -352,7 +356,7 @@ class Node(PageGraphElement, ABC):
                     return False
         return True
 
-    def creator_edge(self) -> Optional["NodeCreateEdge"]:
+    def creator_edge(self) -> Optional[NodeCreateEdge]:
         for edge in self.incoming_edges():
             if create_edge := edge.as_create_edge():
                 return create_edge
