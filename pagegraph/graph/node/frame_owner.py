@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional, TYPE_CHECKING
 
 from pagegraph.graph.node.abc.dom_element import DOMElementNode
@@ -11,20 +13,20 @@ if TYPE_CHECKING:
 
 class FrameOwnerNode(DOMElementNode, Reportable):
 
-    def as_frame_owner_node(self) -> Optional["FrameOwnerNode"]:
+    def as_frame_owner_node(self) -> Optional[FrameOwnerNode]:
         return self
 
     def to_report(self) -> DOMElementReport:
         return DOMElementReport(self.pg_id(), self.tag_name())
 
-    def child_parser_nodes(self) -> list["ParserNode"]:
+    def child_parser_nodes(self) -> list[ParserNode]:
         child_parser_nodes = []
         for child_node in self.child_nodes():
             if parser_node := child_node.as_parser_node():
                 child_parser_nodes.append(parser_node)
         return child_parser_nodes
 
-    def domroot_nodes(self) -> list["DOMRootNode"]:
+    def domroot_nodes(self) -> list[DOMRootNode]:
         domroots = []
         if self.pg.feature_check(Feature.CROSS_DOM_EDGES_POINT_TO_DOM_ROOTS):
             for edge in self.outgoing_edges():

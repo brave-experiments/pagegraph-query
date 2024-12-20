@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC
 from typing import Optional
 
@@ -18,7 +20,7 @@ class StorageAreaNode(Node, ABC):
         Edge.Types.STORAGE_READ_RESULT
     ]
 
-    def as_storage_area_node(self) -> Optional["StorageAreaNode"]:
+    def as_storage_area_node(self) -> Optional[StorageAreaNode]:
         return (
             self.as_cookie_jar_node() or
             self.as_local_storage_node() or

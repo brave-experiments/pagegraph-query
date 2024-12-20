@@ -4,9 +4,9 @@ from functools import lru_cache
 from itertools import chain
 from pathlib import Path
 import re
-from typing import Any, cast, Optional, TYPE_CHECKING
+from typing import cast, Optional, TYPE_CHECKING
 
-import networkx as NWX  # type: ignore
+import networkx as NWX
 from packaging.version import Version
 
 import pagegraph
@@ -19,6 +19,9 @@ from pagegraph.versions import min_version_for_feature
 
 if TYPE_CHECKING:
     from pagegraph.graph.edge.js_call import JSCallEdge
+    from pagegraph.graph.edge.event_listener_add import EventListenerAddEdge
+    from pagegraph.graph.edge.event_listener_fired import EventListenerFiredEdge
+    from pagegraph.graph.edge.event_listener_remove import EventListenerRemoveEdge
     from pagegraph.graph.edge.node_insert import NodeInsertEdge
     from pagegraph.graph.edge.request_start import RequestStartEdge
     from pagegraph.graph.edge.storage_clear import StorageClearEdge
@@ -33,32 +36,90 @@ if TYPE_CHECKING:
     from pagegraph.graph.node.script_local import ScriptLocalNode
     from pagegraph.graph.node.unknown import UnknownNode
     from pagegraph.graph.requests import RequestChain
-    from pagegraph.types import BlinkId, PageGraphId, DOMNode, ChildDomNode
+    from pagegraph.types import BlinkId, EventListenerId, DOMNode, ChildDomNode
     from pagegraph.types import ParentDomNode, FrameId, RequestId, Url
+    from pagegraph.types import PageGraphId, NetworkXEdgeId, NetworkXNodeId
+
 
 class PageGraph:
 
     # Instance properties
-    debug: bool
-    # Tracks the version of the graph (distinct from the version of this
-    # library).
-    graph_version: Version
-    tool_version: Version = pagegraph.VERSION
-    graph: NWX.MultiDiGraph
-    url: Url
-    r_graph: NWX.MultiDiGraph
 
-    __blink_id_map: dict["BlinkId", "DOMNode"] = {}
-    __request_chain_map: dict["RequestId", "RequestChain"] = {}
+    debug: bool
+    """Whether to apply additional checks and include additional logging
+    information."""
+
+    graph_version: Version
+    """Tracks the version of the graph (distinct from the version of this
+    library)."""
+
+    tool_version: Version = pagegraph.__version__
+    """Version of this library. Included in generated reports."""
+
+    graph: NWX.MultiDiGraph
+    """The low-level [NetworkX](https://networkx.org/) representation of the
+    PageGraph generated GraphML file."""
+
+    r_graph: NWX.MultiDiGraph
+    """The reversed (i.e., edges flipped) version of the graph represented by
+    the given GraphML file."""
+
+    url: Url
+    """URL for the page that was executed to generate the given PageGraph
+    file."""
+
+    __blink_id_map: dict[BlinkId, DOMNode] = {}
+    """Private cache for mapping *from* the integer id Blink assigns to each
+    element (e.g., HTMLElement, TextNode, docstring, etc.) in the DOM tree, *to*
+    the node representing that page element in the PageGraph representation."""
+
+    __request_chain_map: dict[RequestId, RequestChain] = {}
+    """Private cache for mapping from the integer id Blink assigns to each
+    request, to the set of edges PageGraph uses to record the start,
+    redirection, and completion (either successfully or with an error) to record
+    a request."""
 
     __nodes_by_type: dict[Node.Types, list[Node]] = {}
-    __edges_by_type: dict[Edge.Types, list[Edge]] = {}
-    __edge_cache: list[Edge] = []
-    __edge_id_cache: dict["PageGraphId", tuple[Any, Any]] = {}
+    """Private cache for mapping from each PageGraph node type, to all the nodes
+    in the graph with that type."""
 
-    __inserted_below_map: dict["ParentDomNode", list["ChildDomNode"]] = {}
-    # Mapping from a frame id to the most recent DOM node seen for the frame
-    __frame_id_map: dict["FrameId", "DOMRootNode"] = {}
+    __edges_by_type: dict[Edge.Types, list[Edge]] = {}
+    """Private cache for mapping from each PageGraph edge type, to all the edges
+    in the graph with that type."""
+
+    __edge_cache: list[Edge] = []
+    """Private cache of every edge in the graph."""
+
+    __edge_id_cache: dict[PageGraphId, tuple[NetworkXNodeId, NetworkXNodeId]] = {}
+    """Private cache mapping from the PageGraph assigned identifier for
+    each edge, to the NetworkX assigned identifier for each edge (which is
+    the tuple of the identifier for the incoming and outgoing node for the
+    edge)."""
+
+    __listener_add_edges: dict[EventListenerId, list[EventListenerAddEdge]] = {}
+    """Private cache mapping from the Blink assigned integer identifier for the
+    event, to all the edges in the graph representing when that event was
+    registered."""
+
+    __listener_fired_edges: dict[EventListenerId, list[EventListenerFiredEdge]] = {}
+    """Private cache mapping from the Blink assigned integer identifier for the
+    event, to all the edges in the graph representing when that event fired
+    (e.g., the edge representing a single "click" event occurring)."""
+
+    __listener_remove_edges: dict[EventListenerId, list[EventListenerRemoveEdge]] = {}
+    """Private cache mapping from the Blink assigned integer identifier for the
+    event, to all the edges in the graph representing when that event was
+    removed or unregistered on an element."""
+
+    __inserted_below_map: dict[ParentDomNode, list[ChildDomNode]] = {}
+    """Private cache mapping from a PageGraph node representing a DOM element
+    (like a HTML element), to *all* the nodes that have ever been a direct
+    child of the parent node."""
+
+    __frame_id_map: dict[FrameId, DOMRootNode] = {}
+    """Private cache mapping from the Blink assigned integer id for each
+    frame root (e.g., usually the Blink id for`window.document.documentElement),
+    to the node representing that element in the PageGraph graph."""
 
     def __init__(self, path: Path, debug: bool = False):
         self.path = path
@@ -68,9 +129,6 @@ class PageGraph:
         self.r_graph = NWX.reverse_view(self.graph)
         self.url = url_from_path(path)
 
-        # do the below to populate the blink_id mapping dicts
-        # and the frame_id to frame node mapping (we keep the most
-        # recent version of each frame).
         for node_type in Node.Types:
             self.__nodes_by_type[node_type] = []
         for edge_type in Edge.Types:
@@ -98,6 +156,9 @@ class PageGraph:
         self.build_caches()
 
     def build_caches(self) -> None:
+        # do the below to populate the blink_id mapping dicts
+        # and the frame_id to frame node mapping (we keep the most
+        # recent version of each frame).
         for node in self.dom_nodes():
             if domroot_node := node.as_domroot_node():
                 blink_id = domroot_node.blink_id()
@@ -112,6 +173,21 @@ class PageGraph:
             request_id = request_start_edge.request_id()
             self.__request_chain_map[request_id] = request_chain_for_edge(
                 request_start_edge)
+
+        for add_edge in self.event_listener_add_edges():
+            listener_id = add_edge.event_listener_id()
+            add_events = self.__listener_add_edges.setdefault(listener_id, [])
+            add_events.append(add_edge)
+
+        for fired_edge in self.event_listener_fired_edges():
+            listener_id = fired_edge.event_listener_id()
+            fired_events = self.__listener_fired_edges.setdefault(listener_id, [])
+            fired_events.append(fired_edge)
+
+        for remove_edge in self.event_listener_remove_edges():
+            listener_id = remove_edge.event_listener_id()
+            remove_events = self.__listener_remove_edges.setdefault(listener_id, [])
+            remove_events.append(remove_edge)
 
     def feature_check(self, feature: Feature) -> bool:
         if self.graph_version is None:
@@ -133,6 +209,18 @@ class PageGraph:
                 raise ValueError(f"Unrecognized request id: {request_id}")
         return self.__request_chain_map[request_id]
 
+    def event_listener_add_edges_for_id(
+            self, listener_id: EventListenerId) -> list[EventListenerAddEdge]:
+        return self.__listener_add_edges[listener_id]
+
+    def event_listener_fired_edges_for_id(
+            self, listener_id: EventListenerId) -> list[EventListenerFiredEdge]:
+        return self.__listener_fired_edges[listener_id]
+
+    def event_listener_remove_edges_for_id(
+            self, listener_id: EventListenerId) -> list[EventListenerRemoveEdge]:
+        return self.__listener_remove_edges[listener_id]
+
     def nodes(self) -> list[Node]:
         return [self.node(node_id) for node_id in self.graph.nodes()]
 
@@ -146,27 +234,39 @@ class PageGraph:
         self.__edge_cache = edges
         return edges
 
-    def insert_edges(self) -> list["NodeInsertEdge"]:
+    def insert_edges(self) -> list[NodeInsertEdge]:
         edges = self.edges_of_type(Edge.Types.NODE_INSERT)
         return cast(list["NodeInsertEdge"], edges)
 
-    def request_start_edges(self) -> list["RequestStartEdge"]:
+    def request_start_edges(self) -> list[RequestStartEdge]:
         edges = self.edges_of_type(Edge.Types.REQUEST_START)
         return cast(list["RequestStartEdge"], edges)
 
-    def storage_set_edges(self) -> list["StorageSetEdge"]:
+    def event_listener_add_edges(self) -> list[EventListenerAddEdge]:
+        edges = self.edges_of_type(Edge.Types.EVENT_LISTENER_ADD)
+        return cast(list["EventListenerAddEdge"], edges)
+
+    def event_listener_fired_edges(self) -> list[EventListenerFiredEdge]:
+        edges = self.edges_of_type(Edge.Types.EVENT_LISTENER_ADD)
+        return cast(list["EventListenerFiredEdge"], edges)
+
+    def event_listener_remove_edges(self) -> list[EventListenerRemoveEdge]:
+        edges = self.edges_of_type(Edge.Types.EVENT_LISTENER_ADD)
+        return cast(list["EventListenerRemoveEdge"], edges)
+
+    def storage_set_edges(self) -> list[StorageSetEdge]:
         edges = self.edges_of_type(Edge.Types.STORAGE_SET)
         return cast(list["StorageSetEdge"], edges)
 
-    def storage_delete_edges(self) -> list["StorageDeleteEdge"]:
+    def storage_delete_edges(self) -> list[StorageDeleteEdge]:
         edges = self.edges_of_type(Edge.Types.STORAGE_DELETE)
         return cast(list["StorageDeleteEdge"], edges)
 
-    def storage_clear_edges(self) -> list["StorageClearEdge"]:
+    def storage_clear_edges(self) -> list[StorageClearEdge]:
         edges = self.edges_of_type(Edge.Types.STORAGE_CLEAR)
         return cast(list["StorageClearEdge"], edges)
 
-    def node_for_blink_id(self, blink_id: "BlinkId") -> "DOMNode":
+    def node_for_blink_id(self, blink_id: "BlinkId") -> DOMNode:
         if self.debug:
             if blink_id not in self.__blink_id_map:
                 raise ValueError(f"blink_id not in blink_id cache: {blink_id}")
@@ -176,7 +276,7 @@ class PageGraph:
         assert dom_node is not None
         return dom_node
 
-    def dom_nodes(self) -> list["DOMNode"]:
+    def dom_nodes(self) -> list[DOMNode]:
         node_types = [
             Node.Types.DOM_ROOT,
             Node.Types.HTML,
@@ -188,13 +288,13 @@ class PageGraph:
             nodes += self.nodes_of_type(node_type)
         return cast(list["DOMNode"], nodes)
 
-    def nodes_of_type(self, node_type: Node.Types) -> list["Node"]:
+    def nodes_of_type(self, node_type: Node.Types) -> list[Node]:
         return self.__nodes_by_type[node_type]
 
-    def edges_of_type(self, edge_type: Edge.Types) -> list["Edge"]:
+    def edges_of_type(self, edge_type: Edge.Types) -> list[Edge]:
         return self.__edges_by_type[edge_type]
 
-    def domroot_for_frame_id(self, frame_id: "FrameId") -> "DOMRootNode":
+    def domroot_for_frame_id(self, frame_id: FrameId) -> DOMRootNode:
         if self.debug:
             if frame_id not in self.__frame_id_map:
                 raise ValueError(f"frame_id not in __frame_id_map:{frame_id}")
@@ -259,7 +359,7 @@ class PageGraph:
         return node
 
     @lru_cache(maxsize=None)
-    def edge(self, edge_id: "PageGraphId") -> Edge:
+    def edge(self, edge_id: PageGraphId) -> Edge:
         """Loading any edge object should come through this method, since
         this method is the one that knows what Edge or Edge subtype
         should be used."""
@@ -268,8 +368,7 @@ class PageGraph:
         edge_data = self.graph.edges[edge_key]
         edge_type_str = edge_data[Edge.RawAttrs.TYPE.value]
         edge_type = Edge.Types(edge_type_str)
-        init_args = [self, edge_id, parent_id, child_id]
-        edge = edge_for_type(edge_type, *init_args)
+        edge = edge_for_type(edge_type, self, edge_id, parent_id, child_id)
 
         if insert_edge := edge.as_insert_edge():
             inserted_node = insert_edge.inserted_node()
@@ -280,14 +379,14 @@ class PageGraph:
             self.__inserted_below_map[parent_node].append(inserted_node)
         return edge
 
-    def iframe_nodes(self) -> list["FrameOwnerNode"]:
+    def iframe_nodes(self) -> list[FrameOwnerNode]:
         nodes = []
         for node in self.frame_owner_nodes():
             if node.tag_name() == "IFRAME":
                 nodes.append(node)
         return nodes
 
-    def toplevel_domroot_nodes(self) -> list["DOMRootNode"]:
+    def toplevel_domroot_nodes(self) -> list[DOMRootNode]:
         domroot_nodes = []
         for domroot_node in self.domroot_nodes():
             if domroot_node.is_top_level_domroot():

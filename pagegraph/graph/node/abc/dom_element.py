@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from pagegraph.graph.requests import RequestChain
     from pagegraph.serialize import DOMNodeReport
     from pagegraph.types import BlinkId, ParentDomNode, ActorNode, DOMNode
+    from bs4 import PageElement
 
 
 class DOMElementNode(Node, ABC):
@@ -30,6 +31,11 @@ class DOMElementNode(Node, ABC):
 
     def to_report(self) -> DOMNodeReport:
         raise NotImplementedError()
+
+    def is_matching(self, bs4_tag: PageElement) -> bool:
+        # if self.tag_name().lower() != bs4_tag.name:
+        #     return False
+        return True
 
     def insertion_edges(self) -> list[NodeInsertEdge]:
         insertion_edges: list[NodeInsertEdge] = []

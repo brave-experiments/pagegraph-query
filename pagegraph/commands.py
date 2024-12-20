@@ -221,3 +221,14 @@ class ValidationCommandReport(Report):
 def validate(input_path: Path) -> CommandReport:
     pg = pagegraph.graph.from_path(input_path, True)
     return to_command_report(pg, ValidationCommandReport(True))
+
+
+@dataclass
+class ElmSearchCommandReport(Report):
+    results: list[DOMNodeReport]
+
+def elm_search(input_path: Path, html:str,
+               debug: bool) -> CommandReport:
+    pg = pagegraph.graph.from_path(input_path, debug)
+    report = ElmSearchCommandReport([])
+    return to_command_report(pg, report)

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional, TYPE_CHECKING
 
 from pagegraph.graph.node import Node
@@ -10,7 +12,7 @@ if TYPE_CHECKING:
 
 class HTMLNode(DOMElementNode, Reportable):
 
-    def as_html_node(self) -> Optional["HTMLNode"]:
+    def as_html_node(self) -> Optional[HTMLNode]:
         return self
 
     def to_report(self) -> DOMElementReport:
@@ -20,7 +22,7 @@ class HTMLNode(DOMElementNode, Reportable):
     def tag_name(self) -> str:
         return self.data()[Node.RawAttrs.TAG.value]
 
-    def attributes(self) -> dict[str, "JSONAble"]:
+    def attributes(self) -> dict[str, JSONAble]:
         summary: dict[str, "JSONAble"] = {}
         incoming_edges = list(self.incoming_edges())
         incoming_edges.sort(key=lambda x: x.id())

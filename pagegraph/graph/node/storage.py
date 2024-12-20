@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional
 
 from pagegraph.graph.edge import Edge
@@ -11,5 +13,5 @@ class StorageNode(Node):
         Edge.Types.STORAGE_BUCKET
     ]
 
-    def as_storage_node(self) -> Optional["StorageNode"]:
+    def as_storage_node(self) -> Optional[StorageNode]:
         return self

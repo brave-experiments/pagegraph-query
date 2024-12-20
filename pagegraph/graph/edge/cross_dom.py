@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional, Union, TYPE_CHECKING
 
 from pagegraph.graph.edge import Edge
@@ -31,15 +33,15 @@ class CrossDOMEdge(Edge):
             self.__class__.outgoing_node_type_names = ["parser"]
         return super().validate()
 
-    def as_cross_dom_edge(self) -> Optional["CrossDOMEdge"]:
+    def as_cross_dom_edge(self) -> Optional[CrossDOMEdge]:
         return self
 
-    def incoming_node(self) -> "FrameOwnerNode":
+    def incoming_node(self) -> FrameOwnerNode:
         incoming_node = super().incoming_node().as_frame_owner_node()
         assert incoming_node
         return incoming_node
 
-    def outgoing_node(self) -> Union["DOMRootNode", "ParserNode"]:
+    def outgoing_node(self) -> Union[DOMRootNode, ParserNode]:
         # Note that even though we can be sure which of these the outgoing
         # node will be, it'll differ across graph versions, so we
         # have to be ambagious for now.

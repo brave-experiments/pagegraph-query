@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
-from typing import Set, TYPE_CHECKING, Union
+from typing import Set, Optional, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from pagegraph.graph.edge import Edge
@@ -23,7 +25,10 @@ if TYPE_CHECKING:
     from pagegraph.serialize import DOMElementReport, FrameReport, JSONAble
 
 
+NetworkXNodeId = str
+NetworkXEdgeId = str
 BlinkId = int
+EventListenerId = int
 FrameId = int
 ScriptId = int
 RequestId = int
@@ -32,7 +37,7 @@ PageGraphNodeId = PageGraphId
 PageGraphEdgeId = PageGraphId
 PageGraphEdgeKey = tuple[PageGraphNodeId, PageGraphNodeId, PageGraphEdgeId]
 Url = str
-ElementSummary = Union[None, dict[str, "JSONAble"]]
+ElementSummary = Optional[dict[str, "JSONAble"]]
 
 DOMNode = Union["DOMRootNode", "HTMLNode", "TextNode", "FrameOwnerNode"]
 AttrDomNode = Union["DOMRootNode", "HTMLNode", "FrameOwnerNode"]
@@ -91,20 +96,20 @@ class ResourceType(Enum):
 
 @dataclass
 class FrameSummary:
-    created_nodes: Set["Node"]
+    created_nodes: Set[Node]
     attached_nodes: Set[ChildDomNode]
-    script_nodes: Set["ScriptLocalNode"]
+    script_nodes: Set[ScriptLocalNode]
 
     def __init__(self) -> None:
         self.created_nodes = set()
         self.attached_nodes = set()
         self.script_nodes = set()
 
-    def includes_created(self, node: "Node") -> bool:
+    def includes_created(self, node: Node) -> bool:
         return node in self.created_nodes
 
     def includes_attached(self, node: ChildDomNode) -> bool:
         return node in self.attached_nodes
 
-    def includes_executed(self, node: "ScriptLocalNode") -> bool:
+    def includes_executed(self, node: ScriptLocalNode) -> bool:
         return node in self.script_nodes

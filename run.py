@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import fileinput
 import pathlib
 import sys
 
 import pagegraph.commands
 import pagegraph.serialize
-from pagegraph import VERSION
+from pagegraph import __version__
 
 
 def scripts_cmd(args):
@@ -51,6 +52,16 @@ def validate_cmd(args):
     return pagegraph.commands.validate(args.input)
 
 
+# def elm_search_cmd(args):
+#     if args.html_path:
+#         files_list = (args.html_path,)
+#     else:
+#         files_list = None
+#     html_lines = list(fileinput.input(files=files_list, encoding="utf-8"))
+#     html = "\n".join(html_lines)
+#     return pagegraph.commands.elm_search(args.input, html, args.debug)
+
+
 PARSER = argparse.ArgumentParser(
     prog="PageGraph Query",
     description="Extracts information about a Web page's execution from "
@@ -60,7 +71,7 @@ PARSER = argparse.ArgumentParser(
 PARSER.add_argument(
     "--version",
     action="version",
-    version=f"%(prog)s {VERSION}")
+    version=f"%(prog)s {__version__}")
 PARSER.add_argument("--debug", action="store_true", default=False)
 
 SUBPARSERS = PARSER.add_subparsers(required=True)
@@ -228,6 +239,19 @@ UNKNOWN_QUERY_PARSER.add_argument(
     help="Path to PageGraph recording.")
 UNKNOWN_QUERY_PARSER.set_defaults(func=unknown_query_cmd)
 
+# ELM_SEARCH_PARSER = SUBPARSERS.add_parser(
+#     "elm-search",
+#     help="Returns the PageGraph id of a HTML element node, given a HTML text.")
+# ELM_SEARCH_PARSER.add_argument(
+#     "input",
+#     type=pathlib.Path,
+#     help="Path to PageGraph recording.")
+# ELM_SEARCH_PARSER.add_argument(
+#     "--html-path",
+#     type=pathlib.Path,
+#     help="Path to HTML text on disk to parse (otherwise reads from stdin).")
+# ELM_SEARCH_PARSER.set_defaults(func=elm_search_cmd)
+#
 # EFFECTS_QUERY_PARSER = SUBPARSERS.add_parser(
 #     "effects",
 #     help="Print information about the effects the given element had on "

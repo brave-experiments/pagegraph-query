@@ -35,23 +35,23 @@ class ResourceNode(Node):
     }
 
     # Instance properties
-    requests_map: dict["RequestId", list["RequestOutgoing"]]
+    requests_map: dict[RequestId, list[RequestOutgoing]]
 
-    def __init__(self, graph: "PageGraph", pg_id: "PageGraphId"):
+    def __init__(self, graph: PageGraph, pg_id: PageGraphId):
         self.requests_map = {}
         super().__init__(graph, pg_id)
 
-    def as_resource_node(self) -> Optional["ResourceNode"]:
+    def as_resource_node(self) -> Optional[ResourceNode]:
         return self
 
-    def url(self) -> "Url":
+    def url(self) -> Url:
         return self.data()[self.RawAttrs.URL.value]
 
-    def incoming_edges(self) -> list["RequestStartEdge"]:
+    def incoming_edges(self) -> list[RequestStartEdge]:
         return cast(list["RequestStartEdge"], super().incoming_edges())
 
-    def outgoing_edges(self) -> list["RequestOutgoing"]:
-        outgoing_edges: list["RequestOutgoing"] = []
+    def outgoing_edges(self) -> list[RequestOutgoing]:
+        outgoing_edges: list[RequestOutgoing] = []
         for edge in super().outgoing_edges():
             if request_complete_edge := edge.as_request_complete_edge():
                 outgoing_edges.append(request_complete_edge)
@@ -61,7 +61,7 @@ class ResourceNode(Node):
                 outgoing_edges.append(request_error_edge)
         return outgoing_edges
 
-    def requesters(self) -> list["RequesterNode"]:
+    def requesters(self) -> list[RequesterNode]:
         requesters = []
         for edge in self.incoming_edges():
             requesters.append(edge.incoming_node())

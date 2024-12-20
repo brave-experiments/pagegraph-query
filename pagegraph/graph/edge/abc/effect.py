@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from abc import ABC
 from typing import Optional
 
 from pagegraph.graph.edge import Edge
 
 
-class EventListenerEdge(Edge):
-    def as_event_listener_edge(self) -> Optional[EventListenerEdge]:
+class EffectEdge(Edge, ABC):
+
+    def as_effect_edge(self) -> Optional[EffectEdge]:
         return self

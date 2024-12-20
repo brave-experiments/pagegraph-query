@@ -92,7 +92,7 @@ class ScriptReport(Report):
     hash: str
     url: Url | None = None
     source: str | None = None
-    executor: Union[DOMElementReport, "ScriptReport", None] = None
+    executor: Union[DOMElementReport, ScriptReport, None] = None
 
 
 @dataclass
@@ -110,15 +110,15 @@ BriefEdgeReport = ElementReport
 
 @dataclass
 class NodeReport(ElementReport):
-    incoming_edges: list[Union["BriefEdgeReport", "EdgeReport", str]]
-    outgoing_edges: list[Union["BriefEdgeReport", "EdgeReport", str]]
+    incoming_edges: list[Union[BriefEdgeReport, EdgeReport, str]]
+    outgoing_edges: list[Union[BriefEdgeReport, EdgeReport, str]]
     kind: str = "node"
 
 
 @dataclass
 class EdgeReport(ElementReport):
-    incoming_node: Union["NodeReport", "BriefNodeReport", str, None]
-    outgoing_node: Union["NodeReport", "BriefNodeReport", str, None]
+    incoming_node: Union[NodeReport, BriefNodeReport, str, None]
+    outgoing_node: Union[NodeReport, BriefNodeReport, str, None]
     kind: str = "edge"
 
 

@@ -65,3 +65,7 @@ class AttributesBasicTestCase(PageGraphBaseTestClass):
         acting_script = attr_delete_edge.incoming_node().as_script_local_node()
         self.assertIsNotNone(acting_script)
         self.assertEqual(attr_delete_edge.key(), "id")
+
+
+class AttributesDeleteTestCase(PageGraphBaseTestClass):
+    NAME = 'attrs_delete'

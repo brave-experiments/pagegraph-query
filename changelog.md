@@ -1,3 +1,23 @@
+Version 0.9.5
+---
+Add `url` into `ScriptLocal` summary for external scripts with new
+`ScriptLocalNode.url_if_external` method.
+
+Renamed `EventListenerEdge` to `EventListenerFiredEdge` to make it clearer
+what the edge denotes.
+
+Add `event_name` methods on `EventListenerAddEdge`, `EventListenerRemoveEdge`,
+and `EventListenerEdge` edges.
+
+Lots of cleanup (e.g., deleting a bunch of double quotes in annotations)
+because of moving most everything to `from __future__ import annotations`.
+
+Add ability for the event listener edges to look up where the event was
+added, removed, or fired in the document with
+`EventListenerEdge.event_add_edges()`, `EventListenerEdge.event_fired_edges()`,
+and `EventListenerEdge.event_removed_edges()` methods.
+
+
 Version 0.9.4
 ---
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC
 from typing import Optional, TYPE_CHECKING
 
@@ -12,7 +14,7 @@ if TYPE_CHECKING:
 class ScriptNode(Node, ABC):
 
     incoming_edge_types = [
-        Edge.Types.EVENT_LISTENER,
+        Edge.Types.EVENT_LISTENER_FIRED,
         Edge.Types.EXECUTE,
         Edge.Types.EXECUTE_FROM_ATTRIBUTE,
         Edge.Types.JS_RESULT,
@@ -39,13 +41,13 @@ class ScriptNode(Node, ABC):
         Edge.Types.EVENT_LISTENER_REMOVE,
     ]
 
-    def as_script_node(self) -> Optional["ScriptNode"]:
+    def as_script_node(self) -> Optional[ScriptNode]:
         return self
 
-    def script_id(self) -> "ScriptId":
+    def script_id(self) -> ScriptId:
         return int(self.data()[self.RawAttrs.SCRIPT_ID.value])
 
-    def execute_edge(self) -> "ExecuteEdge":
+    def execute_edge(self) -> ExecuteEdge:
         execute_edge = None
         for edge in self.incoming_edges():
             if execute_edge := edge.as_execute_edge():

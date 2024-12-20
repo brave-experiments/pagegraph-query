@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 from typing import Callable, Optional, TYPE_CHECKING, TypeVar
 
@@ -34,10 +36,10 @@ class DOMRootNode(DOMElementNode, Reportable):
         "tag name": "tag_name",
     }
 
-    def as_domroot_node(self) -> Optional["DOMRootNode"]:
+    def as_domroot_node(self) -> Optional[DOMRootNode]:
         return self
 
-    def frame_owner_node(self) -> Optional["FrameOwnerNode"]:
+    def frame_owner_node(self) -> Optional[FrameOwnerNode]:
         for edge in self.incoming_edges():
             if cross_dom_edge := edge.as_cross_dom_edge():
                 return cross_dom_edge.incoming_node()
@@ -80,17 +82,17 @@ class DOMRootNode(DOMElementNode, Reportable):
         assert parent_frame_url
         return is_url_local(this_frame_url, parent_frame_url)
 
-    def parent_domroot_node(self) -> Optional["DOMRootNode"]:
+    def parent_domroot_node(self) -> Optional[DOMRootNode]:
         assert not self.is_top_level_domroot()
         frame_owner_node = self.frame_owner_node()
         assert frame_owner_node
         domroot_for_frame_owner_node = frame_owner_node.domroot_node()
         return domroot_for_frame_owner_node
 
-    def frame_id(self) -> "FrameId":
+    def frame_id(self) -> FrameId:
         return int(self.data()[self.RawAttrs.BLINK_ID.value])
 
-    def url(self) -> Optional["Url"]:
+    def url(self) -> Optional[Url]:
         try:
             return self.data()[self.RawAttrs.URL.value]
         except KeyError:
@@ -101,7 +103,7 @@ class DOMRootNode(DOMElementNode, Reportable):
     def tag_name(self) -> str:
         return self.data()[self.RawAttrs.TAG.value]
 
-    def parser(self) -> "ParserNode":
+    def parser(self) -> ParserNode:
         parser_node = None
         for node in self.parent_nodes():
             if parser_node := node.as_parser_node():
@@ -140,20 +142,20 @@ class DOMRootNode(DOMElementNode, Reportable):
 
     def frame_owner_nodes(self, node_filter: CNF = CNF.ALL,
                           func: OptionalDOMNodeFilter[
-                                "FrameOwnerNode"
-                            ] = None) -> list["FrameOwnerNode"]:
+                                FrameOwnerNode
+                            ] = None) -> list[FrameOwnerNode]:
         all_frame_owner_nodes = self.pg.frame_owner_nodes()
         return self.__filter_children(all_frame_owner_nodes, node_filter, func)
 
     def domroot_nodes(self, node_filter: CNF = CNF.ALL,
-                      func: OptionalDOMNodeFilter["DOMRootNode"] = None) -> list["DOMRootNode"]:
+                      func: OptionalDOMNodeFilter[DOMRootNode] = None) -> list[DOMRootNode]:
         child_domroot_nodes = []
         child_frame_owner_nodes = self.frame_owner_nodes(node_filter)
         for node in child_frame_owner_nodes:
             child_domroot_nodes += node.domroot_nodes()
         return list(filter(func, child_domroot_nodes))
 
-    def scripts_executed_in(self) -> list["ScriptLocalNode"]:
+    def scripts_executed_in(self) -> list[ScriptLocalNode]:
         script_local_nodes = self.pg.script_local_nodes()
         current_frame_id = self.frame_id()
 
@@ -163,7 +165,7 @@ class DOMRootNode(DOMElementNode, Reportable):
                 scripts.add(node)
         return list(scripts)
 
-    def scripts_executed_from(self, node_filter: CNF = CNF.ALL) -> list["ScriptLocalNode"]:
+    def scripts_executed_from(self, node_filter: CNF = CNF.ALL) -> list[ScriptLocalNode]:
         current_frame_id = self.frame_id()
         script_local_nodes = self.pg.script_local_nodes()
         scripts = set()
@@ -171,7 +173,6 @@ class DOMRootNode(DOMElementNode, Reportable):
         for script_node in script_local_nodes:
             execute_edge = script_node.execute_edge()
             ex_node = execute_edge.incoming_node()
-            # Union["ParentDomNode", "ParserNode", "ScriptNode"]
             if dom_node := ex_node.as_parent_dom_node():
                 if self.__matches(dom_node, node_filter):
                     scripts.add(script_node)

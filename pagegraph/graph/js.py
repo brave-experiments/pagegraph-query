@@ -14,13 +14,13 @@ if TYPE_CHECKING:
 
 
 class JSCallResult(Reportable):
-    call: "JSCallEdge"
-    structure: "JSStructureNode"
-    result: Union["JSResultEdge", None]
-    pg: "PageGraph"
+    call: JSCallEdge
+    structure: JSStructureNode
+    result: Union[JSResultEdge, None]
+    pg: PageGraph
 
-    def __init__(self, call_edge: "JSCallEdge",
-                 result_edge: Union["JSResultEdge", None]):
+    def __init__(self, call_edge: JSCallEdge,
+                 result_edge: Union[JSResultEdge, None]):
         self.call = call_edge
         self.structure = call_edge.outgoing_node()
         self.result = result_edge
@@ -52,10 +52,10 @@ class JSCallResult(Reportable):
             self.return_value(), call_context.to_report(), execution_context_report)
         return report
 
-    def call_context(self) -> "DOMRootNode":
+    def call_context(self) -> DOMRootNode:
         return self.call.domroot_for_frame_id()
 
-    def receiver_context(self) -> "DOMRootNode":
+    def receiver_context(self) -> DOMRootNode:
         receiver_context_frame_id = self.call.frame_id()
         return self.pg.domroot_for_frame_id(receiver_context_frame_id)
 
