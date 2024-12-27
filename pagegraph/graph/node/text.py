@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional, TYPE_CHECKING
 
 from pagegraph.graph.node.abc.dom_element import DOMElementNode
@@ -9,11 +11,11 @@ if TYPE_CHECKING:
 
 class TextNode(DOMElementNode, Reportable):
 
-    def as_text_node(self) -> Optional["TextNode"]:
+    def as_text_node(self) -> Optional[TextNode]:
         return self
 
     def to_report(self) -> DOMElementReport:
-        attrs: dict[str, "JSONAble"] = {"text": self.text()}
+        attrs: dict[str, JSONAble] = {"text": self.text()}
         return DOMElementReport(self.pg_id(), self.tag_name(), attrs)
 
     def tag_name(self) -> str:

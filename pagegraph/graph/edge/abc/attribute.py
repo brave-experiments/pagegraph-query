@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING
 from pagegraph.graph.edge.abc.frame_id_attributed import FrameIdAttributedEdge
 
 if TYPE_CHECKING:
-    from pagegraph.types import ActorNode, AttrDomNode
+    from pagegraph.graph.node.abc.parent_dom_element import ParentDOMElementNode
+    from pagegraph.types import ActorNode
 
 
 class AttributeEdge(FrameIdAttributedEdge, ABC):
@@ -36,8 +37,8 @@ class AttributeEdge(FrameIdAttributedEdge, ABC):
         assert actor_node
         return actor_node
 
-    def outgoing_node(self) -> AttrDomNode:
+    def outgoing_node(self) -> ParentDOMElementNode:
         outgoing_node = super().outgoing_node()
-        node = outgoing_node.as_attributable_dom_node()
+        node = outgoing_node.as_parent_dom_element_node()
         assert node
         return node

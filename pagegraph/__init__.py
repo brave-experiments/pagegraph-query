@@ -1,3 +1,4 @@
 from packaging.version import Version
 
-VERSION = Version("0.9.4")
+__author__ = "Peter Snyder (pes@peteresnyder.com)"
+__version__ = Version("0.9.5")

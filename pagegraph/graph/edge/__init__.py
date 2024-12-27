@@ -3,21 +3,25 @@ from __future__ import annotations
 
 from abc import ABC
 from enum import Enum
-from typing import cast, Optional
-from typing import TYPE_CHECKING, Union
+from typing import cast, TYPE_CHECKING
 
 from pagegraph.graph.element import PageGraphElement
 from pagegraph.serialize import EdgeReport, BriefEdgeReport
 from pagegraph.serialize import NodeReport, BriefNodeReport
 
 if TYPE_CHECKING:
+    from typing import Optional
+
+    from networkx import MultiDiGraph
+
     from pagegraph.graph import PageGraph
     from pagegraph.graph.edge.abc.effect import EffectEdge
+    from pagegraph.graph.edge.abc.event_listener import EventListenerEdge
     from pagegraph.graph.edge.attribute_delete import AttributeDeleteEdge
     from pagegraph.graph.edge.attribute_set import AttributeSetEdge
     from pagegraph.graph.edge.cross_dom import CrossDOMEdge
     from pagegraph.graph.edge.document import DocumentEdge
-    from pagegraph.graph.edge.event_listener import EventListenerEdge
+    from pagegraph.graph.edge.event_listener_fired import EventListenerFiredEdge
     from pagegraph.graph.edge.event_listener_add import EventListenerAddEdge
     from pagegraph.graph.edge.event_listener_remove import EventListenerRemoveEdge
     from pagegraph.graph.edge.execute import ExecuteEdge
@@ -39,6 +43,7 @@ if TYPE_CHECKING:
     from pagegraph.graph.edge.storage_set import StorageSetEdge
     from pagegraph.graph.edge.structure import StructureEdge
     from pagegraph.graph.node import Node
+    from pagegraph.graph.node.abc.parent_dom_element import ParentDOMElementNode
     from pagegraph.graph.node.abc.script import ScriptNode
     from pagegraph.graph.node.dom_root import DOMRootNode
     from pagegraph.graph.node.frame_owner import FrameOwnerNode
@@ -48,59 +53,91 @@ if TYPE_CHECKING:
     from pagegraph.graph.node.resource import ResourceNode
     from pagegraph.graph.node.storage_area import StorageAreaNode
     from pagegraph.types import BlinkId, PageGraphEdgeKey, RequesterNode
-    from pagegraph.types import ChildDomNode, ParentDomNode, FrameId, RequestId
+    from pagegraph.types import ChildDomNode, FrameId, RequestId
     from pagegraph.types import PageGraphNodeId, PageGraphEdgeId, Url
-    from pagegraph.types import ResourceType, AttrDomNode, ActorNode
+    from pagegraph.types import ResourceType, ActorNode
 
 
 class Edge(PageGraphElement, ABC):
 
-    # Used as class properties
-    #
-    # Note that these are defined as lists of type str, but what they
-    # really are is the str values for the Node.Types Enum. This
-    # is necessary to prevent the dependency loop.
-    # That these are valid node type enum strs is checked at runtime
-    # if in debug mode.
-    incoming_node_type_names: Union[list[str], None] = None  # Node.Types
-    outgoing_node_type_names: Union[list[str], None] = None  # Node.Types
+    # Class properties
 
-    # The below are automatically generated from the above,
-    # but at runtime to again prevent the dependency loop.
-    incoming_node_types: Union[list[Node.Types], None] = None
-    outgoing_node_types: Union[list[Node.Types], None] = None
+    incoming_node_type_names: Optional[list[str]] = None  # Node.Types
+    """Class property defining which types of nodes are expected and valid
+    to be the incoming node for this edge. These strings are the
+    the strings that appear in the GraphML file, and are mapped to PageGraph
+    types. This indirection (using the str name of the type instead of
+    the type itself) is done to avoid introducing a circular dependency loop.
+
+    That the type names given here are valid is checked at runtime when
+    running with `debug=True`."""
+
+    outgoing_node_type_names: Optional[list[str]] = None  # Node.Types
+    """Class property defining which types of nodes are expected and valid
+    to be the outgoing node for this edge. These strings are the
+    the strings that appear in the GraphML file, and are mapped to PageGraph
+    types. This indirection (using the str name of the type instead of
+    the type itself) is done to avoid introducing a circular dependency loop.
+
+    That the type names given here are valid is checked at runtime when
+    running with `debug=True`."""
+
+    __incoming_node_types: Optional[list[Node.Types]] = None
+    """Class property that is automatically populated at runtime, based on
+    the contents fo the class's `incoming_node_type_names` property; its
+    just replacing the string "names of the classes" in
+    `incoming_node_type_names` with references to the corresponding PageGraph
+    query class type.
+
+    Subclasses *should not* implement this; its generated and populated
+    automatically."""
+
+    __outgoing_node_types: Optional[list[Node.Types]] = None
+    """Class property that is automatically populated at runtime, based on
+    the contents fo the class's `outgoing_node_type_names` property; its
+    just replacing the string "names of the classes" in
+    `outgoing_node_type_names` with references to the corresponding PageGraph
+    query class type.
+
+    Subclasses *should not* implement this; its generated and populated
+    automatically."""
 
     @classmethod
-    def make_incoming_node_types(cls) -> Union[list[Node.Types], None]:
+    def incoming_node_types(cls) -> Optional[list[Node.Types]]:
         if cls.incoming_node_type_names is None:
             return None
 
-        if cls.incoming_node_types:
-            return cls.incoming_node_types
+        if cls.__incoming_node_types:
+            return cls.__incoming_node_types
 
         from pagegraph.graph.node import Node
-        cls.incoming_node_types = []
+        cls.__incoming_node_types = []
         for node_type_name in cls.incoming_node_type_names:
-            cls.incoming_node_types.append(Node.Types(node_type_name))
-        return cls.incoming_node_types
+            cls.__incoming_node_types.append(Node.Types(node_type_name))
+        return cls.__incoming_node_types
 
     @classmethod
-    def make_outgoing_node_types(cls) -> Union[list[Node.Types], None]:
+    def outgoing_node_types(cls) -> Optional[list[Node.Types]]:
         if cls.outgoing_node_type_names is None:
             return None
 
-        if cls.outgoing_node_types:
-            return cls.outgoing_node_types
+        if cls.__outgoing_node_types:
+            return cls.__outgoing_node_types
 
         from pagegraph.graph.node import Node
-        cls.outgoing_node_types = []
+        cls.__outgoing_node_types = []
         for node_type_name in cls.outgoing_node_type_names:
-            cls.outgoing_node_types.append(Node.Types(node_type_name))
-        return cls.outgoing_node_types
+            cls.__outgoing_node_types.append(Node.Types(node_type_name))
+        return cls.__outgoing_node_types
 
-    # Used as instance properties
+    # Instance properties
     incoming_node_id: PageGraphNodeId
+    """The identifier for the incoming node to this edge. Will be a string
+    in the format of 'n<int>'."""
+
     outgoing_node_id: PageGraphNodeId
+    """The identifier for the outgoing node to this edge. Will be a string
+    in the format of 'n<int>'."""
 
     class Types(Enum):
         ATTRIBUTE_DELETE = "delete attribute"
@@ -117,7 +154,7 @@ class Edge(PageGraphElement, ABC):
         REQUEST_COMPLETE = "request complete"
         REQUEST_ERROR = "request error"
         REQUEST_REDIRECT = "request redirect"
-        EVENT_LISTENER = "event listener"
+        EVENT_LISTENER_FIRED = "event listener"
         EVENT_LISTENER_ADD = "add event listener"
         EVENT_LISTENER_REMOVE = "remove event listener"
         SHIELD = "shield"
@@ -133,6 +170,7 @@ class Edge(PageGraphElement, ABC):
     class RawAttrs(Enum):
         ARGS = "args"
         BEFORE_BLINK_ID = "before"
+        EVENT_LISTENER_ID = "event listener id"
         FRAME_ID = "frame id"
         HASH = "response hash"
         HEADERS = "headers"
@@ -156,12 +194,12 @@ class Edge(PageGraphElement, ABC):
 
     def to_edge_report(
             self, depth: int = 0,
-            seen: None | set[Union[Node, Edge]] = None) -> EdgeReport:
+            seen: None | set[Node | Edge] = None) -> EdgeReport:
         if seen is None:
             seen = set([self])
 
         incoming_node = self.incoming_node()
-        incoming_node_report: None | NodeReport | BriefNodeReport | str = None
+        incoming_node_report: Optional[NodeReport | BriefNodeReport | str] = None
         if incoming_node:
             if incoming_node in seen:
                 incoming_node_report = f"(recursion {incoming_node.pg_id()})"
@@ -253,6 +291,9 @@ class Edge(PageGraphElement, ABC):
     def as_event_listener_add_edge(self) -> Optional[EventListenerAddEdge]:
         return None
 
+    def as_event_listener_fired_edge(self) -> Optional[EventListenerFiredEdge]:
+        return None
+
     def as_event_listener_remove_edge(self) -> Optional[
             EventListenerRemoveEdge]:
         return None
@@ -305,17 +346,22 @@ class Edge(PageGraphElement, ABC):
         return output
 
     def validate(self) -> bool:
-        valid_incoming_node_types = self.__class__.make_incoming_node_types()
+        valid_incoming_node_types = self.__class__.incoming_node_types()
         if valid_incoming_node_types is not None:
             node_type = self.incoming_node().node_type()
             if node_type not in valid_incoming_node_types:
                 self.throw(f"Unexpected incoming node type: {node_type}")
                 return False
 
-        valid_outgoing_node_types = self.__class__.make_outgoing_node_types()
+        valid_outgoing_node_types = self.__class__.outgoing_node_types()
         if valid_outgoing_node_types is not None:
             node_type = self.outgoing_node().node_type()
             if node_type not in valid_outgoing_node_types:
                 self.throw(f"Unexpected outgoing node type: {node_type}")
                 return False
         return True
+
+    def subgraph(self, depth: int = 1) -> MultiDiGraph:
+        incoming_node = self.incoming_node()
+        outgoing_node = self.outgoing_node()
+        return incoming_node.subgraph(depth, outgoing_node)

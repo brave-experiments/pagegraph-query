@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional
 
 from pagegraph.graph.edge import Edge
@@ -14,5 +16,5 @@ class JSBuiltInNode(JSStructureNode):
         Edge.Types.JS_RESULT
     ]
 
-    def as_js_builtin_node(self) -> Optional["JSBuiltInNode"]:
+    def as_js_builtin_node(self) -> Optional[JSBuiltInNode]:
         return self

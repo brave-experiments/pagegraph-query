@@ -6,7 +6,8 @@ from pagegraph.graph.edge import Edge
 
 
 if TYPE_CHECKING:
-    from pagegraph.types import ParentDomNode, ChildDomNode
+    from pagegraph.graph.node.abc.parent_dom_element import ParentDOMElementNode
+    from pagegraph.types import ChildDomNode
 
 
 class DocumentEdge(Edge):
@@ -14,9 +15,9 @@ class DocumentEdge(Edge):
     def as_document_edge(self) -> Optional[DocumentEdge]:
         return self
 
-    def incoming_node(self) -> ParentDomNode:
+    def incoming_node(self) -> ParentDOMElementNode:
         incoming_node = super().incoming_node()
-        parent_dom_node = incoming_node.as_parent_dom_node()
+        parent_dom_node = incoming_node.as_parent_dom_element_node()
         assert parent_dom_node
         return parent_dom_node
 

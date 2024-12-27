@@ -33,7 +33,7 @@ class ExecuteEdge(FrameIdAttributedEdge):
     def incoming_node(self) -> ScriptExecutorNode:
         node = super().incoming_node()
         in_node: Optional[ScriptExecutorNode] = None
-        if parent_dom_node := node.as_parent_dom_node():
+        if parent_dom_node := node.as_parent_dom_element_node():
             in_node = parent_dom_node
         elif script_node := node.as_script_node():
             in_node = script_node

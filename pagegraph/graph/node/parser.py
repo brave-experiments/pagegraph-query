@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional, TYPE_CHECKING
 
 from pagegraph.graph.node import Node
@@ -17,12 +19,12 @@ class ParserNode(Node):
         Node.Types.RESOURCE
     ]
 
-    def as_parser_node(self) -> Optional["ParserNode"]:
+    def as_parser_node(self) -> Optional[ParserNode]:
         return self
 
-    def frame_owner_node(self) -> Optional["FrameOwnerNode"]:
+    def frame_owner_node(self) -> Optional[FrameOwnerNode]:
         parent_nodes_list = list(self.parent_nodes())
-        frame_owner_nodes: list["FrameOwnerNode"] = []
+        frame_owner_nodes: list[FrameOwnerNode] = []
         for parent_node in parent_nodes_list:
             if frame_owner_node := parent_node.as_frame_owner_node():
                 frame_owner_nodes.append(frame_owner_node)

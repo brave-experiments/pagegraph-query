@@ -10,7 +10,7 @@ from pagegraph.serialize import Reportable, BasicReport
 class UnknownNode(Node, Reportable):
 
     incoming_edge_types = [
-        Edge.Types.EVENT_LISTENER,
+        Edge.Types.EVENT_LISTENER_FIRED,
         Edge.Types.EXECUTE,
         Edge.Types.EXECUTE_FROM_ATTRIBUTE,
         Edge.Types.JS_RESULT,

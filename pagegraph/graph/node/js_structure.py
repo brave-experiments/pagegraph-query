@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import cast, Optional, TYPE_CHECKING
 from itertools import chain
 
@@ -11,12 +13,12 @@ if TYPE_CHECKING:
     from pagegraph.graph.edge.js_result import JSResultEdge
 
 class JSStructureNode(Node, Reportable):
-    __cached_call_map: dict["JSCallEdge", "JSCallResult"] = {}
+    __cached_call_map: dict[JSCallEdge, JSCallResult] = {}
 
-    def to_report(self) -> "JSStructureReport":
+    def to_report(self) -> JSStructureReport:
         return JSStructureReport(self.name(), self.type_name())
 
-    def as_js_structure_node(self) -> Optional["JSStructureNode"]:
+    def as_js_structure_node(self) -> Optional[JSStructureNode]:
         return self
 
     def name(self) -> str:
@@ -56,18 +58,18 @@ class JSStructureNode(Node, Reportable):
                 last_call_result = None
         super().build_caches()
 
-    def call_results(self) -> list["JSCallResult"]:
+    def call_results(self) -> list[JSCallResult]:
         return list(self.__cached_call_map.values())
 
-    def call_result(self, edge: "JSCallEdge") -> "JSCallResult":
+    def call_result(self, edge: JSCallEdge) -> JSCallResult:
         try:
             return self.__cached_call_map[edge]
         except KeyError as exc:
             msg = f"Unable to find call {edge}"
             raise ValueError(msg) from exc
 
-    def incoming_edges(self) -> list["JSCallEdge"]:
+    def incoming_edges(self) -> list[JSCallEdge]:
         return cast(list["JSCallEdge"], super().incoming_edges())
 
-    def outgoing_edges(self) -> list["JSResultEdge"]:
+    def outgoing_edges(self) -> list[JSResultEdge]:
         return cast(list["JSResultEdge"], super().outgoing_edges())

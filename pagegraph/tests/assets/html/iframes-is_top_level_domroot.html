@@ -1,0 +1,11 @@
+<body>
+  <iframe src="about:blank" id="frame1"></iframe>
+  <script>
+    const iframeElm1 = document.getElementById("frame1")
+
+    const iframeElm2 = document.createElement("iframe")
+    iframeElm2.setAttribute("id", "frame2")
+    iframeElm2.srcdoc = "<iframe id='frame3' src='about:blank'></iframe>"
+    iframeElm1.contentDocument.body.appendChild(iframeElm2)
+  </script>
+</body>

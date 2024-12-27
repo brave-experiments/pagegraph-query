@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from pagegraph.graph.node.html import HTMLNode
 from pagegraph.tests import PageGraphBaseTestClass
 
 
 class AttributesBasicTestCase(PageGraphBaseTestClass):
-    NAME = 'attrs_basic'
+    NAME = 'attrs-basic'
 
     def get_par_html_node(self) -> HTMLNode:
         par_html_node = None
@@ -14,6 +16,22 @@ class AttributesBasicTestCase(PageGraphBaseTestClass):
         self.assertIsNotNone(par_html_node)
         assert par_html_node
         return par_html_node
+
+    def test_get_element_by_id(self) -> None:
+        # This should be None, bc the element's id was deleted
+        # during the page's execution
+        self.assertEqual(len(self.graph.get_elements_by_id("my-par")), 0)
+        self.assertEqual(len(self.graph.get_elements_by_id_ever("my-par")), 1)
+
+    def test_attributes(self) -> None:
+        par_node = self.get_par_html_node()
+        self.assertEqual(par_node.get_attribute("hi"), "again")
+
+    def test_attributes_ever(self) -> None:
+        par_node = self.get_par_html_node()
+        all_hi_values = par_node.get_attribute_ever("hi")
+        self.assertIn("there", all_hi_values)
+        self.assertIn("again", all_hi_values)
 
     def test_set_attrs(self) -> None:
         par_html_node = self.get_par_html_node()

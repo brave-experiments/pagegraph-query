@@ -2,7 +2,7 @@ from pagegraph.tests import PageGraphBaseTestClass
 
 
 class LocalStorageBasicTestCase(PageGraphBaseTestClass):
-    NAME = 'localstorage_basic'
+    NAME = 'localstorage-basic'
 
     def test_storage_set(self) -> None:
         storage_set_edges = self.graph.storage_set_edges()
@@ -46,8 +46,9 @@ class LocalStorageBasicTestCase(PageGraphBaseTestClass):
             storage_clear_edge.outgoing_node().as_local_storage_node())
 
 
+# pylint: disable=too-few-public-methods
 class LocalStorageCrossFrameTestCase(PageGraphBaseTestClass):
-    NAME = 'localstorage_cross-frame'
+    NAME = 'localstorage-cross_frame'
 
     def test_storage_set(self) -> None:
         storage_set_edges = self.graph.storage_set_edges()
@@ -57,7 +58,7 @@ class LocalStorageCrossFrameTestCase(PageGraphBaseTestClass):
         toplevel_frame_ids = [x.frame_id() for x in top_domroots]
 
         iframe_elm = self.graph.iframe_nodes()[0]
-        child_domroots = iframe_elm.domroot_nodes()
+        child_domroots = iframe_elm.child_domroot_nodes()
         child_frame_ids = [x.frame_id() for x in child_domroots]
 
         parent_frame_edge = None

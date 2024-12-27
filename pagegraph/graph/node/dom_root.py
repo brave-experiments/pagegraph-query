@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 from enum import Enum
 from typing import Callable, Optional, TYPE_CHECKING, TypeVar
 
 from pagegraph.graph.node.abc.dom_element import DOMElementNode
+from pagegraph.graph.node.abc.parent_dom_element import ParentDOMElementNode
 from pagegraph.serialize import Reportable, FrameReport
-from pagegraph.util import is_url_local
+from pagegraph.urls import is_url_local, is_security_origin_inheriting_url
+from pagegraph.urls import security_origin_from_url
+from pagegraph.versions import Feature
 
 if TYPE_CHECKING:
     from pagegraph.graph.node.frame_owner import FrameOwnerNode
@@ -12,8 +17,6 @@ if TYPE_CHECKING:
     from pagegraph.types import Url, FrameId
 
 
-T = TypeVar('T', bound=DOMElementNode)
-
 class ChildNodeFilter(Enum):
     AT_CREATION = 1
     AT_INSERTION = 2
@@ -21,12 +24,13 @@ class ChildNodeFilter(Enum):
     ALL = 4
 
 
+T = TypeVar('T', bound=DOMElementNode)
 CNF = ChildNodeFilter
 DOMNodeFilterFunc = Callable[[T], bool]
 OptionalDOMNodeFilter = Optional[DOMNodeFilterFunc[T]]
 
 
-class DOMRootNode(DOMElementNode, Reportable):
+class DOMRootNode(ParentDOMElementNode, Reportable):
 
     summary_methods = {
         "frame id": "frame_id",
@@ -34,13 +38,21 @@ class DOMRootNode(DOMElementNode, Reportable):
         "tag name": "tag_name",
     }
 
-    def as_domroot_node(self) -> Optional["DOMRootNode"]:
+    def as_domroot_node(self) -> Optional[DOMRootNode]:
         return self
 
-    def frame_owner_node(self) -> Optional["FrameOwnerNode"]:
-        for edge in self.incoming_edges():
-            if cross_dom_edge := edge.as_cross_dom_edge():
-                return cross_dom_edge.incoming_node()
+    def frame_owner_node(self) -> Optional[FrameOwnerNode]:
+        if self.pg.feature_check(Feature.CROSS_DOM_EDGES_POINT_TO_DOM_ROOTS):
+            for edge in self.incoming_edges():
+                if cross_dom_edge := edge.as_cross_dom_edge():
+                    return cross_dom_edge.incoming_node()
+        else:
+            parent_frame_owner_nodes: list[FrameOwnerNode] = []
+            for parent_node in self.parent_nodes():
+                if frame_owner_node := parent_node.as_frame_owner_node():
+                    parent_frame_owner_nodes.append(frame_owner_node)
+            assert len(parent_frame_owner_nodes) == 1
+            return parent_frame_owner_nodes[0]
         return None
 
     def is_init_domroot(self) -> bool:
@@ -54,18 +66,41 @@ class DOMRootNode(DOMElementNode, Reportable):
         return False
 
     def to_report(self) -> FrameReport:
-        return FrameReport(self.pg_id(), self.url(), self.blink_id())
+        return FrameReport(self.pg_id(), self.is_top_level_domroot(),
+                           self.url(), self.security_origin(), self.blink_id())
+
+    def security_origin(self) -> Optional[Url]:
+        """Calculates the security origin for the frame.
+
+        Usually this'll be determined by the URL of the frame, but in some
+        cases (such as an about:blank frame) it'll be inherited from the
+        parent frame."""
+        this_url = self.url()
+        if this_url and (sec_origin := security_origin_from_url(this_url)):
+            return sec_origin
+        if parent_domroot_node := self.parent_domroot_node():
+            return parent_domroot_node.security_origin()
+        return None
 
     def is_top_level_domroot(self) -> bool:
-        frame_url = self.url()
-        if not frame_url or frame_url == "about:blank":
-            return False
         for edge in self.incoming_edges():
             if edge.as_cross_dom_edge() is not None:
                 return False
         return True
 
+    def is_security_origin_inheriting(self) -> bool:
+        """Returns true if the frame inherits its security origin.
+
+        This happens if the frame has either an about:blank or about:srcdoc
+        Url, in which case the frame inherits its security origin from
+        its parent frame."""
+        this_frame_url = self.url()
+        if not this_frame_url:
+            return False
+        return is_security_origin_inheriting_url(this_frame_url)
+
     def is_local_domroot(self) -> bool:
+        """Returns true if frame has the same origin as the parent frame."""
         parent_frame = self.parent_domroot_node()
         if not parent_frame:
             self.throw("Nonsensical to ask if a top level frame is local")
@@ -80,17 +115,21 @@ class DOMRootNode(DOMElementNode, Reportable):
         assert parent_frame_url
         return is_url_local(this_frame_url, parent_frame_url)
 
-    def parent_domroot_node(self) -> Optional["DOMRootNode"]:
+    def parent_domroot_node(self) -> Optional[DOMRootNode]:
         assert not self.is_top_level_domroot()
         frame_owner_node = self.frame_owner_node()
         assert frame_owner_node
-        domroot_for_frame_owner_node = frame_owner_node.domroot_node()
+        domroot_for_frame_owner_node = frame_owner_node.execution_context()
         return domroot_for_frame_owner_node
 
-    def frame_id(self) -> "FrameId":
+    def is_attached(self) -> bool:
+        """Whether the document was attached to a frame at serialization."""
+        return bool(self.data()[self.RawAttrs.IS_ATTACHED.value])
+
+    def frame_id(self) -> FrameId:
         return int(self.data()[self.RawAttrs.BLINK_ID.value])
 
-    def url(self) -> Optional["Url"]:
+    def url(self) -> Optional[Url]:
         try:
             return self.data()[self.RawAttrs.URL.value]
         except KeyError:
@@ -98,10 +137,7 @@ class DOMRootNode(DOMElementNode, Reportable):
             # are created before the document is setup
             return None
 
-    def tag_name(self) -> str:
-        return self.data()[self.RawAttrs.TAG.value]
-
-    def parser(self) -> "ParserNode":
+    def parser(self) -> ParserNode:
         parser_node = None
         for node in self.parent_nodes():
             if parser_node := node.as_parser_node():
@@ -140,20 +176,20 @@ class DOMRootNode(DOMElementNode, Reportable):
 
     def frame_owner_nodes(self, node_filter: CNF = CNF.ALL,
                           func: OptionalDOMNodeFilter[
-                                "FrameOwnerNode"
-                            ] = None) -> list["FrameOwnerNode"]:
+                                FrameOwnerNode
+                            ] = None) -> list[FrameOwnerNode]:
         all_frame_owner_nodes = self.pg.frame_owner_nodes()
         return self.__filter_children(all_frame_owner_nodes, node_filter, func)
 
     def domroot_nodes(self, node_filter: CNF = CNF.ALL,
-                      func: OptionalDOMNodeFilter["DOMRootNode"] = None) -> list["DOMRootNode"]:
+                      func: OptionalDOMNodeFilter[DOMRootNode] = None) -> list[DOMRootNode]:
         child_domroot_nodes = []
         child_frame_owner_nodes = self.frame_owner_nodes(node_filter)
         for node in child_frame_owner_nodes:
-            child_domroot_nodes += node.domroot_nodes()
+            child_domroot_nodes += node.child_domroot_nodes()
         return list(filter(func, child_domroot_nodes))
 
-    def scripts_executed_in(self) -> list["ScriptLocalNode"]:
+    def scripts_executed_in(self) -> list[ScriptLocalNode]:
         script_local_nodes = self.pg.script_local_nodes()
         current_frame_id = self.frame_id()
 
@@ -163,7 +199,7 @@ class DOMRootNode(DOMElementNode, Reportable):
                 scripts.add(node)
         return list(scripts)
 
-    def scripts_executed_from(self, node_filter: CNF = CNF.ALL) -> list["ScriptLocalNode"]:
+    def scripts_executed_from(self, node_filter: CNF = CNF.ALL) -> list[ScriptLocalNode]:
         current_frame_id = self.frame_id()
         script_local_nodes = self.pg.script_local_nodes()
         scripts = set()
@@ -171,15 +207,14 @@ class DOMRootNode(DOMElementNode, Reportable):
         for script_node in script_local_nodes:
             execute_edge = script_node.execute_edge()
             ex_node = execute_edge.incoming_node()
-            # Union["ParentDomNode", "ParserNode", "ScriptNode"]
-            if dom_node := ex_node.as_parent_dom_node():
+            if dom_node := ex_node.as_parent_dom_element_node():
                 if self.__matches(dom_node, node_filter):
                     scripts.add(script_node)
             elif ex_node.as_parser_node() is not None:
                 if execute_edge.frame_id() == current_frame_id:
                     scripts.add(script_node)
             elif parent_script_node := ex_node.as_script_local_node():
-                if parent_script_node.domroot_executed_from() == self:
+                if parent_script_node.execution_context_from() == self:
                     scripts.add(script_node)
             else:
                 pass

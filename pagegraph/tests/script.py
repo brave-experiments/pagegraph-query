@@ -1,8 +1,9 @@
 from pagegraph.tests import PageGraphBaseTestClass
 
 
+# pylint: disable=too-few-public-methods
 class ScriptCrossDomTestCase(PageGraphBaseTestClass):
-    NAME = "script_cross-dom"
+    NAME = "script-cross_dom"
 
     def test_par_domroots(self) -> None:
         html_nodes = self.graph.html_nodes()
@@ -21,8 +22,9 @@ class ScriptCrossDomTestCase(PageGraphBaseTestClass):
         self.assertEqual(document_frame_id, frame_id)
 
 
+# pylint: disable=too-few-public-methods
 class ScriptJsCallsTestCase(PageGraphBaseTestClass):
-    NAME = "script_js-calls"
+    NAME = "script-js_calls"
 
     def test_num_scripts(self) -> None:
         child_frame_url = "assets/frames/script_js-calls_child_frame.html"

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Type, TYPE_CHECKING
 
 from pagegraph.graph.edge import Edge
@@ -6,7 +8,7 @@ from pagegraph.graph.edge.attribute_set import AttributeSetEdge
 from pagegraph.graph.edge.cross_dom import CrossDOMEdge
 from pagegraph.graph.edge.deprecated import DeprecatedEdge
 from pagegraph.graph.edge.document import DocumentEdge
-from pagegraph.graph.edge.event_listener import EventListenerEdge
+from pagegraph.graph.edge.event_listener_fired import EventListenerFiredEdge
 from pagegraph.graph.edge.event_listener_add import EventListenerAddEdge
 from pagegraph.graph.edge.event_listener_remove import EventListenerRemoveEdge
 from pagegraph.graph.edge.execute import ExecuteEdge
@@ -75,13 +77,12 @@ NODE_TYPE_MAPPING: dict[Node.Types, Type[Node]] = dict([
     (Node.Types.FP_SHIELDS, DeprecatedNode),
 ])
 
-def node_for_type(node_type: Node.Types, graph: "PageGraph",
-                  node_id: "PageGraphNodeId") -> Node:
+def node_for_type(node_type: Node.Types, graph: PageGraph,
+                  node_id: PageGraphNodeId) -> Node:
     try:
         return NODE_TYPE_MAPPING[node_type](graph, node_id)
     except KeyError as exc:
         raise ValueError(f"Unexpected node type={node_type.value}") from exc
-
 
 
 EDGE_TYPE_MAPPING: dict[Edge.Types, Type[Edge]] = dict([
@@ -98,7 +99,7 @@ EDGE_TYPE_MAPPING: dict[Edge.Types, Type[Edge]] = dict([
     (Edge.Types.REQUEST_START, RequestStartEdge),
     (Edge.Types.REQUEST_COMPLETE, RequestCompleteEdge),
     (Edge.Types.REQUEST_REDIRECT, RequestRedirectEdge),
-    (Edge.Types.EVENT_LISTENER, EventListenerEdge),
+    (Edge.Types.EVENT_LISTENER_FIRED, EventListenerFiredEdge),
     (Edge.Types.EVENT_LISTENER_ADD, EventListenerAddEdge),
     (Edge.Types.EVENT_LISTENER_REMOVE, EventListenerRemoveEdge),
     (Edge.Types.STORAGE_BUCKET, StorageBucketEdge),
@@ -115,9 +116,9 @@ EDGE_TYPE_MAPPING: dict[Edge.Types, Type[Edge]] = dict([
 ])
 
 
-def edge_for_type(edge_type: Edge.Types, graph: "PageGraph",
-                  edge_id: "PageGraphEdgeId", parent_id: "PageGraphNodeId",
-                  child_id: "PageGraphNodeId") -> Edge:
+def edge_for_type(edge_type: Edge.Types, graph: PageGraph,
+                  edge_id: PageGraphEdgeId, parent_id: PageGraphNodeId,
+                  child_id: PageGraphNodeId) -> Edge:
     try:
         return EDGE_TYPE_MAPPING[edge_type](graph, edge_id, parent_id,
                                             child_id)
