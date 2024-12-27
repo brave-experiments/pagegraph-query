@@ -1,5 +1,4 @@
 astroid==3.2.2
-beautifulsoup4==4.12.3
 dill==0.3.8
 isort==5.13.2
 mccabe==0.7.0
@@ -9,9 +8,9 @@ networkx==3.3
 numpy==2.0.2
 packaging==24.1
 platformdirs==4.2.2
+publicsuffix2==2.20191221
 pylint==3.2.5
 soupsieve==2.6
 tomlkit==0.12.5
-types-beautifulsoup4==4.12.0.20240907
 types-html5lib==1.1.11.20240806
 typing_extensions==4.12.2

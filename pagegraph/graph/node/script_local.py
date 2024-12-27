@@ -13,9 +13,10 @@ from pagegraph.types import ResourceType
 if TYPE_CHECKING:
     from pagegraph.graph.edge.execute import ExecuteEdge
     from pagegraph.graph.js import JSCallResult
+    from pagegraph.graph.node.abc.parent_dom_element import ParentDOMElementNode
     from pagegraph.graph.node.dom_root import DOMRootNode
     from pagegraph.graph.requests import RequestChain
-    from pagegraph.types import Url, ParentDomNode, ActorNode
+    from pagegraph.types import Url, ActorNode
     from pagegraph.types import ScriptExecutorNode
     from pagegraph.serialize import DOMElementReport
 
@@ -74,13 +75,13 @@ class ScriptLocalNode(ScriptNode, Reportable):
     def executor_node(self) -> ScriptExecutorNode:
         return self.execute_edge().incoming_node()
 
-    def creator_node(self) -> Union[ActorNode, ParentDomNode]:
+    def creator_node(self) -> Union[ActorNode, ParentDOMElementNode]:
         node = self.execute_edge().incoming_node()
         if parent_script_local_node := node.as_script_local_node():
             return parent_script_local_node.creator_node()
         creator_node = (
             node.as_actor_node() or
-            node.as_parent_dom_node()
+            node.as_parent_dom_element_node()
         )
         assert creator_node
         return creator_node
@@ -219,20 +220,20 @@ class ScriptLocalNode(ScriptNode, Reportable):
                 return request_chain
         return None
 
-    def domroot_executed_in(self) -> DOMRootNode:
+    def execution_context_in(self) -> DOMRootNode:
         exc_edge = self.execute_edge()
         return self.pg.domroot_for_frame_id(exc_edge.frame_id())
 
-    def domroot_executed_from(self) -> DOMRootNode:
+    def execution_context_from(self) -> DOMRootNode:
         exc_edge = self.execute_edge()
         exc_node = self.executor_node()
         frame_id = None
 
-        if parent_dom_node := exc_node.as_parent_dom_node():
-            return parent_dom_node.domroot_node()
+        if parent_dom_node := exc_node.as_parent_dom_element_node():
+            return parent_dom_node.execution_context()
 
         if script_local_node := exc_node.as_script_local_node():
-            return script_local_node.domroot_executed_from()
+            return script_local_node.execution_context_from()
 
         if exc_node.as_parser_node() is not None:
             frame_id = exc_edge.frame_id()

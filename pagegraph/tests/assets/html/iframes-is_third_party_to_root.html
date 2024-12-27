@@ -1,0 +1,23 @@
+<body>
+  <iframe src="about:blank" id="frame1"></iframe>
+  <script>
+    const iframeElm1 = document.getElementById("frame1")
+
+    const localUrl = new URL(window.location)
+    localUrl.pathname = "/assets/frames/blank-frame.html"
+    const localFrame = localUrl.toString()
+
+    localUrl.hostname = "localhost"
+    const remoteUrl = localUrl.toString()
+
+    const iframeElm2 = document.createElement("iframe")
+    iframeElm2.setAttribute("id", "frame2")
+    iframeElm2.src = remoteUrl
+    document.body.appendChild(iframeElm2)
+
+    const iframeElm3 = document.createElement("iframe")
+    iframeElm3.setAttribute("id", "frame3")
+    iframeElm3.src = localFrame
+    iframeElm1.contentDocument.body.appendChild(iframeElm3)
+  </script>
+</body>

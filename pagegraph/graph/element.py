@@ -3,9 +3,13 @@ from __future__ import annotations
 from abc import ABC
 from enum import Enum
 import sys
-from typing import Any, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
+
+from networkx import MultiDiGraph
 
 if TYPE_CHECKING:
+    from typing import Any, Optional, Union
+
     from pagegraph.graph import PageGraph
     from pagegraph.serialize import JSONAble
     from pagegraph.types import PageGraphId, ElementSummary
@@ -94,9 +98,21 @@ class PageGraphElement(ABC):
         # before any other, query-related methods are called.
         pass
 
-    def throw(self, desc: str) -> None:
+    def subgraph(self, depth: int = 1) -> MultiDiGraph:
+        """Returns a subgraph of the underlying networkx MultiDiGraph,
+        that depicts the subgraph, starting from this node or edge, and
+        spreading out with the given depth."""
+
+        # This is implemented in the Node and Edge subclasses, with the Edge
+        # implementation just calling to the Node implementation.
+        raise NotImplementedError()
+
+    def throw(self, desc: str,
+              context_exception: Optional[Exception] = None) -> None:
         sys.stderr.write(self.describe())
         sys.stderr.write("\n")
+        if context_exception:
+            raise ValueError(desc) from context_exception
         raise ValueError(desc)
 
 

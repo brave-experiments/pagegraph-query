@@ -10,11 +10,11 @@ from pagegraph.versions import Feature
 if TYPE_CHECKING:
     from pagegraph.graph.edge.node_create import NodeCreateEdge
     from pagegraph.graph.edge.node_insert import NodeInsertEdge
+    from pagegraph.graph.node.abc.parent_dom_element import ParentDOMElementNode
     from pagegraph.graph.node.dom_root import DOMRootNode
     from pagegraph.graph.requests import RequestChain
-    from pagegraph.serialize import DOMNodeReport
-    from pagegraph.types import BlinkId, ParentDomNode, ActorNode, DOMNode
-    from bs4 import PageElement
+    from pagegraph.serialize import DOMNodeReport, JSONAble
+    from pagegraph.types import BlinkId, ActorNode
 
 
 class DOMElementNode(Node, ABC):
@@ -23,19 +23,14 @@ class DOMElementNode(Node, ABC):
         "tag name": "tag_name"
     }
 
+    def as_dom_element_node(self) -> Optional[DOMElementNode]:
+        return self
+
     def blink_id(self) -> BlinkId:
         return int(self.data()[self.RawAttrs.BLINK_ID.value])
 
-    def tag_name(self) -> str:
-        raise NotImplementedError()
-
     def to_report(self) -> DOMNodeReport:
         raise NotImplementedError()
-
-    def is_matching(self, bs4_tag: PageElement) -> bool:
-        # if self.tag_name().lower() != bs4_tag.name:
-        #     return False
-        return True
 
     def insertion_edges(self) -> list[NodeInsertEdge]:
         insertion_edges: list[NodeInsertEdge] = []
@@ -59,7 +54,7 @@ class DOMElementNode(Node, ABC):
         parent_node = self.parent_at_serialization()
         if not parent_node:
             return False
-        needle_node: Optional[DOMNode] = parent_node
+        needle_node: Optional[ParentDOMElementNode] = parent_node
         while needle_node is not None:
             needle_html_node = needle_node.as_html_node()
             if not needle_html_node:
@@ -73,7 +68,7 @@ class DOMElementNode(Node, ABC):
         parent_node_at_serialization = self.parent_at_serialization()
         return parent_node_at_serialization is not None
 
-    def parent_at_serialization(self) -> Optional[ParentDomNode]:
+    def parent_at_serialization(self) -> Optional[ParentDOMElementNode]:
         if self.pg.feature_check(Feature.DOCUMENT_EDGES):
             for edge in self.incoming_edges():
                 if document_edge := edge.as_document_edge():
@@ -84,7 +79,7 @@ class DOMElementNode(Node, ABC):
                 if not structure_edge:
                     continue
                 incoming_node = structure_edge.incoming_node()
-                parent_node = incoming_node.as_parent_dom_node()
+                parent_node = incoming_node.as_parent_dom_element_node()
                 assert parent_node
                 return parent_node
         return None
@@ -100,7 +95,7 @@ class DOMElementNode(Node, ABC):
     def creator_node(self) -> ActorNode:
         return self.creation_edge().incoming_node()
 
-    def domroot_node(self) -> DOMRootNode:
+    def execution_context(self) -> DOMRootNode:
         """Returns a best effort of what frame / DOMRootNode to associate
         this element with. Since an DOM element can be attached to
         multiple documents / multiple frames, this may not be what you're
@@ -160,7 +155,7 @@ class DOMElementNode(Node, ABC):
             return parent_node_from_structure
         return None
 
-    def parent_html_nodes(self) -> list[ParentDomNode]:
+    def parent_html_nodes(self) -> list[ParentDOMElementNode]:
         """Return every node this node was ever inserted under. This can be
         zero nodes (if the node was created but never inserted in the
         document), or more than one node (if the node was moved around the

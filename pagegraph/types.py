@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Set, Optional, TYPE_CHECKING, Union
 
+
 if TYPE_CHECKING:
+    import networkx as NWX
+    from packaging.version import Version
+
     from pagegraph.graph.edge import Edge
     from pagegraph.graph.edge.js_call import JSCallEdge
     from pagegraph.graph.edge.js_result import JSResultEdge
@@ -13,6 +17,7 @@ if TYPE_CHECKING:
     from pagegraph.graph.edge.request_redirect import RequestRedirectEdge
     from pagegraph.graph.edge.request_start import RequestStartEdge
     from pagegraph.graph.node import Node
+    from pagegraph.graph.node.abc.parent_dom_element import ParentDOMElementNode
     from pagegraph.graph.node.abc.script import ScriptNode
     from pagegraph.graph.node.dom_root import DOMRootNode
     from pagegraph.graph.node.frame_owner import FrameOwnerNode
@@ -39,14 +44,11 @@ PageGraphEdgeKey = tuple[PageGraphNodeId, PageGraphNodeId, PageGraphEdgeId]
 Url = str
 ElementSummary = Optional[dict[str, "JSONAble"]]
 
-DOMNode = Union["DOMRootNode", "HTMLNode", "TextNode", "FrameOwnerNode"]
-AttrDomNode = Union["DOMRootNode", "HTMLNode", "FrameOwnerNode"]
 LeafDomNode = Union["TextNode", "FrameOwnerNode"]
-ParentDomNode = Union["DOMRootNode", "HTMLNode", "FrameOwnerNode"]
 ChildDomNode = Union["HTMLNode", "TextNode", "FrameOwnerNode"]
 LocalOrRemoteScriptNode = Union["ScriptLocalNode", "ScriptRemoteNode"]
 JSCallingNode = Union["ScriptLocalNode", "UnknownNode"]
-ScriptExecutorNode = Union["ParentDomNode", "ParserNode", "ScriptNode"]
+ScriptExecutorNode = Union["ParentDOMElementNode", "ParserNode", "ScriptNode"]
 RequesterNode = Union["HTMLNode", "DOMRootNode", "LocalOrRemoteScriptNode",
                       "ParserNode"]
 ActorNode = Union["ScriptLocalNode", "ParserNode", "UnknownNode"]
@@ -113,3 +115,17 @@ class FrameSummary:
 
     def includes_executed(self, node: ScriptLocalNode) -> bool:
         return node in self.script_nodes
+
+
+@dataclass
+class PageGraphInput:
+    url: Url
+    version: Version
+    graph: NWX.MultiDiGraph
+    reverse_graph: NWX.MultiDiGraph
+
+
+class PartyFilterOption(StrEnum):
+    NONE = "none"
+    FIRST_PARTY = "first-party"
+    THIRD_PARTY = "third-party"

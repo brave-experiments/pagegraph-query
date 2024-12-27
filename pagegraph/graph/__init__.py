@@ -3,8 +3,8 @@ from __future__ import annotations
 from functools import lru_cache
 from itertools import chain
 from pathlib import Path
-import re
-from typing import cast, Optional, TYPE_CHECKING
+import sys
+from typing import cast, TYPE_CHECKING
 
 import networkx as NWX
 from packaging.version import Version
@@ -14,10 +14,13 @@ from pagegraph.graph.edge import Edge
 from pagegraph.graph.node import Node
 from pagegraph.graph.requests import request_chain_for_edge
 from pagegraph.graph.type_map import edge_for_type, node_for_type
-from pagegraph.versions import Feature, check_pagegraph_version
+from pagegraph.graphml import load_from_path
+from pagegraph.versions import Feature
 from pagegraph.versions import min_version_for_feature
 
 if TYPE_CHECKING:
+    from typing import Optional
+
     from pagegraph.graph.edge.js_call import JSCallEdge
     from pagegraph.graph.edge.event_listener_add import EventListenerAddEdge
     from pagegraph.graph.edge.event_listener_fired import EventListenerFiredEdge
@@ -27,6 +30,8 @@ if TYPE_CHECKING:
     from pagegraph.graph.edge.storage_clear import StorageClearEdge
     from pagegraph.graph.edge.storage_delete import StorageDeleteEdge
     from pagegraph.graph.edge.storage_set import StorageSetEdge
+    from pagegraph.graph.node.abc.parent_dom_element import ParentDOMElementNode
+    from pagegraph.graph.node.abc.dom_element import DOMElementNode
     from pagegraph.graph.node.dom_root import DOMRootNode
     from pagegraph.graph.node.frame_owner import FrameOwnerNode
     from pagegraph.graph.node.html import HTMLNode
@@ -36,8 +41,8 @@ if TYPE_CHECKING:
     from pagegraph.graph.node.script_local import ScriptLocalNode
     from pagegraph.graph.node.unknown import UnknownNode
     from pagegraph.graph.requests import RequestChain
-    from pagegraph.types import BlinkId, EventListenerId, DOMNode, ChildDomNode
-    from pagegraph.types import ParentDomNode, FrameId, RequestId, Url
+    from pagegraph.types import BlinkId, EventListenerId, ChildDomNode
+    from pagegraph.types import FrameId, RequestId, Url, PageGraphInput
     from pagegraph.types import PageGraphId, NetworkXEdgeId, NetworkXNodeId
 
 
@@ -68,7 +73,7 @@ class PageGraph:
     """URL for the page that was executed to generate the given PageGraph
     file."""
 
-    __blink_id_map: dict[BlinkId, DOMNode] = {}
+    __blink_id_map: dict[BlinkId, DOMElementNode] = {}
     """Private cache for mapping *from* the integer id Blink assigns to each
     element (e.g., HTMLElement, TextNode, docstring, etc.) in the DOM tree, *to*
     the node representing that page element in the PageGraph representation."""
@@ -111,7 +116,7 @@ class PageGraph:
     event, to all the edges in the graph representing when that event was
     removed or unregistered on an element."""
 
-    __inserted_below_map: dict[ParentDomNode, list[ChildDomNode]] = {}
+    __inserted_below_map: dict[ParentDOMElementNode, list[ChildDomNode]] = {}
     """Private cache mapping from a PageGraph node representing a DOM element
     (like a HTML element), to *all* the nodes that have ever been a direct
     child of the parent node."""
@@ -121,13 +126,12 @@ class PageGraph:
     frame root (e.g., usually the Blink id for`window.document.documentElement),
     to the node representing that element in the PageGraph graph."""
 
-    def __init__(self, path: Path, debug: bool = False):
-        self.path = path
+    def __init__(self, input_data: PageGraphInput, debug: bool = False):
         self.debug = debug
-        self.graph_version = check_pagegraph_version(self.path)
-        self.graph = NWX.read_graphml(self.path)
-        self.r_graph = NWX.reverse_view(self.graph)
-        self.url = url_from_path(path)
+        self.url = input_data.url
+        self.graph_version = input_data.version
+        self.graph = input_data.graph
+        self.r_graph = input_data.reverse_graph
 
         for node_type in Node.Types:
             self.__nodes_by_type[node_type] = []
@@ -147,6 +151,10 @@ class PageGraph:
         for node in self.nodes():
             if self.debug:
                 node.validate()
+                # try:
+                    # node.validate()
+                # except AssertionError as exc:
+                    # node.throw("Validation error", exc)
             node.build_caches()
         for edge in self.edges():
             if self.debug:
@@ -266,17 +274,17 @@ class PageGraph:
         edges = self.edges_of_type(Edge.Types.STORAGE_CLEAR)
         return cast(list["StorageClearEdge"], edges)
 
-    def node_for_blink_id(self, blink_id: "BlinkId") -> DOMNode:
+    def node_for_blink_id(self, blink_id: BlinkId) -> DOMElementNode:
         if self.debug:
             if blink_id not in self.__blink_id_map:
                 raise ValueError(f"blink_id not in blink_id cache: {blink_id}")
 
         node = self.__blink_id_map[blink_id]
-        dom_node = node.as_dom_node()
+        dom_node = node.as_dom_element_node()
         assert dom_node is not None
         return dom_node
 
-    def dom_nodes(self) -> list[DOMNode]:
+    def dom_nodes(self) -> list[DOMElementNode]:
         node_types = [
             Node.Types.DOM_ROOT,
             Node.Types.HTML,
@@ -286,7 +294,18 @@ class PageGraph:
         nodes = []
         for node_type in node_types:
             nodes += self.nodes_of_type(node_type)
-        return cast(list["DOMNode"], nodes)
+        return cast(list["DOMElementNode"], nodes)
+
+    def parent_dom_nodes(self) -> list[ParentDOMElementNode]:
+        node_types = [
+            Node.Types.DOM_ROOT,
+            Node.Types.HTML,
+            Node.Types.FRAME_OWNER,
+        ]
+        nodes = []
+        for node_type in node_types:
+            nodes += self.nodes_of_type(node_type)
+        return cast(list["ParentDOMElementNode"], nodes)
 
     def nodes_of_type(self, node_type: Node.Types) -> list[Node]:
         return self.__nodes_by_type[node_type]
@@ -339,7 +358,7 @@ class PageGraph:
         return cast(list["JSCallEdge"], edge_iterator)
 
     def child_dom_nodes(
-            self, parent_node: ParentDomNode) -> Optional[list[ChildDomNode]]:
+            self, parent_node: ParentDOMElementNode) -> Optional[list[ChildDomNode]]:
         """Returns all nodes that were ever a child of the parent node,
         at any point during the page's lifetime."""
         if parent_node not in self.__inserted_below_map:
@@ -354,7 +373,7 @@ class PageGraph:
         node_type_str = self.graph.nodes[node_id][Node.RawAttrs.TYPE.value]
         node_type = Node.Types(node_type_str)
         node = node_for_type(node_type, self, node_id)
-        if dom_node := node.as_dom_node():
+        if dom_node := node.as_dom_element_node():
             self.__blink_id_map[dom_node.blink_id()] = dom_node
         return node
 
@@ -386,6 +405,27 @@ class PageGraph:
                 nodes.append(node)
         return nodes
 
+    def get_elements_by_id(self, id_attr: str) -> list[ParentDOMElementNode]:
+        """Returns all elements that had the given id at serialization."""
+        elements = []
+        for node in self.parent_dom_nodes():
+            if node.get_attribute("id") == id_attr:
+                elements.append(node)
+        return elements
+
+    def get_elements_by_id_ever(self, id_attr: str) -> list[ParentDOMElementNode]:
+        """Returns any element that ever had the given id.
+
+        Note that this method differs from get_elements_by_id() because it'll
+        include elements who had the given id at one point, but the id was
+        deleted during page execution."""
+        elements = []
+        for node in self.parent_dom_nodes():
+            values_for_attr = node.get_attribute_ever("id")
+            if values_for_attr and id_attr in values_for_attr:
+                elements.append(node)
+        return elements
+
     def toplevel_domroot_nodes(self) -> list[DOMRootNode]:
         domroot_nodes = []
         for domroot_node in self.domroot_nodes():
@@ -393,16 +433,11 @@ class PageGraph:
                 domroot_nodes.append(domroot_node)
         return domroot_nodes
 
-
-def url_from_path(input_path: Path) -> Url:
-    pattern = r'<desc>.*?<url>(.*?)</url>.*?</desc>'
-    prog = re.compile(pattern, flags=re.U)
-    with input_path.open() as f:
-        for line in f:
-            if match := prog.search(line):
-                return match.group(1)
-    raise ValueError(f"Could not find <url>...</url> in {input_path}")
+    def print_warning(self, msg: str) -> None:
+        if self.debug:
+            print(msg, file=sys.stderr)
 
 
 def from_path(input_path: Path, debug: bool = False) -> PageGraph:
-    return PageGraph(input_path, debug)
+    pagegraph_data = load_from_path(input_path)
+    return PageGraph(pagegraph_data, debug)

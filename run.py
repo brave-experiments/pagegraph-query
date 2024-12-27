@@ -1,65 +1,54 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 import argparse
-import json
-import fileinput
 import pathlib
 import sys
 
 import pagegraph.commands
+import pagegraph.commands.element
+import pagegraph.commands.html
+import pagegraph.commands.js_calls
+import pagegraph.commands.requests
+import pagegraph.commands.scripts
+import pagegraph.commands.subframes
+import pagegraph.commands.unknown
+import pagegraph.commands.validate
 import pagegraph.serialize
+import pagegraph.types
 from pagegraph import __version__
 
 
-def scripts_cmd(args):
-    return pagegraph.commands.scripts(args.input, args.frame, args.id,
-                                      args.source, args.omit_executors,
-                                      args.debug)
-
-
-# def effects_cmd(args):
-#     return pagegraph.commands.effects(args.input, args.id, args.loose,
-#                                       args.debug)
-
-
-def element_query_cmd(args):
-    return pagegraph.commands.element_query(args.input, args.id, args.depth,
-                                            args.debug)
-
-
-def html_query_cmd(args):
-    return pagegraph.commands.html_query_cmd(args.input, args.frame,
-                                             args.at_serialization,
-                                             args.body_content, args.debug)
-
-def js_calls_cmd(args):
-    return pagegraph.commands.js_calls(args.input, args.frame, args.cross,
-                                       args.method, args.id, args.debug)
-
-
-def request_cmd(args):
-    return pagegraph.commands.requests(args.input, args.frame, args.debug)
-
-
-def subframes_cmd(args):
-    return pagegraph.commands.subframes(args.input, args.local, args.debug)
-
-
-def unknown_query_cmd(args):
-    return pagegraph.commands.unknown(args.input)
-
-
-def validate_cmd(args):
-    return pagegraph.commands.validate(args.input)
-
-
-# def elm_search_cmd(args):
-#     if args.html_path:
-#         files_list = (args.html_path,)
-#     else:
-#         files_list = None
-#     html_lines = list(fileinput.input(files=files_list, encoding="utf-8"))
-#     html = "\n".join(html_lines)
-#     return pagegraph.commands.elm_search(args.input, html, args.debug)
+# pylint: disable=too-many-return-statements
+def get_command(args: argparse.Namespace) -> pagegraph.commands.Command:
+    match args.command_name:
+        case "subframes":
+            return pagegraph.commands.subframes.Command(
+                args.input, args.local, args.party_filter, args.debug)
+        case "validate":
+            return pagegraph.commands.validate.Command(args.input)
+        case "requests":
+            return pagegraph.commands.requests.Command(
+                args.input, args.frame, args.debug)
+        case "scripts":
+            return pagegraph.commands.scripts.Command(
+                args.input, args.frame, args.id, args.source,
+                args.omit_executors, args.debug)
+        case "js_calls":
+            return pagegraph.commands.js_calls.Command(
+                args.input, args.frame, args.cross, args.method, args.id,
+                args.debug)
+        case "element":
+            return pagegraph.commands.element.Command(
+                args.input, args.id, args.depth, args.graphml, args.debug)
+        case "html":
+            return pagegraph.commands.html.Command(
+                args.input, args.frame, args.at_serialization,
+                args.body_content, args.debug)
+        case "unknown":
+            return pagegraph.commands.unknown.Command(args.input)
+        case _:
+            raise ValueError(f"Unknown command name: {args.command_name}")
 
 
 PARSER = argparse.ArgumentParser(
@@ -73,6 +62,7 @@ PARSER.add_argument(
     action="version",
     version=f"%(prog)s {__version__}")
 PARSER.add_argument("--debug", action="store_true", default=False)
+PARSER.set_defaults(command_name="")
 
 SUBPARSERS = PARSER.add_subparsers(required=True)
 
@@ -86,9 +76,16 @@ SUBFRAMES_PARSER.add_argument(
 SUBFRAMES_PARSER.add_argument(
     "-l", "--local",
     action="store_true",
-    help="Only print information about about frames that are local to"
-         " the top level frame at serialization time.")
-SUBFRAMES_PARSER.set_defaults(func=subframes_cmd)
+    help="Print information about frames that are inherit their parent "
+         "frame's security context (i.e., about:blank, about:srcdoc) at "
+         "serialization time.")
+SUBFRAMES_PARSER.add_argument(
+    "--party-filter",
+    choices=pagegraph.types.PartyFilterOption,
+    default=pagegraph.types.PartyFilterOption.NONE.value,
+    help="Only return frames that have the same (first-party) or different "
+         "(third-party) security origin as the top-level document.")
+SUBFRAMES_PARSER.set_defaults(command_name="subframes")
 
 VALIDATE_PARSER = SUBPARSERS.add_parser(
     "validate",
@@ -97,7 +94,7 @@ VALIDATE_PARSER.add_argument(
     "input",
     type=pathlib.Path,
     help="Path to PageGraph recording.")
-VALIDATE_PARSER.set_defaults(func=validate_cmd)
+VALIDATE_PARSER.set_defaults(command_name="validate")
 
 REQUEST_PARSER = SUBPARSERS.add_parser(
     "requests",
@@ -111,7 +108,7 @@ REQUEST_PARSER.add_argument(
     default=None,
     help="Only print information about requests made in a specific frame "
          "(as described by PageGraph node ids, in the format 'n##').")
-REQUEST_PARSER.set_defaults(func=request_cmd)
+REQUEST_PARSER.set_defaults(command_name="requests")
 
 SCRIPTS_PARSER = SUBPARSERS.add_parser(
     "scripts",
@@ -144,7 +141,7 @@ SCRIPTS_PARSER.add_argument(
     action="store_true",
     help="If included, do not append information about why or how each script "
          "was executed.")
-SCRIPTS_PARSER.set_defaults(func=scripts_cmd)
+SCRIPTS_PARSER.set_defaults(command_name="scripts")
 
 JS_CALLS_PARSER = SUBPARSERS.add_parser(
     "js-calls",
@@ -178,7 +175,7 @@ JS_CALLS_PARSER.add_argument(
     help="If provided, only print information about JS calls made by the "
          "Script node with the given ID "
          "(as described by PageGraph node ids, in the format 'n##').")
-JS_CALLS_PARSER.set_defaults(func=js_calls_cmd)
+JS_CALLS_PARSER.set_defaults(command_name="js_calls")
 
 ELEMENT_QUERY_PARSER = SUBPARSERS.add_parser(
     "elm",
@@ -193,11 +190,17 @@ ELEMENT_QUERY_PARSER.add_argument(
          "(as described by PageGraph node ids, in the format 'n##')")
 ELEMENT_QUERY_PARSER.add_argument(
     "-d", "--depth",
-    default=0,
+    default=1,
     type=int,
-    help="Depth of the recursion to summarize in the graph. Defaults to 0 "
+    help="Depth of the recursion to summarize in the graph. Defaults to 1 "
          "(only print detailed information about target element).")
-ELEMENT_QUERY_PARSER.set_defaults(func=element_query_cmd)
+ELEMENT_QUERY_PARSER.add_argument(
+    "--graphml", "-g",
+    type=pathlib.Path,
+    help="Write the element (and its surrounding subgraph, as determined by "
+         "the depth argument) to disk as a graphml encoded graph at the given "
+         "path.")
+ELEMENT_QUERY_PARSER.set_defaults(command_name="element")
 
 HTML_QUERY_PARSER = SUBPARSERS.add_parser(
     "html",
@@ -225,7 +228,7 @@ HTML_QUERY_PARSER.add_argument(
     action="store_true",
     help="Only return elements that appear in the body of the document, "
          "meaning elements that are a child of the <body> element.")
-HTML_QUERY_PARSER.set_defaults(func=html_query_cmd)
+HTML_QUERY_PARSER.set_defaults(command_name="html")
 
 UNKNOWN_QUERY_PARSER = SUBPARSERS.add_parser(
     "unknown",
@@ -237,67 +240,15 @@ UNKNOWN_QUERY_PARSER.add_argument(
     "input",
     type=pathlib.Path,
     help="Path to PageGraph recording.")
-UNKNOWN_QUERY_PARSER.set_defaults(func=unknown_query_cmd)
-
-# ELM_SEARCH_PARSER = SUBPARSERS.add_parser(
-#     "elm-search",
-#     help="Returns the PageGraph id of a HTML element node, given a HTML text.")
-# ELM_SEARCH_PARSER.add_argument(
-#     "input",
-#     type=pathlib.Path,
-#     help="Path to PageGraph recording.")
-# ELM_SEARCH_PARSER.add_argument(
-#     "--html-path",
-#     type=pathlib.Path,
-#     help="Path to HTML text on disk to parse (otherwise reads from stdin).")
-# ELM_SEARCH_PARSER.set_defaults(func=elm_search_cmd)
-#
-# EFFECTS_QUERY_PARSER = SUBPARSERS.add_parser(
-#     "effects",
-#     help="Print information about the effects the given element had on "
-#          "the page. By default only includes requests.")
-# EFFECTS_QUERY_PARSER.add_argument(
-#     "input",
-#     type=pathlib.Path,
-#     help="Path to PageGraph recording.")
-# EFFECTS_QUERY_PARSER.add_argument(
-#     "id",
-#     help="Id of a frame, script, request, or parser node "
-#          "(as described by PageGraph node ids, in the format 'n##').")
-# EFFECTS_QUERY_PARSER.add_argument(
-#     "-l", "--loose",
-#     default=False,
-#     action="store_true",
-#     help="By default, the 'effects' query includes any action or element "
-#          "where the target node was the primary cause of the action (i.e., "
-#          "actions where the target node was the most immediate cause). "
-#          "Passing this flag loosens that, and includes any action or element "
-#          "that this node was involved with at all.")
-# EFFECTS_QUERY_PARSER.add_argument(
-#     "--include-js-builtin-calls",
-#     default=False,
-#     action="store_true",
-#     help="Include calls to JS builtins that occurred because of the target "
-#           "node.")
-# EFFECTS_QUERY_PARSER.add_argument(
-#     "--include-web-api-calls",
-#     default=False,
-#     action="store_true",
-#     help="Include calls to instrumented Web APIs that occurred because of "
-#          "the target node.")
-# EFFECTS_QUERY_PARSER.add_argument(
-#     "--exclude-requests",
-#     default=False,
-#     action="store_true",
-#     help="Do not include requests that occurred because of the target node.")
-# EFFECTS_QUERY_PARSER.set_defaults(func=effects_cmd)
+UNKNOWN_QUERY_PARSER.set_defaults(command_name="unknown")
 
 
 try:
     ARGS = PARSER.parse_args()
-    RESULT = ARGS.func(ARGS)
-    REPORT = pagegraph.serialize.to_jsonable(RESULT)
-    print(json.dumps(REPORT))
+    command = get_command(ARGS)
+    command.validate()
+    RESULT = command.execute()
+    print(command.format(RESULT))
 except ValueError as e:
     print(f"Invalid argument: {e}", file=sys.stderr)
     sys.exit(1)

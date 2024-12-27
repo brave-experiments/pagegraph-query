@@ -17,6 +17,17 @@ added, removed, or fired in the document with
 `EventListenerEdge.event_add_edges()`, `EventListenerEdge.event_fired_edges()`,
 and `EventListenerEdge.event_removed_edges()` methods.
 
+Correctly handle when the URL for the top level frame is empty (which
+should only happen for older graphs, generated with v0.7.2 and older).
+
+Additional options for the `subframes` command, allowing for filtering frames
+by first-and-third-party security origin.
+
+Add ability to export subgraphs of the larger graph, using the `elm --graphml`
+command in the `./run.py` script.
+
+Additional test coverage.
+
 
 Version 0.9.4
 ---

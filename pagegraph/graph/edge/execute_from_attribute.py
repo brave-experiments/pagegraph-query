@@ -5,8 +5,8 @@ from typing import Optional, TYPE_CHECKING
 from pagegraph.graph.edge.execute import ExecuteEdge
 
 if TYPE_CHECKING:
+    from pagegraph.graph.node.abc.parent_dom_element import ParentDOMElementNode
     from pagegraph.graph.node.script_local import ScriptLocalNode
-    from pagegraph.types import ParentDomNode
 
 
 class ExecuteFromAttributeEdge(ExecuteEdge):
@@ -25,9 +25,9 @@ class ExecuteFromAttributeEdge(ExecuteEdge):
             ExecuteFromAttributeEdge]:
         return self
 
-    def incoming_node(self) -> ParentDomNode:
+    def incoming_node(self) -> ParentDOMElementNode:
         node = super().incoming_node()
-        parent_dom_node = node.as_parent_dom_node()
+        parent_dom_node = node.as_parent_dom_element_node()
         assert parent_dom_node
         return parent_dom_node
 

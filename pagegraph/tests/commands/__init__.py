@@ -54,6 +54,8 @@ def run(testcase_filter: Optional[str], verbose: bool) -> None:
     for child in PG_PATHS.unittests().iterdir():
         if not child.is_file() or child.name == "__init__.py":
             continue
+        if child.name.startswith("."):
+            continue
         if verbose:
             unittest_files += ["-v", str(child)]
         else:

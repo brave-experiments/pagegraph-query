@@ -1,0 +1,27 @@
+<body>
+  <iframe src="about:blank" id="frame1"></iframe>
+  <script>
+    const iframeElm1 = document.getElementById("frame1")
+
+    const iframeElm2 = document.createElement("iframe")
+    iframeElm2.setAttribute("id", "frame2")
+    iframeElm2.srcdoc = "<p>child child frame</p>"
+    iframeElm1.contentDocument.body.appendChild(iframeElm2)
+
+    const iframeElm4 = document.createElement("iframe")
+    iframeElm4.setAttribute("id", "frame4")
+    iframeElm4.src = "about:blank"
+    document.body.appendChild(iframeElm4)
+
+    const iframeElm3 = document.createElement("iframe")
+    iframeElm3.setAttribute("id", "frame3")
+    // We want the URL of the iframe we're creating to have a different
+    // security content than any of the parent frames, but still be served
+    // from the local server, so we use "localhost" instead of "[::]"
+    const localUrl = new URL(window.location)
+    localUrl.hostname = "localhost"
+    localUrl.pathname = "/assets/frames/blank-frame.html"
+    iframeElm3.src = localUrl.toString()
+    iframeElm4.contentDocument.body.appendChild(iframeElm3)
+  </script>
+</body>

@@ -3,13 +3,17 @@ from __future__ import annotations
 
 from abc import ABC
 from enum import Enum
-from typing import cast, Optional, TYPE_CHECKING
+from typing import cast, TYPE_CHECKING
 
 from pagegraph.graph.element import PageGraphElement
 from pagegraph.serialize import EdgeReport, BriefEdgeReport
 from pagegraph.serialize import NodeReport, BriefNodeReport
 
 if TYPE_CHECKING:
+    from typing import Optional
+
+    from networkx import MultiDiGraph
+
     from pagegraph.graph import PageGraph
     from pagegraph.graph.edge.abc.effect import EffectEdge
     from pagegraph.graph.edge.abc.event_listener import EventListenerEdge
@@ -39,6 +43,7 @@ if TYPE_CHECKING:
     from pagegraph.graph.edge.storage_set import StorageSetEdge
     from pagegraph.graph.edge.structure import StructureEdge
     from pagegraph.graph.node import Node
+    from pagegraph.graph.node.abc.parent_dom_element import ParentDOMElementNode
     from pagegraph.graph.node.abc.script import ScriptNode
     from pagegraph.graph.node.dom_root import DOMRootNode
     from pagegraph.graph.node.frame_owner import FrameOwnerNode
@@ -48,9 +53,9 @@ if TYPE_CHECKING:
     from pagegraph.graph.node.resource import ResourceNode
     from pagegraph.graph.node.storage_area import StorageAreaNode
     from pagegraph.types import BlinkId, PageGraphEdgeKey, RequesterNode
-    from pagegraph.types import ChildDomNode, ParentDomNode, FrameId, RequestId
+    from pagegraph.types import ChildDomNode, FrameId, RequestId
     from pagegraph.types import PageGraphNodeId, PageGraphEdgeId, Url
-    from pagegraph.types import ResourceType, AttrDomNode, ActorNode
+    from pagegraph.types import ResourceType, ActorNode
 
 
 class Edge(PageGraphElement, ABC):
@@ -355,3 +360,8 @@ class Edge(PageGraphElement, ABC):
                 self.throw(f"Unexpected outgoing node type: {node_type}")
                 return False
         return True
+
+    def subgraph(self, depth: int = 1) -> MultiDiGraph:
+        incoming_node = self.incoming_node()
+        outgoing_node = self.outgoing_node()
+        return incoming_node.subgraph(depth, outgoing_node)

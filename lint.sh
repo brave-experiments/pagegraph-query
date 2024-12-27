@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-pylint pagegraph *.py
+pylint pagegraph run.py tests.py
 mypy --strict pagegraph/

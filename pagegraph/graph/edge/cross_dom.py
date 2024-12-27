@@ -9,7 +9,6 @@ if TYPE_CHECKING:
     from pagegraph.graph.node.frame_owner import FrameOwnerNode
     from pagegraph.graph.node.dom_root import DOMRootNode
     from pagegraph.graph.node.parser import ParserNode
-    from pagegraph.types import ParentDomNode, ChildDomNode
 
 
 class CrossDOMEdge(Edge):

@@ -2,51 +2,57 @@ from __future__ import annotations
 
 from abc import ABC
 from dataclasses import dataclass, fields
-from typing import Any, Optional, TYPE_CHECKING, Union, Sequence
+from typing import TYPE_CHECKING, Union, Sequence
 
 from pagegraph.types import BlinkId, PageGraphId, RequestHeaders
 
 if TYPE_CHECKING:
+    from typing import Any, Optional
+
     from pagegraph.graph import PageGraph
     from pagegraph.types import Url, RequestId
     from packaging.version import Version
 
 
 @dataclass
-class Report:
+class ReportBase(ABC):
     pass
 
 
 @dataclass
-class BasicReport(Report):
+class BasicReport(ReportBase):
     name: str
 
 
-JSONAble = Report | list[Report] | dict[str, Report] | str | int | float | bool | None
+JSONAble = (
+    ReportBase | Sequence[ReportBase] | dict[str, ReportBase] | str | int |
+    float | bool | None)
 
 
 @dataclass
-class FrameReport(Report):
+class FrameReport(ReportBase):
     id: PageGraphId
+    main_frame: bool
     url: Url | None
+    security_origin: Url | None
     blink_id: BlinkId
 
 
 @dataclass
-class DOMElementReport(Report):
+class DOMElementReport(ReportBase):
     id: PageGraphId
     tag: str
     attrs: dict[str, JSONAble] | None = None
 
 
 @dataclass
-class JSStructureReport(Report):
+class JSStructureReport(ReportBase):
     name: str
     type: str
 
 
 @dataclass
-class JSCallResultReport(Report):
+class JSCallResultReport(ReportBase):
     method: str
     args: Any
     result: Any
@@ -55,13 +61,13 @@ class JSCallResultReport(Report):
 
 
 @dataclass
-class RequestReport(Report):
+class RequestReport(ReportBase):
     id: PageGraphId
     url: Url | None
 
 
 @dataclass
-class RequestCompleteReport(Report):
+class RequestCompleteReport(ReportBase):
     id: PageGraphId
     size: int
     hash: str
@@ -70,14 +76,14 @@ class RequestCompleteReport(Report):
 
 
 @dataclass
-class RequestErrorReport(Report):
+class RequestErrorReport(ReportBase):
     id: PageGraphId
     headers: RequestHeaders | None
     status: str = "error"
 
 
 @dataclass
-class RequestChainReport(Report):
+class RequestChainReport(ReportBase):
     request_id: RequestId
     request_type: str
     request: RequestReport
@@ -86,7 +92,7 @@ class RequestChainReport(Report):
 
 
 @dataclass
-class ScriptReport(Report):
+class ScriptReport(ReportBase):
     id: PageGraphId
     type: str
     hash: str
@@ -96,7 +102,7 @@ class ScriptReport(Report):
 
 
 @dataclass
-class ElementReport(Report):
+class ElementReport(ReportBase):
     id: PageGraphId
     type: str
     details: Union[dict[str, JSONAble], None]
@@ -124,30 +130,8 @@ class EdgeReport(ElementReport):
 
 @dataclass
 class Reportable(ABC):
-    def to_report(self) -> Report:
+    def to_report(self) -> ReportBase:
         raise NotImplementedError()
-
-
-@dataclass
-class CommandReport(Report):
-    @dataclass
-    class Metadata(Report):
-        @dataclass
-        class Versions(Report):
-            tool: str
-            graph: str
-        versions: Versions
-        url: Url
-    meta: Metadata
-    report: Union[Report, Sequence[Report]]
-
-
-def to_command_report(pg: PageGraph,
-                      report: Union[Report, Sequence[Report]]) -> CommandReport:
-    versions_data = CommandReport.Metadata.Versions(
-        str(pg.tool_version), str(pg.graph_version))
-    metadata = CommandReport.Metadata(versions_data, pg.url)
-    return CommandReport(metadata, report)
 
 
 def report_field_name(field_name: str) -> str:
@@ -167,7 +151,7 @@ def to_jsonable(data: JSONAble) -> Any:
             jsonable_dict[report_key] = to_jsonable(v)
         return jsonable_dict
 
-    if isinstance(data, Report):
+    if isinstance(data, ReportBase):
         jsonable_map = {}
         for field in fields(data):
             field_name = field.name
