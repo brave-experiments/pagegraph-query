@@ -18,5 +18,13 @@ def graphs() -> pathlib.Path:
     return TEST_ASSETS_DIR / "graphs"
 
 
+def generated_graphs() -> pathlib.Path:
+    return graphs() / "gen"
+
+
+def saved_graphs() -> pathlib.Path:
+    return graphs() / "saved"
+
+
 def unittests() -> pathlib.Path:
     return TESTS_CODE_DIR

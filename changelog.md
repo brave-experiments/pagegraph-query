@@ -1,5 +1,28 @@
-Version 0.9.5
+Version 0.9.6
 ---
+
+Add support for [PageGraph 0.7.4](https://github.com/brave/brave-core/pull/28164),
+changes, which explicitly includes frames' security origins in the
+`DOMRootNode` object.
+
+Related, add an additional `validation` step, to check that the security origin
+recorded by PageGraph (and explicitly included in each graph file) matches
+what we expect it to be based on graph structure. This serves as an additional
+check to make sure that graph structures match the assumptions in
+`pagegraph-query`.
+
+Restructure how graphs for tests are generated, so that graphs for real-world
+sites can be tested against too (in addition to the existing simple tests in
+`pagegraph/tests/assets/html/*.html`).
+
+Additional minor code cleanup, mostly removing more quotes around type
+annotations, using `__future__.annotations`.
+
+Upgrade mypy to 1.15.0.
+
+
+---
+Version 0.9.5
 Add `url` into `ScriptLocal` summary for external scripts with new
 `ScriptLocalNode.url_if_external` method.
 

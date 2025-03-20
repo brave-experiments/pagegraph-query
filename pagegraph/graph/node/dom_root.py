@@ -8,7 +8,7 @@ from pagegraph.graph.node.abc.parent_dom_element import ParentDOMElementNode
 from pagegraph.serialize import Reportable, FrameReport
 from pagegraph.urls import is_url_local, is_security_origin_inheriting_url
 from pagegraph.urls import security_origin_from_url
-from pagegraph.versions import Feature
+from pagegraph.versions import Feature, exception_for_feature
 
 if TYPE_CHECKING:
     from pagegraph.graph.node.frame_owner import FrameOwnerNode
@@ -34,9 +34,26 @@ class DOMRootNode(ParentDOMElementNode, Reportable):
 
     summary_methods = {
         "frame id": "frame_id",
-        "url": "url",
+        "security origin": "security_origin",
         "tag name": "tag_name",
+        "url": "url",
     }
+
+    def validate(self) -> bool:
+        """Add the additional validation step to make sure that the
+        security origins we see explicitly included in graphs match
+        what we expect them to be based on the graph structure (note
+        this validation step will only be taken on graphs recent enough
+        to include the security origin as an attribute)."""
+        if self.pg.feature_check(Feature.EXPLICIT_SECURITY_ORIGINS):
+            explicit_security_origin = self.__security_origin()
+            calculated_security_origin = self.__calculate_security_origin()
+            if explicit_security_origin != calculated_security_origin:
+                self.throw(
+                    f"Explicit security origin '{explicit_security_origin}' "
+                    "did not match what we expect the security origin to be "
+                    f"('{calculated_security_origin}')")
+        return super().validate()
 
     def as_domroot_node(self) -> Optional[DOMRootNode]:
         return self
@@ -69,18 +86,46 @@ class DOMRootNode(ParentDOMElementNode, Reportable):
         return FrameReport(self.pg_id(), self.is_top_level_domroot(),
                            self.url(), self.security_origin(), self.blink_id())
 
-    def security_origin(self) -> Optional[Url]:
-        """Calculates the security origin for the frame.
+    def __calculate_security_origin(self) -> Optional[Url]:
+        """Calculates the security origin of the frame based on graph structure.
 
-        Usually this'll be determined by the URL of the frame, but in some
-        cases (such as an about:blank frame) it'll be inherited from the
-        parent frame."""
+        Older versions of PageGraph files did not explicitly include the
+        Blink-determined security origin of the frame, and instead determined
+        the security origin based on the frame's URL and the graph structure.
+        This isn't necessary anymore, since the origin is explicitly recorded.
+        This method ignores the explicit value, and determines it based on
+        graph structure. This is only used currently as another step of graph
+        validation."""
         this_url = self.url()
         if this_url and (sec_origin := security_origin_from_url(this_url)):
             return sec_origin
         if parent_domroot_node := self.parent_domroot_node():
             return parent_domroot_node.security_origin()
         return None
+
+    def __security_origin(self) -> Optional[Url]:
+        """Returns the security origin of the frame.
+
+        This method returns the value for the "security origin" attribute from
+        the XML. This method only works for graph files version 0.7.4 or more
+        recent. Otherwise, raises an exception."""
+        if self.pg.feature_check(Feature.EXPLICIT_SECURITY_ORIGINS):
+            return str(self.data()[self.RawAttrs.SECURITY_ORIGIN.value])
+        raise exception_for_feature(Feature.EXPLICIT_SECURITY_ORIGINS)
+
+    def security_origin(self) -> Optional[Url]:
+        """Calculates the security origin for the frame.
+
+        Usually this'll be determined by the URL of the frame, but in some
+        cases (such as an about:blank frame) it'll be inherited from the
+        parent frame."""
+
+        # In more recent versions of PageGraph recordings, the security
+        # origin of the frame is explicitly recorded in the graph, and so
+        # doesn't require any calculation.
+        if self.pg.feature_check(Feature.EXPLICIT_SECURITY_ORIGINS):
+            return self.__security_origin()
+        return self.__calculate_security_origin()
 
     def is_top_level_domroot(self) -> bool:
         for edge in self.incoming_edges():
@@ -116,9 +161,9 @@ class DOMRootNode(ParentDOMElementNode, Reportable):
         return is_url_local(this_frame_url, parent_frame_url)
 
     def parent_domroot_node(self) -> Optional[DOMRootNode]:
-        assert not self.is_top_level_domroot()
         frame_owner_node = self.frame_owner_node()
-        assert frame_owner_node
+        if not frame_owner_node:
+            return None
         domroot_for_frame_owner_node = frame_owner_node.execution_context()
         return domroot_for_frame_owner_node
 

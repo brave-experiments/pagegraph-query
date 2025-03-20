@@ -21,10 +21,10 @@ def matching_cases(test_filter: None | str = None) -> list[pathlib.Path]:
 
 def graph_path_for_case(test_case: pathlib.Path) -> pathlib.Path:
     graph_file_name = test_case.name.replace(HTML_FILETYPE, GRAPH_FILETYPE)
-    return PG_PATHS.graphs() / graph_file_name
+    return PG_PATHS.generated_graphs() / graph_file_name
 
 
-def clear_graphs() -> None:
-    for graph in PG_PATHS.graphs().iterdir():
+def clear_generated_graphs() -> None:
+    for graph in PG_PATHS.generated_graphs().iterdir():
         if graph.name.endswith(GRAPH_FILETYPE):
             graph.unlink()

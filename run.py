@@ -20,7 +20,7 @@ from pagegraph import __version__
 
 
 # pylint: disable=too-many-return-statements
-def get_command(args: argparse.Namespace) -> pagegraph.commands.Command:
+def get_command(args: argparse.Namespace) -> pagegraph.commands.Base:
     match args.command_name:
         case "subframes":
             return pagegraph.commands.subframes.Command(

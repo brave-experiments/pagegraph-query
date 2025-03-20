@@ -1,8 +1,12 @@
 # Tools for removing things Brave injects browser side from graphs,
 # to make test results better match expectations.
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from typing import Sequence
+
     from pagegraph.graph import PageGraph
     from pagegraph.graph.edge import Edge
     from pagegraph.graph.node import Node
@@ -10,11 +14,11 @@ if TYPE_CHECKING:
 
 ELM_PICKER_SCRIPT_NEEDLE = "./components/brave_extension/extension/brave_extension/content_element_picker.ts"
 HAS_CACHED: bool = False
-ARTIFACT_NODES: set["Node"] = set()
-ARTIFACT_EDGES: set["Edge"] = set()
+ARTIFACT_NODES: set[Node] = set()
+ARTIFACT_EDGES: set[Edge] = set()
 
 
-def build_caches(pg: "PageGraph") -> None:
+def build_caches(pg: PageGraph) -> None:
     global HAS_CACHED
     if HAS_CACHED:
         return
@@ -27,7 +31,7 @@ def build_caches(pg: "PageGraph") -> None:
     HAS_CACHED = True
 
 
-def filter_artifact_nodes(pg: "PageGraph", nodes: list["Node"]) -> list["Node"]:
+def filter_artifact_nodes(pg: PageGraph, nodes: list[Node]) -> list[Node]:
     build_caches(pg)
     filtered_nodes = []
     for node in nodes:
@@ -37,7 +41,7 @@ def filter_artifact_nodes(pg: "PageGraph", nodes: list["Node"]) -> list["Node"]:
     return filtered_nodes
 
 
-def filter_artifact_edges(pg: "PageGraph", edges: list["Edge"]) -> list["Edge"]:
+def filter_artifact_edges(pg: PageGraph, edges: list[Edge]) -> list[Edge]:
     build_caches(pg)
     filtered_edges = []
     for edge in edges:

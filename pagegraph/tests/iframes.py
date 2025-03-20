@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from pagegraph.urls import security_origin_from_url
 from pagegraph.tests import PageGraphBaseTestClass
@@ -14,7 +14,7 @@ FRAME_URL = "assets/frames/blank-frame.html"
 
 
 class IFramesBasicTestCase(PageGraphBaseTestClass):
-    NAME = "iframes-about_blank"
+    NAME = "gen/iframes-about_blank"
 
     def test_num_iframes(self) -> None:
         frame_nodes = self.graph.iframe_nodes()
@@ -33,11 +33,14 @@ class IFramesBasicTestCase(PageGraphBaseTestClass):
                 automatic_domroot = domroot_node
             else:
                 final_domroot = domroot_node
+
         self.assertIsNotNone(automatic_domroot)
+        assert automatic_domroot
         self.assertEqual(automatic_domroot.url(), ABOUT_BLANK_URL)
         self.assertTrue(automatic_domroot.is_local_domroot())
 
         self.assertIsNotNone(final_domroot)
+        assert final_domroot
         self.assertEqual(final_domroot.url(), ABOUT_BLANK_URL)
         self.assertTrue(final_domroot.is_local_domroot())
 
@@ -47,7 +50,7 @@ class IFramesBasicTestCase(PageGraphBaseTestClass):
 
 
 class IFramesNavigationTestCase(PageGraphBaseTestClass):
-    NAME = "iframes-navigation"
+    NAME = "gen/iframes-navigation"
 
     def test_num_iframes(self) -> None:
         frame_nodes = self.graph.iframe_nodes()
@@ -69,7 +72,7 @@ class IFramesNavigationTestCase(PageGraphBaseTestClass):
         about_blank_domroot = None
         dest_domroot = None
         for node in domroot_nodes:
-            if FRAME_URL in node.url():
+            if FRAME_URL in str(node.url()):
                 dest_domroot = node
             elif node.url() == ABOUT_BLANK_URL:
                 if node.is_init_domroot():
@@ -77,8 +80,11 @@ class IFramesNavigationTestCase(PageGraphBaseTestClass):
                 else:
                     about_blank_domroot = node
         self.assertIsNotNone(init_domroot)
+        assert init_domroot
         self.assertIsNotNone(about_blank_domroot)
+        assert about_blank_domroot
         self.assertIsNotNone(dest_domroot)
+        assert dest_domroot
 
         # Now check to make sure the nodes occurred in the expected order.
         self.assertTrue(
@@ -91,42 +97,52 @@ class IFramesNavigationTestCase(PageGraphBaseTestClass):
 
 
 class IFramesSecurityOriginsTestCase(PageGraphBaseTestClass):
-    NAME = "iframes-security_origin"
+    NAME = "gen/iframes-security_origin"
 
     def graph_security_origin(self) -> Url:
-        return security_origin_from_url(self.graph.url)
+        security_origin = security_origin_from_url(self.graph.url)
+        self.assertTrue(isinstance(security_origin, str))
+        return cast(str, security_origin)
 
     def test_top_frame_security_origin(self) -> None:
-        top_level_frame = self.graph.get_elements_by_id("frame1")
-        self.assertEqual(len(top_level_frame), 1)
-        domroot = top_level_frame[0].domroot_node()
+        query_results = self.graph.get_elements_by_id("frame1")
+        self.assertEqual(len(query_results), 1)
+        top_level_frame = query_results[0].as_frame_owner_node()
+        assert top_level_frame
+        domroot = top_level_frame.domroot_node()
         self.assertIsNotNone(domroot)
         self.assertEqual(self.graph_security_origin(), domroot.security_origin())
 
     def test_srcdoc_frame_security_origin(self) -> None:
-        srcdoc_frame = self.graph.get_elements_by_id("frame2")
-        self.assertEqual(len(srcdoc_frame), 1)
-        domroot = srcdoc_frame[0].domroot_node()
+        query_results = self.graph.get_elements_by_id("frame2")
+        self.assertEqual(len(query_results), 1)
+        frame_node = query_results[0].as_frame_owner_node()
+        assert frame_node
+        domroot = frame_node.domroot_node()
         self.assertIsNotNone(domroot)
         self.assertEqual(self.graph_security_origin(), domroot.security_origin())
 
     def test_remote_frame_security_origin(self) -> None:
-        remote_frame = self.graph.get_elements_by_id("frame3")
-        self.assertEqual(len(remote_frame), 1)
-        domroot = remote_frame[0].domroot_node()
+        query_results = self.graph.get_elements_by_id("frame3")
+        self.assertEqual(len(query_results), 1)
+        frame_node = query_results[0].as_frame_owner_node()
+        assert frame_node
+        domroot = frame_node.domroot_node()
         self.assertIsNotNone(domroot)
         self.assertNotEqual(self.graph_security_origin(), domroot.security_origin())
 
     def test_aboutblank_frame_security_origin(self) -> None:
-        blank_frame = self.graph.get_elements_by_id("frame4")
-        self.assertEqual(len(blank_frame), 1)
-        domroot = blank_frame[0].domroot_node()
+        query_results = self.graph.get_elements_by_id("frame4")
+        self.assertEqual(len(query_results), 1)
+        frame_node = query_results[0].as_frame_owner_node()
+        assert frame_node
+        domroot = frame_node.domroot_node()
         self.assertIsNotNone(domroot)
         self.assertEqual(self.graph_security_origin(), domroot.security_origin())
 
 
 class IFramesSubDocumentTestCase(PageGraphBaseTestClass):
-    NAME = "iframes-sub_document"
+    NAME = "gen/iframes-sub_document"
 
     def test_num_iframes(self) -> None:
         frame_nodes = self.graph.iframe_nodes()
@@ -142,72 +158,88 @@ class IFramesSubDocumentTestCase(PageGraphBaseTestClass):
         init_domroot = None
         dest_domroot = None
         for node in domroot_nodes:
-            if ABOUT_BLANK_URL in node.url():
+            node_url = node.url()
+            if not node_url:
+                continue
+            if ABOUT_BLANK_URL in node_url:
                 init_domroot = node
-            elif FRAME_URL in node.url():
+            elif FRAME_URL in node_url:
                 dest_domroot = node
 
         self.assertIsNotNone(init_domroot)
+        assert init_domroot
         self.assertIsNotNone(dest_domroot)
+        assert dest_domroot
         self.assertTrue(init_domroot.timestamp() <= dest_domroot.timestamp())
         self.assertTrue(init_domroot.id() < dest_domroot.id())
 
 
 class IFramesIsSecurityOriginInheritingTestCase(PageGraphBaseTestClass):
-    NAME = "iframes-is_security_origin_inheriting"
+    NAME = "gen/iframes-is_security_origin_inheriting"
 
     def test_initial_about_blank(self) -> None:
-        frame = self.graph.get_elements_by_id("frame1")[0]
+        frame = self.graph.get_elements_by_id("frame1")[0].as_frame_owner_node()
+        assert frame
         self.assertTrue(frame.is_security_origin_inheriting())
 
     def test_initial_remote_origin(self) -> None:
-        frame = self.graph.get_elements_by_id("frame2")[0]
+        frame = self.graph.get_elements_by_id("frame2")[0].as_frame_owner_node()
+        assert frame
         self.assertFalse(frame.is_security_origin_inheriting())
 
     def test_nested_about_blank(self) -> None:
-        frame = self.graph.get_elements_by_id("frame3")[0]
+        frame = self.graph.get_elements_by_id("frame3")[0].as_frame_owner_node()
+        assert frame
         self.assertTrue(frame.is_security_origin_inheriting())
 
     def test_nested_remote_origin(self) -> None:
-        frame = self.graph.get_elements_by_id("frame4")[0]
+        frame = self.graph.get_elements_by_id("frame4")[0].as_frame_owner_node()
+        assert frame
         self.assertFalse(frame.is_security_origin_inheriting())
 
 
 class IFramesIsThirdPartyToRootTestCase(PageGraphBaseTestClass):
-    NAME = "iframes-is_third_party_to_root"
+    NAME = "gen/iframes-is_third_party_to_root"
 
     def test_about_blank_frame(self) -> None:
-        frame = self.graph.get_elements_by_id("frame1")[0]
+        frame = self.graph.get_elements_by_id("frame1")[0].as_frame_owner_node()
+        assert frame
         self.assertFalse(frame.is_third_party_to_root())
 
     def test_remote_origin_frame(self) -> None:
-        frame = self.graph.get_elements_by_id("frame2")[0]
+        frame = self.graph.get_elements_by_id("frame2")[0].as_frame_owner_node()
+        assert frame
         self.assertTrue(frame.is_third_party_to_root())
 
     def test_local_origin_frame(self) -> None:
-        frame = self.graph.get_elements_by_id("frame3")[0]
+        frame = self.graph.get_elements_by_id("frame3")[0].as_frame_owner_node()
+        assert frame
         self.assertFalse(frame.is_third_party_to_root())
 
 
 class IFramesIsTopLevelDOMRootTestCase(PageGraphBaseTestClass):
-    NAME = "iframes-is_top_level_domroot"
+    NAME = "gen/iframes-is_top_level_domroot"
 
     def test_initial_about_blank_frame(self) -> None:
-        frame = self.graph.get_elements_by_id("frame1")[0]
+        frame = self.graph.get_elements_by_id("frame1")[0].as_frame_owner_node()
+        assert frame
         domroot_node = frame.domroot_node()
         self.assertFalse(domroot_node.is_top_level_domroot())
 
     def test_parent_of_initial_about_blank_frame(self) -> None:
-        frame = self.graph.get_elements_by_id("frame1")[0]
+        frame = self.graph.get_elements_by_id("frame1")[0].as_frame_owner_node()
+        assert frame
         domroot_node = frame.execution_context()
         self.assertTrue(domroot_node.is_top_level_domroot())
 
     def test_nested_injected_iframe(self) -> None:
-        frame = self.graph.get_elements_by_id("frame2")[0]
+        frame = self.graph.get_elements_by_id("frame2")[0].as_frame_owner_node()
+        assert frame
         domroot_node = frame.domroot_node()
         self.assertFalse(domroot_node.is_top_level_domroot())
 
     def test_nested_srcdoc_iframe(self) -> None:
-        frame = self.graph.get_elements_by_id("frame3")[0]
+        frame = self.graph.get_elements_by_id("frame3")[0].as_frame_owner_node()
+        assert frame
         domroot_node = frame.domroot_node()
         self.assertFalse(domroot_node.is_top_level_domroot())

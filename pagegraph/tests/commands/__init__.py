@@ -19,7 +19,7 @@ def serve(port: int, verbose: bool) -> None:
 def generate(tool_path: str, testcase_filter: None, port: int,
              should_clear: bool, verbose: bool, other_args: list[str]) -> None:
     if should_clear:
-        PG_CASES.clear_graphs()
+        PG_CASES.clear_generated_graphs()
 
     pg_crawl_dir = None
     try:

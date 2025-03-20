@@ -5,7 +5,7 @@ from pagegraph.tests import PageGraphBaseTestClass
 
 
 class AttributesBasicTestCase(PageGraphBaseTestClass):
-    NAME = 'attrs-basic'
+    NAME = "gen/attrs-basic"
 
     def get_par_html_node(self) -> HTMLNode:
         par_html_node = None

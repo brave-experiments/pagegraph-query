@@ -151,10 +151,6 @@ class PageGraph:
         for node in self.nodes():
             if self.debug:
                 node.validate()
-                # try:
-                    # node.validate()
-                # except AssertionError as exc:
-                    # node.throw("Validation error", exc)
             node.build_caches()
         for edge in self.edges():
             if self.debug:

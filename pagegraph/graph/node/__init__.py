@@ -91,6 +91,7 @@ class Node(PageGraphElement, ABC):
         METHOD = "method"
         SCRIPT_ID = "script id"
         SCRIPT_TYPE = "script type"
+        SECURITY_ORIGIN = "security origin"
         SOURCE = "source"
         TIMESTAMP = "timestamp"
         TEXT = "text"

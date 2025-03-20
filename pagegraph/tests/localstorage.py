@@ -2,7 +2,7 @@ from pagegraph.tests import PageGraphBaseTestClass
 
 
 class LocalStorageBasicTestCase(PageGraphBaseTestClass):
-    NAME = 'localstorage-basic'
+    NAME = "gen/localstorage-basic"
 
     def test_storage_set(self) -> None:
         storage_set_edges = self.graph.storage_set_edges()
@@ -48,7 +48,7 @@ class LocalStorageBasicTestCase(PageGraphBaseTestClass):
 
 # pylint: disable=too-few-public-methods
 class LocalStorageCrossFrameTestCase(PageGraphBaseTestClass):
-    NAME = 'localstorage-cross_frame'
+    NAME = "gen/localstorage-cross_frame"
 
     def test_storage_set(self) -> None:
         storage_set_edges = self.graph.storage_set_edges()

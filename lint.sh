@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-pylint pagegraph run.py tests.py
-mypy --strict pagegraph/
+pylint --rcfile pylintrc pagegraph run.py tests.py
+mypy --config-file mypy.ini --strict run.py tests.py pagegraph/

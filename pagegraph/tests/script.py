@@ -3,7 +3,7 @@ from pagegraph.tests import PageGraphBaseTestClass
 
 # pylint: disable=too-few-public-methods
 class ScriptCrossDomTestCase(PageGraphBaseTestClass):
-    NAME = "script-cross_dom"
+    NAME = "gen/script-cross_dom"
 
     def test_par_domroots(self) -> None:
         html_nodes = self.graph.html_nodes()
@@ -14,29 +14,39 @@ class ScriptCrossDomTestCase(PageGraphBaseTestClass):
         self.assertEqual(len(par_nodes), 1)
 
         par_node = par_nodes[0]
-        creation_frame_id = par_node.domroot_for_creation().frame_id()
-        document_frame_id = par_node.domroot_for_document().frame_id()
+        assert par_node
+
+        domroot_for_creation = par_node.domroot_for_creation()
+        assert domroot_for_creation
+        creation_frame_id = domroot_for_creation.frame_id()
+
+        domroot_for_document = par_node.domroot_for_document()
+        assert domroot_for_document
+        document_frame_id = domroot_for_document.frame_id()
+
         self.assertNotEqual(creation_frame_id, document_frame_id)
 
-        frame_id = par_node.domroot_for_serialization().frame_id()
+        domroot_for_serialization = par_node.domroot_for_serialization()
+        assert domroot_for_serialization
+        frame_id = domroot_for_serialization.frame_id()
         self.assertEqual(document_frame_id, frame_id)
 
 
 # pylint: disable=too-few-public-methods
 class ScriptJsCallsTestCase(PageGraphBaseTestClass):
-    NAME = "script-js_calls"
+    NAME = "gen/script-js_calls"
 
     def test_num_scripts(self) -> None:
         child_frame_url = "assets/frames/script_js-calls_child_frame.html"
         main_domroot = None
         toplevel_domroot_nodes = self.graph.toplevel_domroot_nodes()
         for node in toplevel_domroot_nodes:
-            if ScriptJsCallsTestCase.NAME in node.url():
+            if "script-js_calls" in str(node.url()):
                 main_domroot = node
                 break
 
-        self.assertIsNotNone(main_domroot)
-        child_domroots = main_domroot.domroot_nodes(func=lambda x: child_frame_url in x.url())
+        assert main_domroot
+        child_domroots = main_domroot.domroot_nodes(func=lambda x: child_frame_url in str(x.url()))
         self.assertEqual(len(child_domroots), 1)
 
         raw_main_frame_scripts = main_domroot.scripts_executed_from()
