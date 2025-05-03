@@ -1,0 +1,13 @@
+<body>
+  <p id="my-par" data-test-attribute="data-test-attribute-value">My paragraph</p>
+
+  <script>
+    const parElm = document.getElementById("my-par")
+
+    // Test "set" operations using setAttribute
+    parElm.setAttribute("data-dynamic-attribute", "data-dynamic-attribute-value")
+
+    // Test "set" operation using *.dataset
+    parElm.dataset.testAttributeSecond = "data-dynamic-attribute-value-second"
+  </script>
+</body>

@@ -63,11 +63,10 @@ class Base(ABC):
         self.input_path = input_path
         self.debug = debug
 
-    def validate(self) -> bool:
+    def validate(self) -> None:
         if not self.input_path.is_file():
             raise ValueError(
                 f"Unable to read from input file: {self.input_path.name}")
-        return True
 
     def execute(self) -> Result:
         raise NotImplementedError()

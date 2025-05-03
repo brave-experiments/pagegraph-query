@@ -36,7 +36,7 @@ class Command(pagegraph.commands.Base):
         self.omit_executors = omit_executors
         super().__init__(input_path, debug)
 
-    def validate(self) -> bool:
+    def validate(self) -> None:
         if self.frame_nid:
             pagegraph.commands.validate_node_id(self.frame_nid)
         if self.pg_id:

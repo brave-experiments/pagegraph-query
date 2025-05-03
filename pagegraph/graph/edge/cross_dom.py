@@ -21,7 +21,7 @@ class CrossDOMEdge(Edge):
     # graph version.
     outgoing_node_type_names = None
 
-    def validate(self) -> bool:
+    def validate(self) -> None:
         if self.__class__.outgoing_node_type_names is not None:
             return super().validate()
 

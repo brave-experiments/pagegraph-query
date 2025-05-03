@@ -83,3 +83,23 @@ class AttributesBasicTestCase(PageGraphBaseTestClass):
         acting_script = attr_delete_edge.incoming_node().as_script_local_node()
         self.assertIsNotNone(acting_script)
         self.assertEqual(attr_delete_edge.key(), "id")
+
+
+class AttributesDataSetTestCase(PageGraphBaseTestClass):
+    NAME = "gen/attrs-data_set"
+
+    def test_set_data_attr_inline(self) -> None:
+        elements = self.graph.get_elements_by_id('my-par')
+        self.assertEqual(len(elements), 1)
+
+        par_elm = elements[0]
+        attributes = par_elm.attributes()
+
+        expected_key_values = {
+            "data-test-attribute": "data-test-attribute-value",
+            "data-dynamic-attribute": "data-dynamic-attribute-value",
+            "data-test-attribute-second": "data-dynamic-attribute-value-second",
+        }
+
+        for key, value in expected_key_values.items():
+            self.assertEqual(attributes[key], value)

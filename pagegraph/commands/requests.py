@@ -29,7 +29,7 @@ class Command(pagegraph.commands.Base):
         self.frame_nid = frame_nid
         super().__init__(input_path, debug)
 
-    def validate(self) -> bool:
+    def validate(self) -> None:
         if self.frame_nid:
             pagegraph.commands.validate_node_id(self.frame_nid)
         return super().validate()

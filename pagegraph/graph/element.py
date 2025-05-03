@@ -72,7 +72,7 @@ class PageGraphElement(ABC):
             needle_class = needle_class.__bases__[0]
         return summary
 
-    def validate(self) -> bool:
+    def validate(self) -> None:
         # Inheriting classes should implement this method to perform correctness
         # checks and similar activities. This is intended as a check that
         # the `pagegraph-query` code correctly understands and abstracts the

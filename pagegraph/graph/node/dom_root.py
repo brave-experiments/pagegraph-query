@@ -39,7 +39,7 @@ class DOMRootNode(ParentDOMElementNode, Reportable):
         "url": "url",
     }
 
-    def validate(self) -> bool:
+    def validate(self) -> None:
         """Add the additional validation step to make sure that the
         security origins we see explicitly included in graphs match
         what we expect them to be based on the graph structure (note
@@ -110,7 +110,10 @@ class DOMRootNode(ParentDOMElementNode, Reportable):
         the XML. This method only works for graph files version 0.7.4 or more
         recent. Otherwise, raises an exception."""
         if self.pg.feature_check(Feature.EXPLICIT_SECURITY_ORIGINS):
-            return str(self.data()[self.RawAttrs.SECURITY_ORIGIN.value])
+            origin: Optional[str] = str(self.data()[self.RawAttrs.SECURITY_ORIGIN.value])
+            if origin == "null":
+                return None
+            return origin
         raise exception_for_feature(Feature.EXPLICIT_SECURITY_ORIGINS)
 
     def security_origin(self) -> Optional[Url]:

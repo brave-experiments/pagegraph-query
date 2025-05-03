@@ -12,6 +12,23 @@ if TYPE_CHECKING:
 
 class ParentDOMElementNode(DOMElementNode, ABC):
 
+    def validate(self) -> None:
+        summary: dict[str, JSONAble] = {}
+        incoming_edges = list(self.incoming_edges())
+        incoming_edges.sort(key=lambda x: x.id())
+        for edge in incoming_edges:
+            if set_attr_edge := edge.as_attribute_set_edge():
+                summary[set_attr_edge.key()] = set_attr_edge.value()
+                continue
+            if del_attr_edge := edge.as_attribute_delete_edge():
+                try:
+                    del summary[del_attr_edge.key()]
+                except KeyError:
+                    self.throw(
+                        f"Found delete attr {del_attr_edge.key()} without "
+                        "an existing attribute value.")
+        super().validate()
+
     def as_parent_dom_element_node(self) -> Optional[ParentDOMElementNode]:
         return self
 
@@ -30,9 +47,12 @@ class ParentDOMElementNode(DOMElementNode, ABC):
                 try:
                     del summary[del_attr_edge.key()]
                 except KeyError:
-                    self.throw(
-                        f"Found delete attr {del_attr_edge.key()} without "
-                        "an existing attribute value.")
+                    # This is an unexpected situation, where we see an
+                    # attribute being deleted in the graph that we
+                    # don't have a record of ever being completed. Here
+                    # we ignore this oddity, but in the validate() method
+                    # we throw.
+                    pass
         return summary
 
     def attributes_ever(self) -> dict[str, list[JSONAble]]:

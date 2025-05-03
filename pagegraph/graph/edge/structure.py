@@ -12,7 +12,7 @@ class StructureEdge(Edge):
     # graph version.
     incoming_node_type_names = None
 
-    def validate(self) -> bool:
+    def validate(self) -> None:
         if self.__class__.incoming_node_type_names:
             return super().validate()
 

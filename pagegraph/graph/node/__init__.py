@@ -299,7 +299,7 @@ class Node(PageGraphElement, ABC):
 
         return output
 
-    def validate(self) -> bool:
+    def validate(self) -> None:
         if self.__class__.incoming_node_types is not None:
             valid_incoming_node_types = self.__class__.incoming_node_types
             for edge in self.incoming_edges():
@@ -311,7 +311,6 @@ class Node(PageGraphElement, ABC):
                         f"{parent_node.node_type()}:{parent_node.pg_id()} -> "
                         f"{edge.edge_type()}:{edge.pg_id()} -> "
                         f"{self.node_type()}:{self.pg_id()}")
-                    return False
 
         if self.__class__.outgoing_node_types is not None:
             valid_outgoing_node_types = self.__class__.outgoing_node_types
@@ -319,7 +318,6 @@ class Node(PageGraphElement, ABC):
                 node_type = child_node.node_type()
                 if node_type not in valid_outgoing_node_types:
                     self.throw(f"Unexpected outgoing node type: {node_type}")
-                    return False
 
         if self.__class__.incoming_edge_types is not None:
             valid_incoming_edge_types = self.__class__.incoming_edge_types
@@ -327,7 +325,6 @@ class Node(PageGraphElement, ABC):
                 edge_type = edge.edge_type()
                 if edge_type not in valid_incoming_edge_types:
                     self.throw(f"Unexpected incoming edge type: {edge_type}")
-                    return False
 
         if self.__class__.outgoing_edge_types is not None:
             valid_outgoing_edge_types = self.__class__.outgoing_edge_types
@@ -335,8 +332,6 @@ class Node(PageGraphElement, ABC):
                 edge_type = edge.edge_type()
                 if edge_type not in valid_outgoing_edge_types:
                     self.throw(f"Unexpected outgoing edge type: {edge_type}")
-                    return False
-        return True
 
     def creator_edge(self) -> Optional[NodeCreateEdge]:
         for edge in self.incoming_edges():

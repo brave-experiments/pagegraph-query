@@ -34,7 +34,7 @@ class Command(pagegraph.commands.Base):
         self.only_body_content = only_body_content
         super().__init__(input_path, debug)
 
-    def validate(self) -> bool:
+    def validate(self) -> None:
         if self.frame_filter:
             pagegraph.commands.validate_node_id(self.frame_filter)
         return super().validate()

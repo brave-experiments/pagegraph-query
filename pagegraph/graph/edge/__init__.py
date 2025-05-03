@@ -345,21 +345,18 @@ class Edge(PageGraphElement, ABC):
             output += f"- {attr_name}={one_line_attr_value}\n"
         return output
 
-    def validate(self) -> bool:
+    def validate(self) -> None:
         valid_incoming_node_types = self.__class__.incoming_node_types()
         if valid_incoming_node_types is not None:
             node_type = self.incoming_node().node_type()
             if node_type not in valid_incoming_node_types:
                 self.throw(f"Unexpected incoming node type: {node_type}")
-                return False
 
         valid_outgoing_node_types = self.__class__.outgoing_node_types()
         if valid_outgoing_node_types is not None:
             node_type = self.outgoing_node().node_type()
             if node_type not in valid_outgoing_node_types:
                 self.throw(f"Unexpected outgoing node type: {node_type}")
-                return False
-        return True
 
     def subgraph(self, depth: int = 1) -> MultiDiGraph:
         incoming_node = self.incoming_node()

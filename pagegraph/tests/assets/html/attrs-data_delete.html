@@ -1,0 +1,15 @@
+<body>
+  <p id="my-par" data-key-one="value-one">My paragraph</p>
+
+  <script>
+    const parElm = document.getElementById("my-par")
+
+    // Test deleting existing data attribute
+    parElm.removeAttribute("data-key-one")
+
+    // Test deleting non-existent data attribute (should not show up in graph)
+    parElm.removeAttribute("data-key-two")
+
+    delete parElm.dataset.keyTwo
+  </script>
+</body>

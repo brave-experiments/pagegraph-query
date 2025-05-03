@@ -1,3 +1,13 @@
+Version 0.9.7
+---
+Fix situation where PageGraph would report a security origin as "null", but
+pagegraph-query was expecting a `None` value.
+
+For container DOM elements (`ParentDOMElementNode`), move fatal check for
+attributes we see a delete record for, but no set record, to `validate()`,
+and make `attributes()` ignore the unexpected situation case.
+
+
 Version 0.9.6
 ---
 

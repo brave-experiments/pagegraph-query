@@ -32,7 +32,7 @@ class NodeCreateEdge(FrameIdAttributedEdge):
     def as_create_edge(self) -> Optional[NodeCreateEdge]:
         return self
 
-    def validate(self) -> bool:
+    def validate(self) -> None:
         # The only times we should see a 0-reported frame id are for
         # frames that are created automatically by blink (e.g.,
         # when a frame is being set up for the to level frame, or
@@ -41,5 +41,5 @@ class NodeCreateEdge(FrameIdAttributedEdge):
         frame_id = self.frame_id()
         outgoing_node = self.outgoing_node()
         if frame_id == 0 and outgoing_node.as_domroot_node() is None:
-            return False
-        return True
+            nid = outgoing_node.pg_id()
+            self.throw(f"Found frame_id=0 for non-DOM Root nid={nid}")

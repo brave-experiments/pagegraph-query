@@ -38,7 +38,7 @@ class Command(pagegraph.commands.Base):
         self.output_path = output_path
         super().__init__(input_path, debug)
 
-    def validate(self) -> bool:
+    def validate(self) -> None:
         if self.pg_id:
             pagegraph.commands.validate_pg_id(self.pg_id)
         return super().validate()
