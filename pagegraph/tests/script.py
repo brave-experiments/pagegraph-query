@@ -64,3 +64,12 @@ class ScriptJsCallsTestCase(PageGraphBaseTestClass):
             for js_call_result in script.calls("Performance.now"):
                 attr_sets.add(js_call_result.pretty_print())
         self.assertEqual(len(attr_sets), 5)
+
+class ScriptNumJsCallsTestCase(PageGraphBaseTestClass):
+    NAME = "gen/script-num-js_calls"
+
+    def test_num_js_calls(self) -> None:
+        js_structure_nodes = self.graph.js_structure_nodes()
+        for js_node in js_structure_nodes:
+            results = js_node.call_results()
+            self.assertEqual(len(results), 2)
