@@ -11,9 +11,14 @@ from pagegraph.serialize import JSStructureReport
 if TYPE_CHECKING:
     from pagegraph.graph.edge.js_call import JSCallEdge
     from pagegraph.graph.edge.js_result import JSResultEdge
+    from pagegraph.graph import PageGraph
+    from pagegraph.types import PageGraphId
 
 class JSStructureNode(Node, Reportable):
-    __cached_call_map: dict[JSCallEdge, JSCallResult] = {}
+
+    def __init__(self, graph: PageGraph, pg_id: PageGraphId) -> None:
+        super().__init__(graph, pg_id)
+        self.__cached_call_map: dict[JSCallEdge, JSCallResult] = {}
 
     def to_report(self) -> JSStructureReport:
         return JSStructureReport(self.name(), self.type_name())
