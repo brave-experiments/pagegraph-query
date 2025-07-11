@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from pathlib import Path
     from typing import Optional, Union
 
-    from pagegraph.node.dom_root import DOMRootNode
+    from pagegraph.graph.node.dom_root import DOMRootNode
     from pagegraph.serialize import ScriptReport, BasicReport, JSCallResultReport
     from pagegraph.types import PageGraphId
 
@@ -53,7 +53,7 @@ class Command(pagegraph.commands.Base):
             domroot_node = pg.node(self.frame_nid).as_domroot_node()
             if not domroot_node:
                 raise ValueError("The PageGraph id provided is not " +
-                    f"a DOMRootNode, nid={self.frame_id}")
+                    f"a DOMRootNode, nid={self.frame_nid}")
         assert domroot_node
 
         can_do_fast_path = (domroot_node is not None and
