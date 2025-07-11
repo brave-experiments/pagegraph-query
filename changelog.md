@@ -1,3 +1,8 @@
+Version 0.9.8
+---
+Fix error in `js-calls` command that caused JS invocations to be over counted.
+
+
 Version 0.9.7
 ---
 Fix situation where PageGraph would report a security origin as "null", but
