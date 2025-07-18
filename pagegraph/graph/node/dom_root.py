@@ -262,7 +262,7 @@ class DOMRootNode(ParentDOMElementNode, Reportable):
                 if execute_edge.frame_id() == current_frame_id:
                     scripts.add(script_node)
             elif parent_script_node := ex_node.as_script_local_node():
-                if parent_script_node.execution_context_from() == self:
+                if parent_script_node.execution_context_from() is self:
                     scripts.add(script_node)
             else:
                 pass

@@ -7,6 +7,7 @@ from typing import Union, Optional, TYPE_CHECKING
 
 from pagegraph.graph.node import Node
 from pagegraph.graph.node.abc.script import ScriptNode
+from pagegraph.graph.node.text import TextNode
 from pagegraph.serialize import Reportable, ScriptReport
 from pagegraph.types import ResourceType
 
@@ -23,12 +24,6 @@ if TYPE_CHECKING:
 
 class ScriptLocalNode(ScriptNode, Reportable):
 
-    summary_methods = {
-        "hash": "hash",
-        "script_type": "script_type",
-        "url": "url_if_external"
-    }
-
     # As defined by the Blink `ScriptSourceLocationType` enum
     # third_party/blink/renderer/bindings/core/v8/script_source_location_type.h
     class ScriptType(Enum):
@@ -43,6 +38,14 @@ class ScriptLocalNode(ScriptNode, Reportable):
         JS_URL = "javascript url"
         MODULE = "module"
         UNKNOWN = "unknown"
+
+    summary_methods = {
+        "hash": "hash",
+        "script_type": "script_type",
+        "url": "url_if_external"
+    }
+
+    script_types_potentially_with_urls = {ScriptType.EXTERNAL, ScriptType.MODULE}
 
     def as_script_local_node(self) -> Optional[ScriptLocalNode]:
         return self
@@ -99,9 +102,7 @@ class ScriptLocalNode(ScriptNode, Reportable):
         elif frame_owner_node := executor_node.as_frame_owner_node():
             executor_report = frame_owner_node.to_report()
 
-        url = None
-        if self.script_type() == self.__class__.ScriptType.EXTERNAL:
-            url = self.url()
+        url = self.url_if_available()
 
         report = ScriptReport(self.pg_id(), self.script_type().value,
                               self.hash())
@@ -122,12 +123,20 @@ class ScriptLocalNode(ScriptNode, Reportable):
         hasher.update(self.source().encode("utf8"))
         return b64encode(hasher.digest()).decode("utf8")
 
-    def url_if_external(self) -> Optional["Url"]:
+    def url_if_external(self) -> Optional[Url]:
         if self.script_type() != self.__class__.ScriptType.EXTERNAL:
             return None
         return self.url()
 
-    def url(self) -> "Url":
+    def url_if_available(self) -> Optional[Url]:
+        if self.script_type() not in ScriptLocalNode.script_types_potentially_with_urls:
+            return None
+        # Inline scripts can also have the module type, but have no URL.
+        if self.script_type() == ScriptLocalNode.ScriptType.MODULE and self.matching_text_node():
+            return None
+        return self.url()
+
+    def url(self) -> Url:
         # pylint: disable=line-too-long
         # If all of the following are correct, then we can be certain
         # about associating this script with a particular URL.
@@ -140,15 +149,15 @@ class ScriptLocalNode(ScriptNode, Reportable):
         # 6. that resulting request is for script
         # Test for requirement 1 above
         script_type = self.script_type()
-        if self.pg.debug and script_type != self.__class__.ScriptType.EXTERNAL:
+        if self.pg.debug and script_type not in ScriptLocalNode.script_types_potentially_with_urls:
             self.throw("Cannot ask for URL of non-external script")
 
-        incoming_node = self.execute_edge().incoming_node()
+        creator_node = self.creator_node()
         # Test for requirement 2 above
-        if self.pg.debug and incoming_node.as_html_node() is None:
-            incoming_node.throw("Unexpected execute edge")
+        if self.pg.debug and creator_node.as_html_node() is None:
+            creator_node.throw("Unexpected execute edge")
 
-        executing_node = incoming_node.as_html_node()
+        executing_node = creator_node.as_html_node()
         assert executing_node
         # Test for requirement 3 above
         execution_edges = []
@@ -169,6 +178,7 @@ class ScriptLocalNode(ScriptNode, Reportable):
             successful_request = request_chain.success_request()
             if not successful_request:
                 break
+            # Test for requirements 6
             if request_chain.resource_type() != ResourceType.SCRIPT:
                 break
             # Otherwise, if we're here, we can confidently and correctly
@@ -204,8 +214,8 @@ class ScriptLocalNode(ScriptNode, Reportable):
 
     def matching_request_chain(self) -> Optional[RequestChain]:
         script_hash = self.hash()
-        incoming_node = self.execute_edge().incoming_node()
-        executing_node = incoming_node.as_html_node()
+        creator_node = self.creator_node()
+        executing_node = creator_node.as_html_node()
         assert executing_node
         for request_chain in executing_node.requests():
             if request_chain.hash() == script_hash:
@@ -218,6 +228,17 @@ class ScriptLocalNode(ScriptNode, Reportable):
         for request_chain in unattributed_requests:
             if request_chain.hash() == script_hash:
                 return request_chain
+        return None
+
+    def matching_text_node(self) -> Optional[TextNode]:
+        script_hash = self.hash()
+        creator_node = self.creator_node()
+        for edge in creator_node.outgoing_edges():
+            if create_edge := edge.as_document_edge():
+                node = create_edge.outgoing_node()
+                if text_node := node.as_text_node():
+                    if text_node.hash() == script_hash:
+                        return text_node
         return None
 
     def execution_context_in(self) -> DOMRootNode:
