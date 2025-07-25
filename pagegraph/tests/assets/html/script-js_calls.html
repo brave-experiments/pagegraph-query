@@ -1,9 +1,21 @@
 <body onload="document.getElementsByTagName('textarea')[0].value += 'load::' + performance.now() + '\n';">
-  <textarea></textarea>
+  <textarea rows="15"></textarea>
   <script>
     document.getElementsByTagName('textarea')[0].value += 'inline::' + performance.now() + '\n';
   </script>
   <script src="/assets/js/script_js-calls_standard.js"></script>
   <script src="/assets/js/script_js-calls_async.js" async></script>
   <iframe src="/assets/frames/script_js-calls_child_frame.html"></iframe>
+
+  <script>
+    import('/assets/js/script_js-module-1.js').then(module => {
+      module.run();
+    });
+  </script>
+
+  <script type="module" src="/assets/js/script_js-module-3.js"></script>
+
+  <script type="module">
+    document.getElementsByTagName('textarea')[0].value += 'module4::' + performance.now() + '\n';  
+  </script>
 </body>

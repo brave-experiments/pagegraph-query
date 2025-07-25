@@ -1,4 +1,5 @@
 from pagegraph.tests import PageGraphBaseTestClass
+from pagegraph.graph.node.script_local import ScriptLocalNode
 
 
 # pylint: disable=too-few-public-methods
@@ -36,7 +37,8 @@ class ScriptCrossDomTestCase(PageGraphBaseTestClass):
 class ScriptJsCallsTestCase(PageGraphBaseTestClass):
     NAME = "gen/script-js_calls"
 
-    def test_num_scripts(self) -> None:
+    def setUp(self):
+        super().setUp()
         child_frame_url = "assets/frames/script_js-calls_child_frame.html"
         main_domroot = None
         toplevel_domroot_nodes = self.graph.toplevel_domroot_nodes()
@@ -49,21 +51,62 @@ class ScriptJsCallsTestCase(PageGraphBaseTestClass):
         child_domroots = main_domroot.domroot_nodes(func=lambda x: child_frame_url in str(x.url()))
         self.assertEqual(len(child_domroots), 1)
 
-        raw_main_frame_scripts = main_domroot.scripts_executed_from()
-        main_frame_scripts = self.filter_nodes(raw_main_frame_scripts)
-        self.assertEqual(len(main_frame_scripts), 4)
-
         child_domroot = child_domroots[0]
-        raw_frame_scripts = child_domroot.scripts_executed_from()
-        frame_scripts = self.filter_nodes(raw_frame_scripts)
-        self.assertEqual(len(frame_scripts), 1)
 
-        all_scripts = main_frame_scripts + frame_scripts
+        raw_main_frame_scripts = main_domroot.scripts_executed_from()
+        self.main_frame_scripts = self.filter_nodes(raw_main_frame_scripts)
+
+        raw_frame_scripts = child_domroot.scripts_executed_from()
+        self.frame_scripts = self.filter_nodes(raw_frame_scripts)
+
+        self.all_scripts = self.main_frame_scripts + self.frame_scripts
+
+    def test_num_scripts(self) -> None:
+        self.assertEqual(len(self.main_frame_scripts), 9)
+        self.assertEqual(len(self.frame_scripts), 1)
         attr_sets = set()
-        for script in all_scripts:
+        for script in self.all_scripts:
             for js_call_result in script.calls("Performance.now"):
                 attr_sets.add(js_call_result.pretty_print())
-        self.assertEqual(len(attr_sets), 5)
+        self.assertEqual(len(attr_sets), 9)
+
+    def test_script_texts(self) -> None:
+        expected_texts = [
+            "inline::",
+            "module4::",
+            "childframe::",
+            "import('/assets/js/script_js-module-1.js')"
+        ]
+
+        actual_texts = [
+            script.matching_text_node().text()
+            for script in self.all_scripts
+            if script.matching_text_node()
+        ]
+
+        self.assertEqual(len(actual_texts), len(expected_texts))
+        for expected in expected_texts:
+            assert any(expected in actual for actual in actual_texts), \
+            f"Expected text '{expected}' not found in actual texts"
+
+    def test_script_urls(self) -> None:
+        excepted_urls = [
+            "http://[::]:8000/assets/js/script_js-module-1.js",
+            "http://[::]:8000/assets/js/script_js-module-2.js",
+            "http://[::]:8000/assets/js/script_js-module-3.js",
+            "http://[::]:8000/assets/js/script_js-calls_async.js",
+            "http://[::]:8000/assets/js/script_js-calls_standard.js",
+        ]
+
+        actual_urls = [
+            script.url_if_available()
+            for script in self.all_scripts
+            if script.script_type() in ScriptLocalNode.script_types_potentially_with_urls
+            and script.url_if_available() is not None
+        ]
+
+        self.assertEqual(sorted(excepted_urls), sorted(actual_urls))
+
 
 class ScriptNumJsCallsTestCase(PageGraphBaseTestClass):
     NAME = "gen/script-num-js_calls"
