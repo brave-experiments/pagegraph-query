@@ -19,7 +19,7 @@ class FrameOwnerNode(ParentDOMElementNode, Reportable):
         return self
 
     def to_report(self) -> DOMElementReport:
-        return DOMElementReport(self.pg_id(), self.tag_name())
+        return DOMElementReport(self.pg_id(), self.tag_name(), self.attributes())
 
     def child_parser_nodes(self) -> list[ParserNode]:
         child_parser_nodes = []
