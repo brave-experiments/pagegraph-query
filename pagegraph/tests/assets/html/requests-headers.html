@@ -1,0 +1,22 @@
+<body>
+  <h2></h2>
+  <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
+  <script>
+    const appendImage = (url) => {
+      const imgElm = document.createElement("img");
+      imgElm.src = url;
+      document.body.appendChild(imgElm)
+    }
+    Cookies.set("test-cookie-name", "test-cookie-value", {
+      expires: 7,
+      sameSite: 'strict'
+    });
+    document.getElementsByTagName('h2')[0].innerText = JSON.stringify(Cookies.get());
+    setTimeout(_ => {
+      appendImage("/assets/img/blue.png?cookie=yes&cache=" + Math.random());
+      setTimeout(_ => {
+        Cookies.remove("test-cookie-name")
+      }, 500);
+    }, 500);
+  </script>
+</body>

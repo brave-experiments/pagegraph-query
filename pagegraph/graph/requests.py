@@ -31,11 +31,13 @@ class RequestChain(Reportable):
         request_id = self.request_id
         resource_type = self.request.resource_type()
 
-        start_report = RequestReport(self.request.pg_id(), self.request.url())
+        start_report = RequestReport(self.request.pg_id(), self.request.url(),
+                                     self.request.headers())
         redirect_reports = []
         for redirect in self.redirects:
             redirect_reports.append(
-                RequestReport(redirect.pg_id(), redirect.url()))
+                RequestReport(redirect.pg_id(), redirect.url(),
+                              redirect.headers()))
         result_report: Union[
             RequestCompleteReport, RequestErrorReport, None] = None
         result_edge = self.result

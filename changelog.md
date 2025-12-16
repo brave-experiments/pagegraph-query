@@ -1,3 +1,11 @@
+
+Version 0.9.9
+---
+
+Add support for http headers now being in all requests, and not just responses,
+in all `Request*Edge` classes.
+
+
 Version 0.9.8
 ---
 Fix error in `js-calls` command that caused JS invocations to be over counted.

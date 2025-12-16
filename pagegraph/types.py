@@ -57,7 +57,9 @@ RequestIncoming = Union["RequestStartEdge", "RequestRedirectEdge"]
 RequestOutgoing = Union["RequestRedirectEdge", "RequestCompleteEdge",
                         "RequestErrorEdge"]
 
+ResponseHeaders = list[tuple[str, str]]
 RequestHeaders = list[tuple[str, str]]
+
 
 # Values are defined by Blink, in `Resource::ResourceTypeToString`.
 # See third_party/blink/renderer/platform/loader/fetch/resource.h.

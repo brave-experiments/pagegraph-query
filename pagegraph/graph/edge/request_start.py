@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Optional, TYPE_CHECKING
 
 from pagegraph.graph.edge import Edge
@@ -8,7 +9,7 @@ from pagegraph.types import ResourceType
 
 if TYPE_CHECKING:
     from pagegraph.graph.node.resource import ResourceNode
-    from pagegraph.types import Url, RequesterNode
+    from pagegraph.types import Url, RequesterNode, RequestHeaders
 
 
 class RequestStartEdge(RequestEdge):
@@ -56,3 +57,14 @@ class RequestStartEdge(RequestEdge):
 
     def url(self) -> Url:
         return self.outgoing_node().url()
+
+    def headers(self) -> RequestHeaders:
+        parsed_headers = []
+        if header_text := self.headers_raw():
+            try:
+                header_rows = json.loads(header_text)
+                for a_header in header_rows:
+                    parsed_headers.append((a_header["name"], a_header["value"]))
+            except json.JSONDecodeError:
+                pass
+        return parsed_headers

@@ -6,7 +6,7 @@ from pagegraph.graph.edge.abc.request_response import RequestResponseEdge
 from pagegraph.graph.requests import parse_headers
 
 if TYPE_CHECKING:
-    from pagegraph.types import RequesterNode, RequestHeaders
+    from pagegraph.types import RequesterNode, ResponseHeaders
 
 
 class RequestErrorEdge(RequestResponseEdge):
@@ -36,7 +36,7 @@ class RequestErrorEdge(RequestResponseEdge):
         except KeyError:
             return None
 
-    def headers(self) -> Optional[RequestHeaders]:
+    def headers(self) -> Optional[ResponseHeaders]:
         if header_text := self.headers_raw():
             return parse_headers(header_text)
         return None

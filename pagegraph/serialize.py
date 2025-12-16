@@ -4,13 +4,13 @@ from abc import ABC
 from dataclasses import dataclass, fields
 from typing import TYPE_CHECKING, Union, Sequence
 
-from pagegraph.types import BlinkId, PageGraphId, RequestHeaders
+from pagegraph.types import BlinkId, PageGraphId, ResponseHeaders
 
 if TYPE_CHECKING:
     from typing import Any, Optional
 
     from pagegraph.graph import PageGraph
-    from pagegraph.types import Url, RequestId
+    from pagegraph.types import Url, RequestId, RequestHeaders
     from packaging.version import Version
 
 
@@ -33,8 +33,8 @@ JSONAble = (
 class FrameReport(ReportBase):
     id: PageGraphId
     main_frame: bool
-    url: Url | None
-    security_origin: Url | None
+    url: Optional[Url]
+    security_origin: Optional[Url]
     blink_id: BlinkId
 
 
@@ -64,6 +64,7 @@ class JSCallResultReport(ReportBase):
 class RequestReport(ReportBase):
     id: PageGraphId
     url: Url | None
+    headers: RequestHeaders | None
 
 
 @dataclass
@@ -71,14 +72,14 @@ class RequestCompleteReport(ReportBase):
     id: PageGraphId
     size: int
     hash: str
-    headers: RequestHeaders
+    headers: ResponseHeaders | None
     status: str = "complete"
 
 
 @dataclass
 class RequestErrorReport(ReportBase):
     id: PageGraphId
-    headers: RequestHeaders | None
+    headers: ResponseHeaders | None
     status: str = "error"
 
 
