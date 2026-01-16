@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from pagegraph.graph.edge import Edge
 
 if TYPE_CHECKING:
+    from typing import Optional
+
     from pagegraph.types import EventListenerId
     from pagegraph.graph.edge.event_listener_add import EventListenerAddEdge
     from pagegraph.graph.edge.event_listener_fired import EventListenerFiredEdge

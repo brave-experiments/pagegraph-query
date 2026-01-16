@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from typing import cast
+from urllib.parse import urlparse
+
+from pagegraph.graph.node.script_local import ScriptLocalNode
 from tests.cases.abc.base import PageGraphBaseTestClass
 
 
@@ -38,7 +42,9 @@ class ScriptCrossDomTestCase(PageGraphBaseTestClass):
 class ScriptJsCallsTestCase(PageGraphBaseTestClass):
     NAME = "gen/script-js_calls"
 
-    def setUp(self):
+    all_scripts: list[ScriptLocalNode] = []
+
+    def setUp(self) -> None:
         super().setUp()
         child_frame_url = "assets/frames/script_js-calls_child_frame.html"
         main_domroot = None
@@ -54,16 +60,15 @@ class ScriptJsCallsTestCase(PageGraphBaseTestClass):
         child_domroot = child_domroots[0]
 
         raw_main_frame_scripts = main_domroot.scripts_executed_from()
-        self.main_frame_scripts = self.filter_nodes(raw_main_frame_scripts)
+        main_frame_scripts = self.filter_nodes(raw_main_frame_scripts)
 
         raw_frame_scripts = child_domroot.scripts_executed_from()
-        self.frame_scripts = self.filter_nodes(raw_frame_scripts)
-
-        self.all_scripts = self.main_frame_scripts + self.frame_scripts
+        frame_scripts = self.filter_nodes(raw_frame_scripts)
 
         all_scripts = list(main_frame_scripts) + list(frame_scripts)
+        self.all_scripts = cast(list[ScriptLocalNode], all_scripts)
         attr_sets = set()
-        for script in all_scripts:
+        for script in self.all_scripts:
             script_local_node = script.as_script_local_node()
             self.assertIsNotNone(script_local_node)
             assert script_local_node
@@ -79,11 +84,10 @@ class ScriptJsCallsTestCase(PageGraphBaseTestClass):
             "import('/assets/js/script_js-module-1.js')"
         ]
 
-        actual_texts = [
-            script.matching_text_node().text()
-            for script in self.all_scripts
-            if script.matching_text_node()
-        ]
+        actual_texts: list[str] = []
+        for script in self.all_scripts:
+            if matching_text_node := script.matching_text_node():
+                actual_texts.append(matching_text_node.text())
 
         self.assertEqual(len(actual_texts), len(expected_texts))
         for expected in expected_texts:
@@ -91,29 +95,30 @@ class ScriptJsCallsTestCase(PageGraphBaseTestClass):
             f"Expected text '{expected}' not found in actual texts"
 
     def test_script_urls(self) -> None:
-        excepted_urls = [
-            "http://[::]:8000/assets/js/script_js-module-1.js",
-            "http://[::]:8000/assets/js/script_js-module-2.js",
-            "http://[::]:8000/assets/js/script_js-module-3.js",
-            "http://[::]:8000/assets/js/script_js-calls_async.js",
-            "http://[::]:8000/assets/js/script_js-calls_standard.js",
+        expected_url_paths = [
+            "/assets/js/script_js-module-1.js",
+            "/assets/js/script_js-module-2.js",
+            "/assets/js/script_js-module-3.js",
+            "/assets/js/script_js-calls_async.js",
+            "/assets/js/script_js-calls_standard.js",
         ]
 
-        actual_urls = [
-            script.url_if_available()
-            for script in self.all_scripts
-            if script.script_type() in ScriptLocalNode.script_types_potentially_with_urls
-            and script.url_if_available() is not None
-        ]
+        observed_url_paths = []
+        for script in self.all_scripts:
+            if script.script_type() not in ScriptLocalNode.script_types_potentially_with_urls:
+                continue
+            script_url = script.url_if_available()
+            url_path = urlparse(script_url).path
+            if len(url_path) > 0:
+                observed_url_paths.append(url_path)
+        self.assertEqual(sorted(expected_url_paths), sorted(observed_url_paths))
 
-        self.assertEqual(sorted(excepted_urls), sorted(actual_urls))
 
+# class ScriptNumJsCallsTestCase(PageGraphBaseTestClass):
+#     NAME = "gen/script-num-js_calls"
 
-class ScriptNumJsCallsTestCase(PageGraphBaseTestClass):
-    NAME = "gen/script-num-js_calls"
-
-    def test_num_js_calls(self) -> None:
-        js_structure_nodes = self.graph.js_structure_nodes()
-        for js_node in js_structure_nodes:
-            results = js_node.call_results()
-            self.assertEqual(len(results), 2)
+#     def test_num_js_calls(self) -> None:
+#         js_structure_nodes = self.graph.js_structure_nodes()
+#         for js_node in js_structure_nodes:
+#             results = js_node.call_results()
+#             self.assertEqual(len(results), 2)

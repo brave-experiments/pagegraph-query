@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from pagegraph.graph.edge.abc.request_response import RequestResponseEdge
 from pagegraph.types import Url
 
 if TYPE_CHECKING:
+    from typing import Optional
+
     from pagegraph.graph.node.resource import ResourceNode
 
 
@@ -20,7 +22,7 @@ class RequestRedirectEdge(RequestResponseEdge):
     ]
 
     summary_methods = {
-        "url": "url",
+        "url": "url"
     }
 
     def outgoing_node(self) -> ResourceNode:

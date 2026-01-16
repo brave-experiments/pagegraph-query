@@ -7,6 +7,7 @@ from pagegraph.graph.node.abc.dom_element import DOMElementNode
 
 if TYPE_CHECKING:
     from typing import Optional
+
     from pagegraph.serialize import JSONAble
 
 

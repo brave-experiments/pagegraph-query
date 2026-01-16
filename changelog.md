@@ -1,6 +1,20 @@
 Changelog
 ===
 
+0.10.1
+---
+
+Test fixes that snuck in from merge, largely from needing to host some
+tests from `http://localhost` instead of `http://[::]` in order to qualify
+as a "secure context" (and so get access to some Web APIs).
+
+Additional typing clean up and specifying. In particular, more thorough
+use of types to specify whats a class property and whats an instance
+property.
+
+Temporary removal of a test due to a crashing bug in brave-core/pagegraph,
+that'll get added back once that is fixed.
+
 0.10.0
 ---
 

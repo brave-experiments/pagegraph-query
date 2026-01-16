@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from pagegraph.graph.node.abc.parent_dom_element import ParentDOMElementNode
 from pagegraph.serialize import Reportable, DOMElementReport
@@ -8,6 +8,8 @@ from pagegraph.urls import are_urls_same_site
 from pagegraph.versions import Feature
 
 if TYPE_CHECKING:
+    from typing import Optional
+
     from pagegraph.graph.edge.cross_dom import CrossDOMEdge
     from pagegraph.graph.node.dom_root import DOMRootNode
     from pagegraph.graph.node.parser import ParserNode

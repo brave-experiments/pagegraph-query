@@ -3,13 +3,15 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import json
 import re
-from typing import cast, Optional, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from pagegraph.serialize import Reportable, RequestCompleteReport
 from pagegraph.serialize import RequestErrorReport, RequestChainReport
 from pagegraph.serialize import RequestReport
 
 if TYPE_CHECKING:
+    from typing import Optional, Union
+
     from pagegraph.graph import PageGraph
     from pagegraph.graph.edge.abc.request import RequestEdge
     from pagegraph.graph.edge.abc.request_response import RequestResponseEdge
@@ -131,7 +133,10 @@ def parse_headers(headers_text: str) -> RequestHeaders:
     try:
         headers_parsed = json.loads(headers_text)
         if headers_parsed:
-            return cast(list[tuple[str, str]], headers_parsed)
+            headers: list[tuple[str, str]] = []
+            for item in headers_parsed:
+                headers.append((item['name'], item['value']))
+            return headers
     except ValueError:
         pass
     headers = []

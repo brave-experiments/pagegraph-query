@@ -3,7 +3,7 @@ from __future__ import annotations
 from base64 import b64encode
 from enum import Enum
 import hashlib
-from typing import Union, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from pagegraph.graph.node import Node
 from pagegraph.graph.node.abc.script import ScriptNode
@@ -12,6 +12,8 @@ from pagegraph.serialize import Reportable, ScriptReport
 from pagegraph.types import ResourceType
 
 if TYPE_CHECKING:
+    from typing import ClassVar, Optional, Union
+
     from pagegraph.graph.edge.execute import ExecuteEdge
     from pagegraph.graph.js import JSCallResult
     from pagegraph.graph.node.abc.parent_dom_element import ParentDOMElementNode
@@ -42,10 +44,13 @@ class ScriptLocalNode(ScriptNode, Reportable):
     summary_methods = {
         "hash": "hash",
         "script_type": "script_type",
-        "url": "url_if_external"
+        "url": "url_if_external",
     }
 
-    script_types_potentially_with_urls = {ScriptType.EXTERNAL, ScriptType.MODULE}
+    script_types_potentially_with_urls: ClassVar[set[ScriptType]] = set({
+        ScriptType.EXTERNAL,
+        ScriptType.MODULE
+    })
 
     def as_script_local_node(self) -> Optional[ScriptLocalNode]:
         return self

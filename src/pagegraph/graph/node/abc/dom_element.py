@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from pagegraph.graph.element import sort_elements
 from pagegraph.graph.node import Node
 from pagegraph.versions import Feature
 
 if TYPE_CHECKING:
+    from typing import Optional
+
     from pagegraph.graph.edge.node_create import NodeCreateEdge
     from pagegraph.graph.edge.node_insert import NodeInsertEdge
     from pagegraph.graph.node.abc.parent_dom_element import ParentDOMElementNode

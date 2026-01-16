@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from networkx import MultiDiGraph
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Union
+    from typing import Any, ClassVar, Optional
 
     from pagegraph.graph import PageGraph
     from pagegraph.serialize import JSONAble
@@ -30,7 +30,7 @@ class PageGraphElement(ABC):
     # that implement should define a dict, mapping "descriptive name of the
     # value, for use in a JSON dict" to "name of the method to call to get
     # that value".
-    summary_methods: Union[dict[str, str], None] = None
+    summary_methods: ClassVar[Optional[dict[str, str]]] = None
 
     # Instance properties
 

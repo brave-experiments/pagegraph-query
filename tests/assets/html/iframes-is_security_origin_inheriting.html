@@ -4,7 +4,7 @@
     const iframeElm1 = document.getElementById("frame1")
 
     const localUrl = new URL(window.location)
-    localUrl.hostname = "localhost"
+    localUrl.hostname = "[::]"
     localUrl.pathname = "/assets/frames/blank-frame.html"
 
     const iframeElm2 = document.createElement("iframe")

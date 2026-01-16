@@ -10,7 +10,7 @@ from pagegraph.serialize import EdgeReport, BriefEdgeReport
 from pagegraph.serialize import NodeReport, BriefNodeReport
 
 if TYPE_CHECKING:
-    from typing import Optional
+    from typing import ClassVar, Optional
 
     from networkx import MultiDiGraph
 
@@ -62,7 +62,7 @@ class Edge(PageGraphElement, ABC):
 
     # Class properties
 
-    incoming_node_type_names: Optional[list[str]] = None  # Node.Types
+    incoming_node_type_names: ClassVar[Optional[list[str]]] = None  # Node.Types
     """Class property defining which types of nodes are expected and valid
     to be the incoming node for this edge. These strings are the
     the strings that appear in the GraphML file, and are mapped to PageGraph
@@ -72,7 +72,7 @@ class Edge(PageGraphElement, ABC):
     That the type names given here are valid is checked at runtime when
     running with `debug=True`."""
 
-    outgoing_node_type_names: Optional[list[str]] = None  # Node.Types
+    outgoing_node_type_names: ClassVar[Optional[list[str]]] = None  # Node.Types
     """Class property defining which types of nodes are expected and valid
     to be the outgoing node for this edge. These strings are the
     the strings that appear in the GraphML file, and are mapped to PageGraph
@@ -82,7 +82,7 @@ class Edge(PageGraphElement, ABC):
     That the type names given here are valid is checked at runtime when
     running with `debug=True`."""
 
-    __incoming_node_types: Optional[list[Node.Types]] = None
+    __incoming_node_types: ClassVar[Optional[list[Node.Types]]] = None
     """Class property that is automatically populated at runtime, based on
     the contents fo the class's `incoming_node_type_names` property; its
     just replacing the string "names of the classes" in
@@ -92,7 +92,7 @@ class Edge(PageGraphElement, ABC):
     Subclasses *should not* implement this; its generated and populated
     automatically."""
 
-    __outgoing_node_types: Optional[list[Node.Types]] = None
+    __outgoing_node_types: ClassVar[Optional[list[Node.Types]]] = None
     """Class property that is automatically populated at runtime, based on
     the contents fo the class's `outgoing_node_type_names` property; its
     just replacing the string "names of the classes" in

@@ -11,7 +11,7 @@ from pagegraph.serialize import EdgeReport, BriefEdgeReport
 from pagegraph.serialize import NodeReport, BriefNodeReport
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Union, Iterable
+    from typing import Any, ClassVar, Optional, Union, Iterable
 
     from networkx import MultiDiGraph
 
@@ -56,10 +56,10 @@ if TYPE_CHECKING:
 class Node(PageGraphElement, ABC):
 
     # Used as class properties
-    incoming_node_types: Union[list[Node.Types], None] = None
-    outgoing_node_types: Union[list[Node.Types], None] = None
-    incoming_edge_types: Union[list[Edge.Types], None] = None
-    outgoing_edge_types: Union[list[Edge.Types], None] = None
+    incoming_node_types: ClassVar[Union[list[Node.Types], None]] = None
+    outgoing_node_types: ClassVar[Union[list[Node.Types], None]] = None
+    incoming_edge_types: ClassVar[Union[list[Edge.Types], None]] = None
+    outgoing_edge_types: ClassVar[Union[list[Edge.Types], None]] = None
 
     class Types(Enum):
         ADS_SHIELDS = "shieldsAds shield"

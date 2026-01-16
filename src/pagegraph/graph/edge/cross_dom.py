@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from typing import Optional, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from pagegraph.graph.edge import Edge
 from pagegraph.versions import Feature
 
 if TYPE_CHECKING:
+    from typing import Optional, Union
+
+    from pagegraph.graph.node import Node
     from pagegraph.graph.node.frame_owner import FrameOwnerNode
     from pagegraph.graph.node.dom_root import DOMRootNode
     from pagegraph.graph.node.parser import ParserNode

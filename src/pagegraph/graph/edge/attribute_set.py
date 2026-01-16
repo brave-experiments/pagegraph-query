@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import TYPE_CHECKING
 
 from pagegraph.graph.edge.abc.attribute import AttributeEdge
+
+if TYPE_CHECKING:
+    from typing import Optional
 
 
 class AttributeSetEdge(AttributeEdge):

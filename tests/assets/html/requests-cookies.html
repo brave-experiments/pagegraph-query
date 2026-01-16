@@ -12,11 +12,11 @@
         const cookieString = JSON.stringify(cookieValue);
         document.getElementsByTagName('h2')[0].innerText = cookieString;
         setTimeout(_ => {
-        appendImage("/assets/img/blue.png?cookie=yes&cache=" + Math.random());
-        setTimeout(async _ => {
-            await cookieStore.delete("test-cookie-name")
-            appendImage("/assets/img/blue.png?cookie=no&cache=" + Math.random());
-        }, 500);
+            appendImage("/assets/img/blue.png?cookie=yes&cache=" + Math.random());
+            setTimeout(async _ => {
+                await cookieStore.delete("test-cookie-name")
+                appendImage("/assets/img/blue.png?cookie=no&cache=" + Math.random());
+            }, 500);
         }, 500);
     })();
   </script>

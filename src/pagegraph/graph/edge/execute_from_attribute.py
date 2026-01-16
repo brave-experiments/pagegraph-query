@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from pagegraph.graph.edge.execute import ExecuteEdge
 
 if TYPE_CHECKING:
+    from typing import Optional
+
     from pagegraph.graph.node.abc.parent_dom_element import ParentDOMElementNode
     from pagegraph.graph.node.script_local import ScriptLocalNode
 

@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import TYPE_CHECKING
 
 from pagegraph.graph.edge import Edge
 from pagegraph.graph.node.js_structure import JSStructureNode
+
+if TYPE_CHECKING:
+    from typing import Optional
 
 
 class JSBuiltInNode(JSStructureNode):

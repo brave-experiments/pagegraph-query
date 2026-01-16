@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import TYPE_CHECKING
 
 from pagegraph.graph.node.abc.parent_dom_element import ParentDOMElementNode
 from pagegraph.serialize import Reportable, DOMElementReport
+
+if TYPE_CHECKING:
+    from typing import Optional
 
 
 class HTMLNode(ParentDOMElementNode, Reportable):

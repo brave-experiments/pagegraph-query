@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import cast, Optional, TYPE_CHECKING
+from typing import cast, TYPE_CHECKING
 
 from pagegraph.graph.edge import Edge
 from pagegraph.graph.node import Node
 
 if TYPE_CHECKING:
+    from typing import Optional
+
     from pagegraph.graph import PageGraph
     from pagegraph.graph.edge.abc.request import RequestEdge
     from pagegraph.graph.edge.request_start import RequestStartEdge
