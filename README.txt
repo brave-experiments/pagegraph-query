@@ -1,29 +1,27 @@
 usage: PageGraph Query [-h] [--version] [--debug]
-                       {subframes,validate,requests,scripts,js-calls,elm,html,unknown}
-                       ...
+                       {elm,html,js-calls,requests,scripts,subframes,unknown,validate} ...
 
 Extracts information about a Web page's execution from a PageGraph recordings.
 
 positional arguments:
-  {subframes,validate,requests,scripts,js-calls,elm,html,unknown}
-    subframes           Print information about subframes created and loaded
-                        by page.
-    validate            Just runs all validation and structure checks against
-                        a graph.
-    requests            Print information about requests made during page
-                        execution.
-    scripts             Print information about JS units executed during page
-                        execution.
-    js-calls            Print information about JS calls made during page
-                        execution.
+  {elm,html,js-calls,requests,scripts,subframes,unknown,validate}
     elm                 Print information about a node or edge in the graph.
     html                Print information about the HTML elements in a
                         document.
+    js-calls            Print information about JS calls made during page
+                        execution.
+    requests            Print information about requests made during
+                        execution.
+    scripts             Print information about JS execution during page
+                        execution.
+    subframes           Print information about subframes created by page.
     unknown             Print information about any events that occurred where
                         we could not attribute the script event to a running
                         script. (note this is different from the 'validate'
                         command, which only checks if the structure of the
                         graph is as expected).
+    validate            Runs all validation and structure checks against a
+                        graph.
 
 options:
   -h, --help            show this help message and exit
