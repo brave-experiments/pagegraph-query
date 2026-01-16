@@ -1,0 +1,23 @@
+[project]
+name = "pagegraph-query"
+authors  = [
+    { name="Peter Snyder", email="pes@peteresnyder.com" },
+]
+readme = "README.txt"
+version = "0.10.0"
+license = "MIT"
+
+dependencies = [
+    "networkx",
+    "packaging",
+    "publicsuffix2"
+]
+
+[project.optional-dependencies]
+dev = [
+    "mypy",
+    "pylint"
+]
+
+[project.scripts]
+pagegraph-query = "pagegraph.cli.run:run"

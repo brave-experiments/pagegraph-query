@@ -1,24 +1,33 @@
 #!/usr/bin/env python3
+"""Test runner and utility. Has three commands:
+- run: runs all the tests (defined in tests/cases/*.py)
+- generate: uses pagegraph-crawl to generate pagegraph-format graphml files,
+            which are the datasets tests are run against.
+- serve: launches the server used to run the `generate` command against. Only
+         really useful when debugging the .html pages tested against.
+
+Run ./tests.py --help for more information.
+"""
 import argparse
 import sys
 
-import pagegraph.tests.commands
+import tests.commands
 
 
 def serve_cmd(args: argparse.Namespace, other_args: list[str]) -> None:
     # pylint: disable=unused-argument
-    pagegraph.tests.commands.serve(args.port, args.verbose)
+    tests.commands.serve(args.port, args.verbose)
 
 
 def generate_cmd(args: argparse.Namespace, other_args: list[str]) -> None:
-    pagegraph.tests.commands.generate(
+    tests.commands.generate(
         args.path, args.filter, args.port, args.clear, args.verbose,
         other_args)
 
 
 def run_cmd(args: argparse.Namespace, other_args: list[str]) -> None:
     # pylint: disable=unused-argument
-    pagegraph.tests.commands.run(args.filter, args.verbose)
+    tests.commands.run(args.filter, args.verbose)
 
 
 PARSER = argparse.ArgumentParser(

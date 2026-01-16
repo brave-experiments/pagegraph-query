@@ -1,5 +1,31 @@
-Version 0.9.7
+Changelog
+===
+
+0.10.0
 ---
+
+Restructure everything to use modern `pyproject.toml` format, splitout
+dependencies and dev-only dependencies, and upgrade all dependencies (which
+is now easy and convenient!).
+
+Add test code to linting (mypy and pylint) checks.
+
+Add test for new header serializing and recording code.
+
+0.9.9
+---
+
+Add support for http headers now being in all requests, and not just responses,
+in all `Request*Edge` classes.
+
+0.9.8
+---
+
+Fix error in `js-calls` command that caused JS invocations to be over counted.
+
+0.9.7
+---
+
 Fix situation where PageGraph would report a security origin as "null", but
 pagegraph-query was expecting a `None` value.
 
@@ -7,8 +33,7 @@ For container DOM elements (`ParentDOMElementNode`), move fatal check for
 attributes we see a delete record for, but no set record, to `validate()`,
 and make `attributes()` ignore the unexpected situation case.
 
-
-Version 0.9.6
+0.9.6
 ---
 
 Add support for [PageGraph 0.7.4](https://github.com/brave/brave-core/pull/28164),
@@ -30,9 +55,8 @@ annotations, using `__future__.annotations`.
 
 Upgrade mypy to 1.15.0.
 
-
 ---
-Version 0.9.5
+0.9.5
 Add `url` into `ScriptLocal` summary for external scripts with new
 `ScriptLocalNode.url_if_external` method.
 
@@ -61,11 +85,10 @@ command in the `./run.py` script.
 
 Additional test coverage.
 
-
-Version 0.9.4
+0.9.4
 ---
 
-Add support for PageGraph version 0.7.2 (which adds new node types for actors).
+Add support for PageGraph 0.7.2 (which adds new node types for actors).
 
 Fix `iframes` test and regenerate test graphs with recent pagegraph.
 
@@ -87,22 +110,19 @@ Remove assumption in `RequestChain` class that all requests will have a result
 (either a completion edge or an error edge). There will be no result if the
 graph was serialized while the request was still in the air.
 
-
-Version 0.9.3
+0.9.3
 ---
 
 Fix frame filter for `requests` command.
 
-
-Version 0.9.2
+0.9.2
 ---
 
 Add `html` command, for querying what HTML elements appeared in which pages.
 
 Made some minor changes to get python 3.10 compatibility
 
-
-Version 0.9.1
+0.9.1
 ---
 
 Add some tests.
@@ -111,24 +131,24 @@ Moved to pylint linting, which required a lot of code restructuring.
 
 Parse headers in relevant requests.
 
-
-Version 0.6.5
+0.6.5
 ---
+
 Add ability to gate some functionality behind graph versions.
 
 Report frame information for the `scripts` command if parsing graphs
 versions 0.6.3 or later.
 
-
-Version 0.6.4
+0.6.4
 ---
+
 Added two new commands: `elm` for querying information about a specific
 graph element (and its surrounding subgraph), and `scripts` for querying
 information about relationship chains between scripts on a page.
 
-
-Version 0.6.3
+0.6.3
 ---
+
 Added graph structure type checks for edges.
 
 Further cleaned up how reports are serialized.
@@ -137,9 +157,9 @@ Corrected handling of redirection flows for requests through the graph,
 and exposed that information in the `RequestChainReport` structure
 and the `requests` command.
 
-
-Version 0.6.2
+0.6.2
 ---
+
 Add new `js-calls` query command, to allow querying what JS calls were
 made during page execution.
 
@@ -148,9 +168,9 @@ be `mypy` checked, and to make the reports more consistent.
 
 Much faster.
 
-
-Version 0.6.1
+0.6.1
 ---
+
 Add explicitly passed `--debug` option on command line, to optionally
 perform more expensive checks of graph correctness. Started moving
 `assert`s to this, to give more useful failure information.
