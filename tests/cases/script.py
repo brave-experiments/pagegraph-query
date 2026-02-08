@@ -114,11 +114,11 @@ class ScriptJsCallsTestCase(PageGraphBaseTestClass):
         self.assertEqual(sorted(expected_url_paths), sorted(observed_url_paths))
 
 
-# class ScriptNumJsCallsTestCase(PageGraphBaseTestClass):
-#     NAME = "gen/script-num-js_calls"
+class ScriptNumJsCallsTestCase(PageGraphBaseTestClass):
+    NAME = "gen/script-num-js_calls"
 
-#     def test_num_js_calls(self) -> None:
-#         js_structure_nodes = self.graph.js_structure_nodes()
-#         for js_node in js_structure_nodes:
-#             results = js_node.call_results()
-#             self.assertEqual(len(results), 2)
+    def test_num_js_calls(self) -> None:
+        js_structure_nodes = self.graph.js_structure_nodes()
+        for js_node in js_structure_nodes:
+            results = js_node.call_results()
+            self.assertEqual(len(results), 2)

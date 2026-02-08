@@ -31,7 +31,7 @@ def run_cmd(args: argparse.Namespace, other_args: list[str]) -> None:
 
 
 PARSER = argparse.ArgumentParser(
-        prog="Generate pageqraph-query tests",
+        prog="pageqraph-query tests",
         description="Tools for setting up and running tests against "
                     "PageGraph graphs")
 

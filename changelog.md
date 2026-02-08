@@ -1,6 +1,15 @@
 Changelog
 ===
 
+0.10.2
+---
+
+Support the timestamp value that was added to PageGraph recordings in
+PageGraph 0.7.7.
+
+Re-add test, due to PageGraph crashing due to incorrect typing for certain
+request sizes.
+
 0.10.1
 ---
 

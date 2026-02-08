@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum, StrEnum
 from typing import Set, Optional, TYPE_CHECKING, Union
 
@@ -123,6 +124,8 @@ class FrameSummary:
 class PageGraphInput:
     url: Url
     version: Version
+    # Optional because <date>s were added in PageGraph 0.7.7.
+    date: Optional[datetime]
     graph: NWX.MultiDiGraph
     reverse_graph: NWX.MultiDiGraph
 

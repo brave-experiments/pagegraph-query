@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from functools import lru_cache
 from itertools import chain
 from pathlib import Path
@@ -49,6 +50,8 @@ if TYPE_CHECKING:
 class PageGraph:
 
     # Instance properties
+    timestamp: Optional[datetime]
+    """The date and time the PageGraph GraphML file was generated."""
 
     debug: bool
     """Whether to apply additional checks and include additional logging
@@ -129,6 +132,7 @@ class PageGraph:
     def __init__(self, input_data: PageGraphInput, debug: bool = False):
         self.debug = debug
         self.url = input_data.url
+        self.timestamp = input_data.date
         self.graph_version = input_data.version
         self.graph = input_data.graph
         self.r_graph = input_data.reverse_graph
